@@ -1,6 +1,6 @@
 'use client';
 
-import { Form, Input, InputNumber, Switch, Button, Row, Col, Card } from 'antd';
+import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space } from 'antd';
 import { useEffect } from 'react';
 import ar from '@/i18n/ar';
 import { toEGP, toPiasters } from '@/lib/utils/money';
@@ -100,7 +100,21 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting }: P
                             label={ar.products.sellingPrice}
                             rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}
                         >
-                            <InputNumber min={0} step={0.25} style={{ width: '100%' }} addonAfter="ج.م" />
+                            <Space.Compact style={{ width: '100%' }}>
+                                <InputNumber min={0} step={0.25} style={{ width: '100%' }} />
+                                <div style={{
+                                    padding: '0 11px',
+                                    backgroundColor: '#f5f5f5',
+                                    border: '1px solid #d9d9d9',
+                                    borderLeft: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    borderRadius: '0 6px 6px 0',
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                    ج.م
+                                </div>
+                            </Space.Compact>
                         </Form.Item>
                     </Col>
                     <Col xs={24} md={8}>
