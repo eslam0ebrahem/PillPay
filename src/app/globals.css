@@ -1,7 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
-
 :root {
-  --font-arabic: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+  --font-arabic: var(--font-cairo), 'Segoe UI', Tahoma, sans-serif;
   --primary: #1677ff;
   --primary-dark: #0958d9;
   --bg: #f5f5f5;
