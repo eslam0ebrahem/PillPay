@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Form, Input, InputNumber, Button, Switch } from 'antd';
+import { Form, Input, InputNumber, Button, Switch, Space } from 'antd';
 
 interface CustomerFormProps {
     initialValues?: any;
@@ -46,11 +46,24 @@ export default function CustomerForm({ initialValues, onSubmit, isLoading, isEdi
                     help="أدخل أي ديون سابقة على العميل عند تسجيله لأول مرة"
                     initialValue={0}
                 >
-                    <InputNumber
-                        style={{ width: '100%' }}
-                        min={0}
-                        addonAfter="جنيه"
-                    />
+                    <Space.Compact style={{ width: '100%' }}>
+                        <InputNumber
+                            style={{ width: '100%' }}
+                            min={0}
+                        />
+                        <div style={{
+                            padding: '0 11px',
+                            backgroundColor: '#f5f5f5',
+                            border: '1px solid #d9d9d9',
+                            borderLeft: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderRadius: '0 6px 6px 0',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            جنيه
+                        </div>
+                    </Space.Compact>
                 </Form.Item>
             )}
 
