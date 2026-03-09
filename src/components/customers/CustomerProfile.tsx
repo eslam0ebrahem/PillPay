@@ -144,7 +144,7 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
     ];
 
     return (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
             {/* Header / Summary Card */}
             <Card>
                 <div className="flex justify-between items-start">

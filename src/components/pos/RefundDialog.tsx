@@ -381,7 +381,7 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                 </Button>,
             ]}
         >
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Space orientation="vertical" size="large" style={{ width: '100%' }}>
                 <Segmented
                     block
                     value={mode}
@@ -413,7 +413,7 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
 
                         {invoiceData ? (
                             <>
-                                <Space direction="vertical" size={2}>
+                                <Space orientation="vertical" size={2}>
                                     <Text strong>
                                         الفاتورة: {invoiceData.invoiceNumber}
                                     </Text>
@@ -492,7 +492,7 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                             }
                         />
 
-                        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                        <Space orientation="vertical" style={{ width: '100%' }} size="middle">
                             {standaloneItems.map((item, index) => (
                                 <Space
                                     key={item.id}

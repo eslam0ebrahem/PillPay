@@ -43,7 +43,7 @@ export default function BarcodeScanner({ open, onClose, onScan }: BarcodeScanner
         >
             <div style={{ textAlign: 'center', minHeight: 250 }}>
                 {hasCameraPermission === false && (
-                    <Space direction="vertical" style={{ marginTop: 50 }}>
+                    <Space orientation="vertical" style={{ marginTop: 50 }}>
                         <Text type="danger">{ar.pos.cameraError}</Text>
                         <Text type="secondary">{error}</Text>
                     </Space>
