@@ -1,12 +1,10 @@
 export const dynamic = 'force-dynamic';
 
-import { Typography } from 'antd';
+import PageHeader from '@/components/common/PageHeader';
 import { connectDB } from '@/lib/db/connection';
 import Supplier from '@/lib/models/Supplier';
 import Product from '@/lib/models/Product';
 import NewSupplierInvoiceClientWrapper from '@/components/suppliers/NewSupplierInvoiceClientWrapper';
-
-const { Title } = Typography;
 
 export default async function NewSupplierInvoicePage() {
     await connectDB();
@@ -19,9 +17,7 @@ export default async function NewSupplierInvoicePage() {
 
     return (
         <div>
-            <Title level={2} style={{ marginBottom: 24 }}>
-                تسجيل فاتورة مورد جديدة
-            </Title>
+            <PageHeader title="تسجيل فاتورة مورد جديدة" />
 
             <NewSupplierInvoiceClientWrapper suppliers={safeSuppliers} products={safeProducts} />
         </div>

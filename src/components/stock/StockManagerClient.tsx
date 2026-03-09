@@ -138,7 +138,7 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
                 open={isTransferModalOpen}
                 onCancel={() => !transferMutation.isPending && setIsTransferModalOpen(false)}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
             >
                 <TransferForm
                     products={products}

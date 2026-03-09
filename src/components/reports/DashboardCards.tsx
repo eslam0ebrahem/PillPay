@@ -20,7 +20,7 @@ export default function DashboardCards({ summary }: DashboardCardsProps) {
     return (
         <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} lg={8}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                     <Statistic
                         title={ar.reports.todaySales}
                         value={summary.todaySales}
@@ -30,7 +30,7 @@ export default function DashboardCards({ summary }: DashboardCardsProps) {
                 </Card>
             </Col>
             <Col xs={24} sm={12} lg={8}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                     <Statistic
                         title={ar.reports.totalProfit}
                         value={summary.netProfit}
@@ -40,7 +40,7 @@ export default function DashboardCards({ summary }: DashboardCardsProps) {
                 </Card>
             </Col>
             <Col xs={24} sm={12} lg={8}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                     <Statistic
                         title={ar.reports.cashInHand}
                         value={summary.cashInHand}
@@ -50,7 +50,7 @@ export default function DashboardCards({ summary }: DashboardCardsProps) {
                 </Card>
             </Col>
             <Col xs={24} sm={12} lg={12}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                     <Statistic
                         title={ar.reports.customerDebt}
                         value={summary.totalCustomerDebt}
@@ -60,7 +60,7 @@ export default function DashboardCards({ summary }: DashboardCardsProps) {
                 </Card>
             </Col>
             <Col xs={24} sm={12} lg={12}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                     <Statistic
                         title={ar.reports.supplierDebt}
                         value={summary.totalSupplierDebt}

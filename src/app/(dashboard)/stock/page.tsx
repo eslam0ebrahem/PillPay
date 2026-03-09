@@ -1,15 +1,11 @@
 export const dynamic = 'force-dynamic';
 
-import { Typography, Row, Col, Card, Statistic, Alert } from 'antd';
-import { WarningOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { connectDB } from '@/lib/db/connection';
 import Product from '@/lib/models/Product';
 import Batch from '@/lib/models/Batch';
+import StockHeaderClient from '@/components/stock/StockHeaderClient';
 import StockManagerClient from '@/components/stock/StockManagerClient';
-import ar from '@/i18n/ar';
 import dayjs from 'dayjs';
-
-const { Title } = Typography;
 
 export default async function StockPage() {
     await connectDB();
@@ -54,50 +50,24 @@ export default async function StockPage() {
         _id: b._id.toString(),
         productId: {
             ...b.productId,
-            _id: b.productId._id.toString()
+            _id: b.productId?._id?.toString() || ''
         },
         supplierInvoiceId: b.supplierInvoiceId ? b.supplierInvoiceId.toString() : null
     }));
 
     return (
         <div>
-            <Title level={2} style={{ marginBottom: 24 }}>
-                {ar.nav.stock}
-            </Title>
+            <StockHeaderClient
+                outOfStockCount={outOfStockProducts.length}
+                lowStockCount={lowStockProducts.length}
+                expiredCount={expiredBatches.length}
+                expiringSoonCount={expiringSoonBatches.length}
+            />
 
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                <Col xs={24} sm={12} md={6}>
-                    <Card>
-                        <Statistic title="منتجات نفذت" value={outOfStockProducts.length} valueStyle={{ color: '#cf1322' }} prefix={<WarningOutlined />} />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                    <Card>
-                        <Statistic title="المخزون المنخفض" value={lowStockProducts.length} valueStyle={{ color: '#d48806' }} />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                    <Card>
-                        <Statistic title="منتهية الصلاحية" value={expiredBatches.length} valueStyle={{ color: '#cf1322' }} prefix={<ExclamationCircleOutlined />} />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                    <Card>
-                        <Statistic title="تقارب الانتهاء (30 يوم)" value={expiringSoonBatches.length} valueStyle={{ color: '#d48806' }} />
-                    </Card>
-                </Col>
-            </Row>
-
-            {outOfStockProducts.length > 0 && (
-                <Alert
-                    message={`يوجد ${outOfStockProducts.length} منتجات نفذت من المخزون`}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 16 }}
-                />
-            )}
-
-            <StockManagerClient safeBatches={safeBatches} products={products.map(p => ({ ...p, _id: p._id.toString() }))} />
+            <StockManagerClient
+                safeBatches={safeBatches}
+                products={products.map(p => ({ ...p, _id: p._id.toString() }))}
+            />
         </div>
     );
 }

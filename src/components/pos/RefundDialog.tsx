@@ -237,23 +237,23 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
             const payload =
                 mode === 'invoice'
                     ? {
-                          originalInvoiceId: invoiceData?._id,
-                          items:
-                              invoiceData?.items
-                                  .filter((item) => (selectedQuantities[item.saleItemId] || 0) > 0)
-                                  .map((item) => ({
-                                      productId: item.productId,
-                                      quantity: selectedQuantities[item.saleItemId],
-                                  })) ?? [],
-                      }
+                        originalInvoiceId: invoiceData?._id,
+                        items:
+                            invoiceData?.items
+                                .filter((item) => (selectedQuantities[item.saleItemId] || 0) > 0)
+                                .map((item) => ({
+                                    productId: item.productId,
+                                    quantity: selectedQuantities[item.saleItemId],
+                                })) ?? [],
+                    }
                     : {
-                          customerId: selectedCustomerId,
-                          items: standaloneItems.map((item) => ({
-                              productId: item.productId,
-                              quantity: item.quantity,
-                              unitPrice: Math.round(item.unitPrice * 100),
-                          })),
-                      };
+                        customerId: selectedCustomerId,
+                        items: standaloneItems.map((item) => ({
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            unitPrice: Math.round(item.unitPrice * 100),
+                        })),
+                    };
 
             if (payload.items.length === 0) {
                 throw new Error('حدد صنفاً واحداً على الأقل لإتمام المرتجع');
@@ -365,7 +365,7 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
             open={open}
             onCancel={handleClose}
             width={960}
-            destroyOnClose
+            destroyOnHidden
             footer={[
                 <Button key="close" onClick={handleClose}>
                     إغلاق

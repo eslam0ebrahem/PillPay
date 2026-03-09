@@ -39,7 +39,7 @@ export default function BarcodeScanner({ open, onClose, onScan }: BarcodeScanner
                     {ar.actions.cancel}
                 </Button>,
             ]}
-            destroyOnClose
+            destroyOnHidden
         >
             <div style={{ textAlign: 'center', minHeight: 250 }}>
                 {hasCameraPermission === false && (

@@ -13,3 +13,4 @@ export { default as CustomerPayment } from './CustomerPayment';
 export { default as BalanceAdjustment } from './BalanceAdjustment';
 export { default as StockTransfer } from './StockTransfer';
 export { default as Refund } from './Refund';
+export { default as InventoryAuditSession } from './InventoryAuditSession';
