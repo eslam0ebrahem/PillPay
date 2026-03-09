@@ -16,10 +16,11 @@ const returnSchema = z.object({
     items: z.array(returnItemSchema).min(1),
 });
 
-export const POST = withPermission('suppliers.manage', async (req: NextRequest) => {
+export const POST = withPermission(
+    'suppliers.manage',
+    async (req: NextRequest, context) => {
     try {
-        const user = (req as any).user;
-        const userId = user?.id || user?._id;
+        const userId = context.user._id;
 
         const body = await req.json();
         const parsed = returnSchema.parse(body);
@@ -55,4 +56,5 @@ export const POST = withPermission('suppliers.manage', async (req: NextRequest) 
         }
         return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: error.message } }, { status: 500 });
     }
-});
+    }
+);

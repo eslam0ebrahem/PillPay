@@ -93,12 +93,12 @@
 
 **Independent Test**: Create owner account via seed, log in, verify dashboard loads with summary cards and alert panels (empty-state placeholders for fresh system)
 
-- [ ] T044 [US1] Create alerts service (getExpiredBatches, getExpiringSoonBatches using Settings.expiringSoonDays, getLowStockProducts, getOutOfStockProducts) querying Batch and Product models in src/lib/services/alerts.service.ts
-- [ ] T045 [US1] Create report service with getDashboardSummary method (today's totalSales, cashInHand, netProfit from batch-level COGS, totalCustomerDebt, totalSupplierDebt, topSellingProducts, slowMovingProducts) using MongoDB aggregation pipelines in src/lib/services/report.service.ts
-- [ ] T046 [P] [US1] Create DashboardCards component (Ant Design Card grid showing sales, profit, cash, customer debt, supplier debt with MoneyDisplay) in src/components/reports/DashboardCards.tsx
-- [ ] T047 [P] [US1] Create GET /api/reports/dashboard route handler (withAuth + withPermission reports.view, call report service) in src/app/api/reports/dashboard/route.ts
-- [ ] T048 [P] [US1] Create GET /api/products/alerts route handler (withAuth + withPermission products.view, call alerts service) in src/app/api/products/alerts/route.ts
-- [ ] T049 [US1] Create owner dashboard page as Server Component calling report.service.getDashboardSummary and alerts.service directly, rendering DashboardCards + alert lists + top/slow product tables in src/app/(dashboard)/page.tsx
+- [x] T044 [US1] Create alerts service (getExpiredBatches, getExpiringSoonBatches using Settings.expiringSoonDays, getLowStockProducts, getOutOfStockProducts) querying Batch and Product models in src/lib/services/alerts.service.ts
+- [x] T045 [US1] Create report service with getDashboardSummary method (today's totalSales, cashInHand, netProfit from batch-level COGS, totalCustomerDebt, totalSupplierDebt, topSellingProducts, slowMovingProducts) using MongoDB aggregation pipelines in src/lib/services/report.service.ts
+- [x] T046 [P] [US1] Create DashboardCards component (Ant Design Card grid showing sales, profit, cash, customer debt, supplier debt with MoneyDisplay) in src/components/reports/DashboardCards.tsx
+- [x] T047 [P] [US1] Create GET /api/reports/dashboard route handler (withAuth + withPermission reports.view, call report service) in src/app/api/reports/dashboard/route.ts
+- [x] T048 [P] [US1] Create GET /api/products/alerts route handler (withAuth + withPermission products.view, call alerts service) in src/app/api/products/alerts/route.ts
+- [x] T049 [US1] Create owner dashboard page as Server Component calling report.service.getDashboardSummary and alerts.service directly, rendering DashboardCards + alert lists + top/slow product tables in src/app/(dashboard)/page.tsx
 
 **Checkpoint**: Owner can log in and see full business dashboard — US1 complete
 
@@ -228,12 +228,12 @@
 
 **Independent Test**: Create sale, cancel it, verify stock fully restored and invoice marked cancelled. Create another sale, issue partial refund, verify stock and customer balance updated
 
-- [ ] T113 [US7] Create Refund model with schema (refundNumber unique auto-generated, originalInvoiceId ref nullable, items[] embedded RefundItem with productId/quantity/unitPrice/subtotal, total, customerId ref nullable, processedBy ref, createdAt) in src/lib/models/Refund.ts
-- [ ] T114 [US7] Update models barrel export to include Refund in src/lib/models/index.ts
-- [ ] T115 [US7] Create refund service (createRefund: validate items, return stock to floor batches, create Refund record, adjust customer.totalOwed if applicable, log audit; cancelSale: mark invoice cancelled, reverse all batch allocations by restoring floorQty, reverse customer balance if credit sale, log audit) in src/lib/services/refund.service.ts
-- [ ] T116 [P] [US7] Create POST /api/pos/cancel/:invoiceId route handler (withPermission pos.cancel, call refund.service.cancelSale) in src/app/api/pos/cancel/[invoiceId]/route.ts
-- [ ] T117 [US7] Create GET (list with filters: originalInvoiceId, customerId, date range, pagination) and POST (withPermission refunds.create, call refund.service.createRefund) handlers for /api/refunds in src/app/api/refunds/route.ts
-- [ ] T118 [US7] Add sale cancellation button and refund creation UI (refund dialog with optional invoice lookup, item selection, quantity input) to POS screen in src/components/pos/POSScreen.tsx
+- [x] T113 [US7] Create Refund model with schema (refundNumber unique auto-generated, originalInvoiceId ref nullable, items[] embedded RefundItem with productId/quantity/unitPrice/subtotal, total, customerId ref nullable, processedBy ref, createdAt) in src/lib/models/Refund.ts
+- [x] T114 [US7] Update models barrel export to include Refund in src/lib/models/index.ts
+- [x] T115 [US7] Create refund service (createRefund: validate items, return stock to floor batches, create Refund record, adjust customer.totalOwed if applicable, log audit; cancelSale: mark invoice cancelled, reverse all batch allocations by restoring floorQty, reverse customer balance if credit sale, log audit) in src/lib/services/refund.service.ts
+- [x] T116 [P] [US7] Create POST /api/pos/cancel/:invoiceId route handler (withPermission pos.cancel, call refund.service.cancelSale) in src/app/api/pos/cancel/[invoiceId]/route.ts
+- [x] T117 [US7] Create GET (list with filters: originalInvoiceId, customerId, date range, pagination) and POST (withPermission refunds.create, call refund.service.createRefund) handlers for /api/refunds in src/app/api/refunds/route.ts
+- [x] T118 [US7] Add sale cancellation button and refund creation UI (refund dialog with optional invoice lookup, item selection, quantity input) to POS screen in src/components/pos/POSScreen.tsx
 
 **Checkpoint**: Refunds and cancellations correctly reverse stock and financial records — US7 complete
 
