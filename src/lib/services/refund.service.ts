@@ -418,6 +418,7 @@ export async function createRefund({
         auditDetails = {
             refundNumber: refund.refundNumber,
             originalInvoiceId: invoice?._id?.toString() ?? null,
+            originalInvoiceNumber: invoice?.invoiceNumber ?? null,
             total,
             itemCount: normalizedItems.length,
         };
@@ -434,6 +435,14 @@ export async function createRefund({
         action: 'REFUND_CREATED',
         entityType: 'Refund',
         entityId: refundDocId,
+        invoiceNumber:
+            typeof auditDetails?.originalInvoiceNumber === 'string'
+                ? auditDetails.originalInvoiceNumber
+                : undefined,
+        productId:
+            createdRefund?.items?.length === 1
+                ? createdRefund.items[0].productId.toString()
+                : undefined,
         details: auditDetails,
     });
 
@@ -506,6 +515,11 @@ export async function cancelSale(invoiceRef: string, userId: string) {
         action: 'SALE_CANCELLED',
         entityType: 'SaleInvoice',
         entityId: invoiceId,
+        invoiceNumber: typeof auditDetails?.invoiceNumber === 'string' ? auditDetails.invoiceNumber : undefined,
+        productId:
+            cancelledInvoice?.items?.length === 1
+                ? cancelledInvoice.items[0].productId.toString()
+                : undefined,
         details: auditDetails,
     });
 

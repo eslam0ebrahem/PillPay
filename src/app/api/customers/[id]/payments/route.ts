@@ -9,8 +9,6 @@ const paymentSchema = z.object({
 
 export const POST = withPermission('customers.payments', async (req: NextRequest, context: any) => {
     try {
-        const user = (req as any).user;
-        const userId = user?.id || user?._id;
         const params = await context.params;
         const id = params.id; // customerId
 
@@ -20,7 +18,7 @@ export const POST = withPermission('customers.payments', async (req: NextRequest
         const payment = await recordCustomerPayment(
             id,
             Math.round(parsed.amount * 100), // EGP to piasters
-            userId
+            context.user._id
         );
 
         return NextResponse.json(payment, { status: 201 });

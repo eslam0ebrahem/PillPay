@@ -12,6 +12,13 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
+    let createdInvoiceId = '';
+    let createdInvoiceNumber = '';
+    let createdInvoiceTotal = 0;
+    let createdSupplierId = '';
+    let createdPaymentId = '';
+    let createdPaymentAmount = 0;
+
     try {
         const invoice = new SupplierInvoice({
             ...invoiceData,
@@ -48,17 +55,40 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
                 paidBy: userId
             });
             await payment.save({ session });
+            createdPaymentId = payment._id.toString();
+            createdPaymentAmount = invoiceData.paidAmount;
         }
 
         await session.commitTransaction();
 
+        createdInvoiceId = invoice._id.toString();
+        createdInvoiceNumber = invoice.invoiceNumber;
+        createdInvoiceTotal = invoice.total;
+        createdSupplierId = invoice.supplierId.toString();
+
         await logAction({
             userId,
-            action: 'SUPPLIER_INVOICE_CREATE',
+            action: 'SUPPLIER_INVOICE_CREATED',
             entityType: 'SupplierInvoice',
-            entityId: invoice._id.toString(),
-            details: { invoiceNumber: invoice.invoiceNumber, total: invoice.total }
+            entityId: createdInvoiceId,
+            invoiceNumber: createdInvoiceNumber,
+            details: { invoiceNumber: createdInvoiceNumber, total: createdInvoiceTotal }
         });
+
+        if (createdPaymentId) {
+            await logAction({
+                userId,
+                action: 'SUPPLIER_PAYMENT_RECORDED',
+                entityType: 'SupplierPayment',
+                entityId: createdPaymentId,
+                invoiceNumber: createdInvoiceNumber,
+                details: {
+                    amount: createdPaymentAmount,
+                    supplierId: createdSupplierId,
+                    supplierInvoiceId: createdInvoiceId,
+                }
+            });
+        }
 
         return invoice;
     } catch (error) {
@@ -73,6 +103,9 @@ export async function recordSupplierPayment(supplierId: string, amount: number, 
     await connectDB();
     const session = await mongoose.startSession();
     session.startTransaction();
+
+    let paymentId = '';
+    let invoiceNumber: string | undefined;
 
     try {
         const payment = new SupplierPayment({
@@ -95,16 +128,19 @@ export async function recordSupplierPayment(supplierId: string, amount: number, 
                 invoice.paidAmount += amount;
                 invoice.remainingBalance -= amount;
                 await invoice.save({ session });
+                invoiceNumber = invoice.invoiceNumber;
             }
         }
 
         await session.commitTransaction();
+        paymentId = payment._id.toString();
 
         await logAction({
             userId,
-            action: 'SUPPLIER_PAYMENT',
+            action: 'SUPPLIER_PAYMENT_RECORDED',
             entityType: 'SupplierPayment',
-            entityId: payment._id.toString(),
+            entityId: paymentId,
+            invoiceNumber,
             details: { amount, supplierId, invoiceId }
         });
 
@@ -160,9 +196,10 @@ export async function voidSupplierInvoice(invoiceId: string, userId: string) {
 
         await logAction({
             userId,
-            action: 'SUPPLIER_INVOICE_VOID',
+            action: 'SUPPLIER_INVOICE_VOIDED',
             entityType: 'SupplierInvoice',
             entityId: invoiceId,
+            invoiceNumber: invoice.invoiceNumber,
             details: { invoiceNumber: invoice.invoiceNumber }
         });
 
@@ -192,7 +229,7 @@ export async function adjustSupplierBalance(supplierId: string, amountChange: nu
 
         await logAction({
             userId,
-            action: 'SUPPLIER_BALANCE_ADJUST',
+            action: 'SUPPLIER_BALANCE_ADJUSTED',
             entityType: 'Supplier',
             entityId: supplierId,
             details: { oldBalance, newBalance: supplier.totalOwed, amountChange, reason }

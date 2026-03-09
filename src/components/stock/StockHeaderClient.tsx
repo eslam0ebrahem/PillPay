@@ -31,7 +31,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title="منتجات نفذت"
                             value={outOfStockCount}
-                            valueStyle={{ color: '#cf1322' }}
+                            styles={{ content: { color: '#cf1322' } }}
                             prefix={<WarningOutlined />}
                         />
                     </Card>
@@ -41,7 +41,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title="المخزون المنخفض"
                             value={lowStockCount}
-                            valueStyle={{ color: '#d48806' }}
+                            styles={{ content: { color: '#d48806' } }}
                         />
                     </Card>
                 </Col>
@@ -50,7 +50,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title="منتهية الصلاحية"
                             value={expiredCount}
-                            valueStyle={{ color: '#cf1322' }}
+                            styles={{ content: { color: '#cf1322' } }}
                             prefix={<ExclamationCircleOutlined />}
                         />
                     </Card>
@@ -60,7 +60,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title="تقارب الانتهاء (30 يوم)"
                             value={expiringSoonCount}
-                            valueStyle={{ color: '#d48806' }}
+                            styles={{ content: { color: '#d48806' } }}
                         />
                     </Card>
                 </Col>

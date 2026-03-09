@@ -284,9 +284,9 @@
 
 **Independent Test**: Perform auditable actions (sale, refund, stock adjustment), open audit log viewer, search by each filter type, verify entries are present and immutable
 
-- [ ] T136 [US10] Create GET /api/audit-logs route handler (withPermission audit-logs.view, search filters: userId, action, entityType, invoiceNumber, productId, from/to date range, pagination) in src/app/api/audit-logs/route.ts
-- [ ] T137 [US10] Create audit log viewer page with Ant Design filter form (user dropdown, action type dropdown, date range picker, invoice number input, product search) and paginated results table showing timestamp, user, action, entity, details in src/app/(dashboard)/audit-logs/page.tsx
-- [ ] T138 [US10] Verify all service mutations call audit.service.logAction — audit each service file (pos.service, stock.service, supplier.service, customer.service, refund.service) and add any missing audit log calls for: sale.created, sale.cancelled, refund.created, stock.adjusted, stock.transferred, supplier-invoice.created, supplier-invoice.edited, supplier-invoice.voided, supplier-payment.recorded, customer-payment.recorded, balance.adjusted
+- [x] T136 [US10] Create GET /api/audit-logs route handler (withPermission audit-logs.view, search filters: userId, action, entityType, invoiceNumber, productId, from/to date range, pagination) in src/app/api/audit-logs/route.ts
+- [x] T137 [US10] Create audit log viewer page with Ant Design filter form (user dropdown, action type dropdown, date range picker, invoice number input, product search) and paginated results table showing timestamp, user, action, entity, details in src/app/(dashboard)/audit-logs/page.tsx
+- [x] T138 [US10] Verify all service mutations call audit.service.logAction — audit each service file (pos.service, stock.service, supplier.service, customer.service, refund.service) and add any missing audit log calls for: sale.created, sale.cancelled, refund.created, stock.adjusted, stock.transferred, supplier-invoice.created, supplier-invoice.edited, supplier-invoice.voided, supplier-payment.recorded, customer-payment.recorded, balance.adjusted
 
 **Checkpoint**: Audit logs viewable, searchable, and verified complete across all services — US10 complete
 
@@ -298,9 +298,9 @@
 
 **Independent Test**: Create cashier account with default permissions, log in as cashier and verify POS-only access, grant products.manage permission, verify catalog access, deactivate account, verify login fails
 
-- [ ] T139 [US11] Create GET (list with role filter, isActive filter, pagination) and POST (withPermission users.manage, create user with role + permissions, hash password) handlers for /api/users in src/app/api/users/route.ts
-- [ ] T140 [US11] Create PUT /api/users/:id route handler (withPermission users.manage, update name, email, role, permissions, isActive; optionally reset password) in src/app/api/users/[id]/route.ts
-- [ ] T141 [US11] Create user management page with user list table (name, email, role, status), create user modal (Ant Design Form with all fields), edit user drawer with permission checkboxes (all 22 permission keys from permissions.md grouped by category), and deactivate toggle in src/app/(dashboard)/users/page.tsx
+- [x] T139 [US11] Create GET (list with role filter, isActive filter, pagination) and POST (withPermission users.manage, create user with role + permissions, hash password) handlers for /api/users in src/app/api/users/route.ts
+- [x] T140 [US11] Create PUT /api/users/:id route handler (withPermission users.manage, update name, email, role, permissions, isActive; optionally reset password) in src/app/api/users/[id]/route.ts
+- [x] T141 [US11] Create user management page with user list table (name, email, role, status), create user modal (Ant Design Form with all fields), edit user drawer with permission checkboxes (all 22 permission keys from permissions.md grouped by category), and deactivate toggle in src/app/(dashboard)/users/page.tsx
 
 **Checkpoint**: Full user lifecycle management with granular permissions — US11 complete
 
@@ -310,13 +310,13 @@
 
 **Purpose**: System settings, backup/restore, edge case handling, and final quality validation
 
-- [ ] T142 [P] Create GET (withPermission settings.view) and PUT (withPermission settings.manage, validate settingsSchema) handlers for /api/settings in src/app/api/settings/route.ts
-- [ ] T143 [P] Create backup service (exportAllData: stream all collections as JSON download; importFromJSON: validate structure, drop and reimport with transaction safety) in src/lib/services/backup.service.ts
-- [ ] T144 Create POST /api/backup/export (withPermission backup.manage, call backup.service.exportAllData) and POST /api/backup/import (withPermission backup.manage, call backup.service.importFromJSON) route handlers in src/app/api/backup/export/route.ts and src/app/api/backup/import/route.ts
-- [ ] T145 Create settings page with Ant Design Form (expiringSoonDays number input, defaultLowStockThreshold number input, maxDiscountPercentage input as percentage, save button) and backup section (export button, import with file upload) in src/app/(dashboard)/settings/page.tsx
-- [ ] T146 Verify RTL layout consistency across all pages — check logical properties, Ant Design component alignment, Arabic text rendering, and fix any LTR leaks
-- [ ] T147 Handle edge cases: concurrent stock depletion (optimistic locking on batch qty), discount exceeding price (cap at item price), voiding invoice after stock sold (return 409 with message), customer overpayment (cap at totalOwed), zero-stock during checkout (return clear error)
-- [ ] T148 Run quickstart.md validation — verify npm install, dev server startup, seed owner creation, login flow, and all env vars are correctly documented
+- [x] T142 [P] Create GET (withPermission settings.view) and PUT (withPermission settings.manage, validate settingsSchema) handlers for /api/settings in src/app/api/settings/route.ts
+- [x] T143 [P] Create backup service (exportAllData: stream all collections as JSON download; importFromJSON: validate structure, drop and reimport with transaction safety) in src/lib/services/backup.service.ts
+- [x] T144 Create POST /api/backup/export (withPermission backup.manage, call backup.service.exportAllData) and POST /api/backup/import (withPermission backup.manage, call backup.service.importFromJSON) route handlers in src/app/api/backup/export/route.ts and src/app/api/backup/import/route.ts
+- [x] T145 Create settings page with Ant Design Form (expiringSoonDays number input, defaultLowStockThreshold number input, maxDiscountPercentage input as percentage, save button) and backup section (export button, import with file upload) in src/app/(dashboard)/settings/page.tsx
+- [x] T146 Verify RTL layout consistency across all pages — check logical properties, Ant Design component alignment, Arabic text rendering, and fix any LTR leaks
+- [x] T147 Handle edge cases: concurrent stock depletion (optimistic locking on batch qty), discount exceeding price (cap at item price), voiding invoice after stock sold (return 409 with message), customer overpayment (cap at totalOwed), zero-stock during checkout (return clear error)
+- [x] T148 Run quickstart.md validation — verify npm install, dev server startup, seed owner creation, login flow, and all env vars are correctly documented
 
 ---
 

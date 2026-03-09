@@ -3,7 +3,7 @@ import { withPermission } from '@/lib/auth/middleware';
 import { connectDB } from '@/lib/db/connection';
 import SupplierInvoice from '@/lib/models/SupplierInvoice';
 
-export const GET = withPermission('suppliers.view', async (req: NextRequest, context: any) => {
+export const GET = withPermission('supplier-invoices.view', async (req: NextRequest, context: any) => {
     try {
         await connectDB();
 

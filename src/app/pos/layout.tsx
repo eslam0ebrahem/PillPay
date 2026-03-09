@@ -20,7 +20,7 @@ export default function POSLayout({ children }: { children: ReactNode }) {
                 borderBottom: '1px solid #f0f0f0'
             }}>
                 <Space size="large">
-                    <Title level={4} style={{ margin: 0, color: '#1677ff' }}>فارما ستوك POS</Title>
+                    <Title level={4} style={{ margin: 0, color: '#1677ff' }}>PillPay POS</Title>
                 </Space>
                 <Space>
                     <Link href="/dashboard">
