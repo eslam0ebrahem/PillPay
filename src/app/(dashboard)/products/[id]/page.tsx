@@ -1,13 +1,10 @@
 export const dynamic = 'force-dynamic';
 
-import { Typography } from 'antd';
 import { notFound } from 'next/navigation';
 import { connectDB } from '@/lib/db/connection';
 import Product from '@/lib/models/Product';
 import Batch from '@/lib/models/Batch';
 import ProductDetailClient from '@/components/products/ProductDetailClient';
-
-const { Title } = Typography;
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     await connectDB();

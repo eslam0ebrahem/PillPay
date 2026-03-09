@@ -1,14 +1,11 @@
 export const dynamic = 'force-dynamic';
 
-import { Typography } from 'antd';
 import { notFound } from 'next/navigation';
 import { connectDB } from '@/lib/db/connection';
 import Supplier from '@/lib/models/Supplier';
 import SupplierInvoice from '@/lib/models/SupplierInvoice';
 import SupplierPayment from '@/lib/models/SupplierPayment';
 import SupplierDetailClient from '@/components/suppliers/SupplierDetailClient';
-
-const { Title } = Typography;
 
 export default async function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
     await connectDB();

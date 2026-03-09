@@ -140,7 +140,7 @@ export default function CustomersPage() {
                 open={isAddModalVisible}
                 onCancel={() => setIsAddModalVisible(false)}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
             >
                 <CustomerForm onSubmit={handleAddCustomer} isLoading={adding} />
             </Modal>

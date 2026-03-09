@@ -261,7 +261,7 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                 open={isEditModalVisible}
                 onCancel={() => setIsEditModalVisible(false)}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
             >
                 <CustomerForm
                     initialValues={customer}

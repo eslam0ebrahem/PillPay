@@ -56,7 +56,7 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
     };
 
     return (
-        <Card title={ar.pos.checkout} bordered={false}>
+        <Card title={ar.pos.checkout} variant="borderless">
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 <div>
                     <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.pos.paymentMode}</Text>

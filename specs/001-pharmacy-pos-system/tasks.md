@@ -245,17 +245,17 @@
 
 **Independent Test**: Generate sales over multiple days, view sales report with date filter, verify profit calculation uses actual batch costs, compare month-over-month, export each report to Excel
 
-- [ ] T119 [US8] Expand report service with full report methods (salesReport: aggregate by date with totals/counts; profitReport: join saleInvoice.batchAllocations to compute actual COGS per sale; stockReport: aggregate batch quantities by product; customerDebtReport: aggregate customer balances; supplierDebtReport: aggregate supplier balances; all with date range filters and comparison period support) in src/lib/services/report.service.ts
-- [ ] T120 [US8] Create Excel export service (generateSalesExcel, generateProfitExcel, generateStockExcel, generateCustomerDebtExcel, generateSupplierDebtExcel) using ExcelJS with RTL worksheet direction, Arabic headers, formatted monetary columns in src/lib/services/excel.service.ts
-- [ ] T121 [P] [US8] Create GET /api/reports/sales route handler (withPermission reports.view, date filters, comparison) in src/app/api/reports/sales/route.ts
-- [ ] T122 [P] [US8] Create GET /api/reports/profit route handler in src/app/api/reports/profit/route.ts
-- [ ] T123 [P] [US8] Create GET /api/reports/stock route handler in src/app/api/reports/stock/route.ts
-- [ ] T124 [P] [US8] Create GET /api/reports/customer-debt route handler in src/app/api/reports/customer-debt/route.ts
-- [ ] T125 [P] [US8] Create GET /api/reports/supplier-debt route handler in src/app/api/reports/supplier-debt/route.ts
-- [ ] T126 [US8] Create GET /api/reports/export/:type route handler (generate Excel via excel.service, return as application/vnd.openxmlformats-officedocument.spreadsheetml.sheet download) in src/app/api/reports/export/[type]/route.ts
-- [ ] T127 [P] [US8] Create ReportFilters component (date range picker, period shortcuts today/yesterday/this_week/this_month/custom, comparison toggle mom/yoy) as Client Component in src/components/reports/ReportFilters.tsx
-- [ ] T128 [P] [US8] Create ReportTable component (Ant Design Table with configurable columns, MoneyDisplay for monetary columns, export to Excel button) in src/components/reports/ReportTable.tsx
-- [ ] T129 [US8] Create reports page with tabbed views (sales, profit, stock, customer debt, supplier debt), ReportFilters, ReportTable, and export controls in src/app/(dashboard)/reports/page.tsx
+- [x] T119 [US8] Expand report service with full report methods (salesReport: aggregate by date with totals/counts; profitReport: join saleInvoice.batchAllocations to compute actual COGS per sale; stockReport: aggregate batch quantities by product; customerDebtReport: aggregate customer balances; supplierDebtReport: aggregate supplier balances; all with date range filters and comparison period support) in src/lib/services/report.service.ts
+- [x] T120 [US8] Create Excel export service (generateSalesExcel, generateProfitExcel, generateStockExcel, generateCustomerDebtExcel, generateSupplierDebtExcel) using ExcelJS with RTL worksheet direction, Arabic headers, formatted monetary columns in src/lib/services/excel.service.ts
+- [x] T121 [P] [US8] Create GET /api/reports/sales route handler (withPermission reports.view, date filters, comparison) in src/app/api/reports/sales/route.ts
+- [x] T122 [P] [US8] Create GET /api/reports/profit route handler in src/app/api/reports/profit/route.ts
+- [x] T123 [P] [US8] Create GET /api/reports/stock route handler in src/app/api/reports/stock/route.ts
+- [x] T124 [P] [US8] Create GET /api/reports/customer-debt route handler in src/app/api/reports/customer-debt/route.ts
+- [x] T125 [P] [US8] Create GET /api/reports/supplier-debt route handler in src/app/api/reports/supplier-debt/route.ts
+- [x] T126 [US8] Create GET /api/reports/export/:type route handler (generate Excel via excel.service, return as application/vnd.openxmlformats-officedocument.spreadsheetml.sheet download) in src/app/api/reports/export/[type]/route.ts
+- [x] T127 [P] [US8] Create ReportFilters component (date range picker, period shortcuts today/yesterday/this_week/this_month/custom, comparison toggle mom/yoy) as Client Component in src/components/reports/ReportFilters.tsx
+- [x] T128 [P] [US8] Create ReportTable component (Ant Design Table with configurable columns, MoneyDisplay for monetary columns, export to Excel button) in src/components/reports/ReportTable.tsx
+- [x] T129 [US8] Create reports page with tabbed views (sales, profit, stock, customer debt, supplier debt), ReportFilters, ReportTable, and export controls in src/app/(dashboard)/reports/page.tsx
 
 **Checkpoint**: All reports with date filters, comparisons, and Excel export — US8 complete
 
@@ -267,12 +267,12 @@
 
 **Independent Test**: Start audit, enter counts for products (some matching, some not), review discrepancies, approve adjustments, verify system stock updated
 
-- [ ] T130 [US9] Create InventoryAuditSession model with schema (status enum in_progress/completed, counts[] embedded AuditCount with productId/location/expectedQty/actualQty/discrepancy/adjusted, startedBy ref, startedAt, completedAt) in src/lib/models/InventoryAuditSession.ts
-- [ ] T131 [US9] Update models barrel export to include InventoryAuditSession in src/lib/models/index.ts
-- [ ] T132 [US9] Create POST /api/inventory-audits route handler (withPermission inventory-audits.manage, create session with current stock snapshots as expectedQty) in src/app/api/inventory-audits/route.ts
-- [ ] T133 [US9] Create GET /api/inventory-audits/:id route handler, PUT /api/inventory-audits/:id/counts route handler (update physical counts), and POST /api/inventory-audits/:id/approve route handler (apply adjustments to batches, mark session completed, log audit) in src/app/api/inventory-audits/[id]/route.ts, src/app/api/inventory-audits/[id]/counts/route.ts, and src/app/api/inventory-audits/[id]/approve/route.ts
-- [ ] T134 [US9] Create AuditSession component (product list with current system qty, count input fields, discrepancy highlighting with color coding, approve adjustments button) in src/components/stock/AuditSession.tsx
-- [ ] T135 [US9] Create inventory audit page with session list, start new session button, and active session view in src/app/(dashboard)/stock/audit/page.tsx
+- [x] T130 [US9] Create InventoryAuditSession model with schema (status enum in_progress/completed, counts[] embedded AuditCount with productId/location/expectedQty/actualQty/discrepancy/adjusted, startedBy ref, startedAt, completedAt) in src/lib/models/InventoryAuditSession.ts
+- [x] T131 [US9] Update models barrel export to include InventoryAuditSession in src/lib/models/index.ts
+- [x] T132 [US9] Create POST /api/inventory-audits route handler (withPermission inventory-audits.manage, create session with current stock snapshots as expectedQty) in src/app/api/inventory-audits/route.ts
+- [x] T133 [US9] Create GET /api/inventory-audits/:id route handler, PUT /api/inventory-audits/:id/counts route handler (update physical counts), and POST /api/inventory-audits/:id/approve route handler (apply adjustments to batches, mark session completed, log audit) in src/app/api/inventory-audits/[id]/route.ts, src/app/api/inventory-audits/[id]/counts/route.ts, and src/app/api/inventory-audits/[id]/approve/route.ts
+- [x] T134 [US9] Create AuditSession component (product list with current system qty, count input fields, discrepancy highlighting with color coding, approve adjustments button) in src/components/stock/AuditSession.tsx
+- [x] T135 [US9] Create inventory audit page with session list, start new session button, and active session view in src/app/(dashboard)/stock/audit/page.tsx
 
 **Checkpoint**: Inventory audit with count entry, discrepancy review, and adjustment approval — US9 complete
 
