@@ -78,6 +78,35 @@ body {
   direction: rtl;
 }
 
+.ant-picker-dropdown,
+.ant-select-dropdown,
+.ant-table-filter-dropdown,
+.ant-dropdown,
+.ant-upload-list,
+.ant-pagination,
+.ant-drawer-content,
+.ant-modal-content {
+  direction: rtl;
+}
+
+.ant-upload-list-item-name,
+.ant-form-item-explain,
+.ant-form-text,
+.ant-empty-description {
+  text-align: start;
+}
+
+.ant-pagination {
+  justify-content: flex-start;
+}
+
+.ant-input[dir='ltr'],
+.ant-input-number[dir='ltr'] input,
+input[dir='ltr'] {
+  direction: ltr;
+  text-align: left;
+}
+
 /* Login page */
 .login-container {
   display: flex;

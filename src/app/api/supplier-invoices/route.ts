@@ -5,7 +5,7 @@ import SupplierInvoice from '@/lib/models/SupplierInvoice';
 import { createSupplierInvoice } from '@/lib/services/supplier.service';
 import { supplierInvoiceSchema } from '@/lib/utils/validation';
 
-export const GET = withPermission('suppliers.view', async (req: NextRequest) => {
+export const GET = withPermission('supplier-invoices.view', async (req: NextRequest) => {
     try {
         await connectDB();
 
@@ -49,11 +49,8 @@ export const GET = withPermission('suppliers.view', async (req: NextRequest) => 
     }
 });
 
-export const POST = withPermission('suppliers.manage', async (req: NextRequest) => {
+export const POST = withPermission('supplier-invoices.manage', async (req: NextRequest, context) => {
     try {
-        const user = (req as any).user;
-        const userId = user?.id || user?._id;
-
         const body = await req.json();
 
         // Validation
@@ -77,7 +74,7 @@ export const POST = withPermission('suppliers.manage', async (req: NextRequest) 
             paidAmount: body.paidAmount || 0, // from client if they made an immediate payment
         };
 
-        const invoice = await createSupplierInvoice(invoiceData, userId);
+        const invoice = await createSupplierInvoice(invoiceData, context.user._id);
 
         return NextResponse.json(invoice, { status: 201 });
     } catch (error: any) {

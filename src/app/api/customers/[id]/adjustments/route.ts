@@ -10,8 +10,6 @@ const adjustmentSchema = z.object({
 
 export const POST = withPermission('balance.adjust', async (req: NextRequest, context: any) => {
     try {
-        const user = (req as any).user;
-        const userId = user?.id || user?._id;
         const params = await context.params;
         const id = params.id; // customerId
 
@@ -22,7 +20,7 @@ export const POST = withPermission('balance.adjust', async (req: NextRequest, co
             id,
             Math.round(parsed.amountChange * 100), // EGP to piasters
             parsed.reason,
-            userId
+            context.user._id
         );
 
         return NextResponse.json(result, { status: 201 });

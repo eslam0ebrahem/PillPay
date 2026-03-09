@@ -239,6 +239,7 @@ export async function checkout(input: CheckoutInput): Promise<string> {
             entityType: 'SaleInvoice',
             entityId: invoice._id.toString(),
             invoiceNumber,
+            productId: saleItems.length === 1 ? saleItems[0].productId.toString() : undefined,
         });
 
         await session.commitTransaction();

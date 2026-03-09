@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPermission } from '@/lib/auth/middleware';
 import { voidSupplierInvoice } from '@/lib/services/supplier.service';
 
-export const POST = withPermission('suppliers.manage', async (req: NextRequest, context: any) => {
+export const POST = withPermission('supplier-invoices.manage', async (_req: NextRequest, context: any) => {
     try {
-        const user = (req as any).user;
-        const userId = user?.id || user?._id;
         const params = await context.params;
         const id = params.id; // InvoiceId
 
-        const result = await voidSupplierInvoice(id, userId);
+        const result = await voidSupplierInvoice(id, context.user._id);
 
         return NextResponse.json(result);
     } catch (error: any) {

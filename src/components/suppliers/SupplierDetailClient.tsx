@@ -96,7 +96,7 @@ export default function SupplierDetailClient({ supplier, recentInvoices, recentP
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h2>{supplier.name} {supplier.isActive ? '' : '(غير نشط)'}</h2>
-                <Statistic title={ar.suppliers.totalOwed} value={supplier.totalOwed || 0} precision={2} valueStyle={{ color: supplier.totalOwed > 0 ? '#cf1322' : '#3f8600' }} prefix="ج.م" />
+                <Statistic title={ar.suppliers.totalOwed} value={supplier.totalOwed || 0} precision={2} styles={{ content: { color: supplier.totalOwed > 0 ? '#cf1322' : '#3f8600' } }} prefix="ج.م" />
             </div>
 
             <Tabs defaultActiveKey="1" items={items} />
