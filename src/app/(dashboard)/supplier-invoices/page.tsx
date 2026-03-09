@@ -42,79 +42,74 @@ export default async function SupplierInvoicesPage() {
             </div>
 
             <Card>
-                <SupplierInvoiceClientTable data={copyableInvoices} />
+                <Table
+                    columns={[
+                        {
+                            title: 'رقم الفاتورة',
+                            dataIndex: 'invoiceNumber',
+                            key: 'invoiceNumber',
+                        },
+                        {
+                            title: 'المورد',
+                            dataIndex: ['supplierId', 'name'],
+                            key: 'supplierName',
+                        },
+                        {
+                            title: 'التاريخ',
+                            dataIndex: 'date',
+                            key: 'date',
+                            render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+                        },
+                        {
+                            title: 'الإجمالي',
+                            dataIndex: 'total',
+                            key: 'total',
+                            render: (value: number) => formatPiasters(value),
+                        },
+                        {
+                            title: 'المدفوع',
+                            dataIndex: 'paidAmount',
+                            key: 'paidAmount',
+                            render: (value: number) => (
+                                <span style={{ color: 'green' }}>{formatPiasters(value)}</span>
+                            ),
+                        },
+                        {
+                            title: 'المتبقي',
+                            dataIndex: 'remainingBalance',
+                            key: 'remainingBalance',
+                            render: (value: number) => (
+                                <span style={{ color: value > 0 ? 'red' : 'green' }}>
+                                    {formatPiasters(value)}
+                                </span>
+                            ),
+                        },
+                        {
+                            title: 'الحالة',
+                            dataIndex: 'status',
+                            key: 'status',
+                            render: (status: string) => (
+                                <Tag color={status === 'voided' ? 'red' : 'blue'}>
+                                    {status === 'voided' ? 'ملغاة' : 'نشطة'}
+                                </Tag>
+                            ),
+                        },
+                        {
+                            title: 'الإجراءات',
+                            key: 'actions',
+                            render: (_: unknown, record: any) => (
+                                <Link href={`/supplier-invoices/${record._id}`}>
+                                    <Button type="text" icon={<EyeOutlined />} size="small" />
+                                </Link>
+                            ),
+                        },
+                    ]}
+                    dataSource={copyableInvoices}
+                    rowKey="_id"
+                    pagination={{ pageSize: 20 }}
+                    scroll={{ x: 'max-content' }}
+                />
             </Card>
         </div>
-    );
-}
-
-// Inline trivial Client Component for Table rendering
-'use client';
-
-function SupplierInvoiceClientTable({ data }: { data: any[] }) {
-    const columns = [
-        {
-            title: 'رقم الفاتورة',
-            dataIndex: 'invoiceNumber',
-            key: 'invoiceNumber',
-        },
-        {
-            title: 'المورد',
-            dataIndex: ['supplierId', 'name'],
-            key: 'supplierName',
-        },
-        {
-            title: 'التاريخ',
-            dataIndex: 'date',
-            key: 'date',
-            render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
-        },
-        {
-            title: 'الإجمالي',
-            dataIndex: 'total',
-            key: 'total',
-            render: (val: number) => formatPiasters(val),
-        },
-        {
-            title: 'المدفوع',
-            dataIndex: 'paidAmount',
-            key: 'paidAmount',
-            render: (val: number) => <span style={{ color: 'green' }}>{formatPiasters(val)}</span>,
-        },
-        {
-            title: 'المتبقي',
-            dataIndex: 'remainingBalance',
-            key: 'remainingBalance',
-            render: (val: number) => <span style={{ color: val > 0 ? 'red' : 'green' }}>{formatPiasters(val)}</span>,
-        },
-        {
-            title: 'الحالة',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: string) => (
-                <Tag color={status === 'voided' ? 'red' : 'blue'}>
-                    {status === 'voided' ? 'ملغاة' : 'نشطة'}
-                </Tag>
-            ),
-        },
-        {
-            title: 'الإجراءات',
-            key: 'actions',
-            render: (_: any, record: any) => (
-                <Link href={`/supplier-invoices/${record._id}`}>
-                    <Button type="text" icon={<EyeOutlined />} size="small" />
-                </Link>
-            ),
-        },
-    ];
-
-    return (
-        <Table
-            columns={columns}
-            dataSource={data}
-            rowKey="_id"
-            pagination={{ pageSize: 20 }}
-            scroll={{ x: 'max-content' }}
-        />
     );
 }

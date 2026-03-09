@@ -1,10 +1,14 @@
 import { connectDB } from '@/lib/db/connection';
-import mongoose from 'mongoose';
 import Customer from '@/lib/models/Customer';
+import Product from '@/lib/models/Product';
+import SaleInvoice from '@/lib/models/SaleInvoice';
+import Supplier from '@/lib/models/Supplier';
 
-// The Report service will need the SaleInvoice and SupplierInvoice models
-// which will be created in later phases, but we can set up the skeleton
-// and the customer debt calculation for now.
+export interface DashboardProductStat {
+    id: string;
+    name: string;
+    quantity: number;
+}
 
 export interface DashboardSummary {
     todaySales: number;
@@ -12,41 +16,153 @@ export interface DashboardSummary {
     cashInHand: number;
     totalCustomerDebt: number;
     totalSupplierDebt: number;
-    topSellingProducts: { id: string; name: string; quantity: number }[];
-    slowMovingProducts: { id: string; name: string; quantity: number }[];
+    topSellingProducts: DashboardProductStat[];
+    slowMovingProducts: DashboardProductStat[];
+}
+
+function getTodayRange() {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return { start, end };
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
     await connectDB();
 
-    // 1. Calculate Customer Debt
-    const customerDebtAgg = await Customer.aggregate([
-        { $group: { _id: null, total: { $sum: '$totalOwed' } } },
+    const { start, end } = getTodayRange();
+
+    const [
+        todayMetrics,
+        customerDebt,
+        supplierDebt,
+        topSellingProducts,
+        soldQuantities,
+        activeProducts,
+    ] = await Promise.all([
+        SaleInvoice.aggregate([
+            {
+                $match: {
+                    status: 'completed',
+                    createdAt: { $gte: start, $lt: end },
+                },
+            },
+            {
+                $project: {
+                    total: 1,
+                    paidAmount: 1,
+                    cogs: {
+                        $sum: {
+                            $map: {
+                                input: '$items',
+                                as: 'item',
+                                in: {
+                                    $sum: {
+                                        $map: {
+                                            input: '$$item.batchAllocations',
+                                            as: 'allocation',
+                                            in: {
+                                                $multiply: [
+                                                    '$$allocation.quantity',
+                                                    '$$allocation.unitCost',
+                                                ],
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    todaySales: { $sum: '$total' },
+                    cashInHand: { $sum: '$paidAmount' },
+                    netProfit: { $sum: { $subtract: ['$total', '$cogs'] } },
+                },
+            },
+        ]),
+        Customer.aggregate([
+            { $group: { _id: null, totalCustomerDebt: { $sum: '$totalOwed' } } },
+        ]),
+        Supplier.aggregate([
+            { $group: { _id: null, totalSupplierDebt: { $sum: '$totalOwed' } } },
+        ]),
+        SaleInvoice.aggregate([
+            { $match: { status: 'completed' } },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.productId',
+                    quantity: { $sum: '$items.quantity' },
+                },
+            },
+            { $sort: { quantity: -1, _id: 1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'product',
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    id: { $toString: '$_id' },
+                    name: {
+                        $ifNull: [{ $arrayElemAt: ['$product.nameAr', 0] }, 'منتج غير متاح'],
+                    },
+                    quantity: 1,
+                },
+            },
+        ]),
+        SaleInvoice.aggregate([
+            { $match: { status: 'completed' } },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.productId',
+                    quantity: { $sum: '$items.quantity' },
+                },
+            },
+        ]),
+        Product.find({ isActive: true })
+            .select('_id nameAr')
+            .lean<Array<{ _id: { toString(): string }; nameAr: string }>>(),
     ]);
-    const totalCustomerDebt = customerDebtAgg[0]?.total || 0;
 
-    // Since we haven't created the SaleInvoice or Supplier and SupplierInvoice models yet 
-    // (these are in Phase 4 and Phase 6 respectively), we'll return mock data or 
-    // partial data for the missing metrics until those models are available.
+    const soldQuantityMap = new Map(
+        soldQuantities.map((entry) => [entry._id.toString(), entry.quantity as number])
+    );
 
-    // TO DO: Implement query for actual todaySales, netProfit, cashInHand (from SaleInvoice)
-    const todaySales = 0;
-    const netProfit = 0;
-    const cashInHand = 0;
+    const slowMovingProducts = activeProducts
+        .map((product) => ({
+            id: product._id.toString(),
+            name: product.nameAr,
+            quantity: soldQuantityMap.get(product._id.toString()) ?? 0,
+        }))
+        .sort((left, right) => left.quantity - right.quantity || left.name.localeCompare(right.name, 'ar'))
+        .slice(0, 5);
 
-    // TO DO: Implement query for totalSupplierDebt (from Supplier model, once created)
-    const totalSupplierDebt = 0;
-
-    // TO DO: Implement query for top/slow moving products (from SaleInvoice aggregation)
-    const topSellingProducts: { id: string; name: string; quantity: number }[] = [];
-    const slowMovingProducts: { id: string; name: string; quantity: number }[] = [];
+    const todaySummary = todayMetrics[0] ?? {
+        todaySales: 0,
+        cashInHand: 0,
+        netProfit: 0,
+    };
 
     return {
-        todaySales,
-        netProfit,
-        cashInHand,
-        totalCustomerDebt,
-        totalSupplierDebt,
+        todaySales: todaySummary.todaySales ?? 0,
+        cashInHand: todaySummary.cashInHand ?? 0,
+        netProfit: todaySummary.netProfit ?? 0,
+        totalCustomerDebt: customerDebt[0]?.totalCustomerDebt ?? 0,
+        totalSupplierDebt: supplierDebt[0]?.totalSupplierDebt ?? 0,
         topSellingProducts,
         slowMovingProducts,
     };

@@ -206,3 +206,78 @@ export async function adjustSupplierBalance(supplierId: string, amountChange: nu
         session.endSession();
     }
 }
+
+export async function processSupplierReturn(returnData: any, userId: string) {
+    await connectDB();
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const supplier = await Supplier.findById(returnData.supplierId).session(session);
+        if (!supplier) {
+            throw new Error('المورد غير موجود');
+        }
+
+        for (const item of returnData.items) {
+            const batch = await Batch.findById(item.batchId).session(session);
+            if (!batch) {
+                throw new Error('التشغيلة غير موجودة');
+            }
+
+            const availableQuantity = batch.warehouseQty + batch.floorQty;
+            if (availableQuantity < item.quantity) {
+                throw new Error('الكمية المرتجعة أكبر من المخزون المتاح');
+            }
+
+            let remaining = item.quantity;
+            const warehouseDeduction = Math.min(batch.warehouseQty, remaining);
+            batch.warehouseQty -= warehouseDeduction;
+            remaining -= warehouseDeduction;
+
+            if (remaining > 0) {
+                batch.floorQty = Math.max(0, batch.floorQty - remaining);
+            }
+
+            await batch.save({ session });
+        }
+
+        const supplierReturn = new SupplierReturn({
+            ...returnData,
+            processedBy: userId,
+        });
+        await supplierReturn.save({ session });
+
+        supplier.totalOwed = Math.max(0, supplier.totalOwed - returnData.total);
+        await supplier.save({ session });
+
+        if (returnData.supplierInvoiceId) {
+            const invoice = await SupplierInvoice.findById(returnData.supplierInvoiceId).session(session);
+            if (invoice) {
+                invoice.total = Math.max(0, invoice.total - returnData.total);
+                invoice.remainingBalance = Math.max(0, invoice.remainingBalance - returnData.total);
+                await invoice.save({ session });
+            }
+        }
+
+        await session.commitTransaction();
+
+        await logAction({
+            userId,
+            action: 'SUPPLIER_RETURN_CREATED',
+            entityType: 'SupplierReturn',
+            entityId: supplierReturn._id.toString(),
+            details: {
+                supplierId: returnData.supplierId,
+                total: returnData.total,
+                itemCount: returnData.items.length,
+            }
+        });
+
+        return supplierReturn;
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
