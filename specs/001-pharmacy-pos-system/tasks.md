@@ -135,15 +135,15 @@
 
 **Independent Test**: Create product with all fields, view in catalog, check batch details, set low-stock threshold, verify alert triggers, perform manual stock adjustment
 
-- [ ] T064 [P] [US3] Create ProductForm component (Ant Design Form with all product fields: barcode, nameAr, nameEn, imageUrl, manufacturer, category, description, activeIngredient, dosageForm, route, uses, pharmacology, sellingPrice in EGP with piaster conversion, baseUnit, subUnit, subUnitConversionFactor, lowStockThreshold, isActive toggle) in src/components/products/ProductForm.tsx
-- [ ] T065 [P] [US3] Create ProductList component (Ant Design Table with search, category filter, stock status badges for low/out/expired, pagination) in src/components/products/ProductList.tsx
-- [ ] T066 [P] [US3] Create BatchViewer component (Ant Design Table showing batch number, expiration date, warehouse qty, floor qty, purchase price, status badges for expired/expiring-soon) in src/components/products/BatchViewer.tsx
-- [ ] T067 [US3] Create GET (list with search, category filter, isActive filter, pagination) and POST (create with validation) handlers for /api/products in src/app/api/products/route.ts
-- [ ] T068 [US3] Create GET (full product with aggregated stock + batch list) and PUT (update with validation) handlers for /api/products/:id in src/app/api/products/[id]/route.ts
-- [ ] T069 [US3] Create POST /api/stock/adjustments route handler (withPermission stock.adjust, validate productId+batchId+location+newQuantity+reason, update batch qty, log audit) in src/app/api/stock/adjustments/route.ts
-- [ ] T070 [US3] Create product list page as Server Component (call Product.find directly, render ProductList) in src/app/(dashboard)/products/page.tsx
-- [ ] T071 [US3] Create product detail page as Server Component (product info + ProductForm for editing + BatchViewer + stock adjustment controls) in src/app/(dashboard)/products/[id]/page.tsx
-- [ ] T072 [US3] Create stock overview page showing all products with stock levels, alert panels (expired, expiring-soon, low stock, out of stock), and manual adjustment form in src/app/(dashboard)/stock/page.tsx
+- [x] T064 [P] [US3] Create ProductForm component (Ant Design Form with all product fields: barcode, nameAr, nameEn, imageUrl, manufacturer, category, description, activeIngredient, dosageForm, route, uses, pharmacology, sellingPrice in EGP with piaster conversion, baseUnit, subUnit, subUnitConversionFactor, lowStockThreshold, isActive toggle) in src/components/products/ProductForm.tsx
+- [x] T065 [P] [US3] Create ProductList component (Ant Design Table with search, category filter, stock status badges for low/out/expired, pagination) in src/components/products/ProductList.tsx
+- [x] T066 [P] [US3] Create BatchViewer component (Ant Design Table showing batch number, expiration date, warehouse qty, floor qty, purchase price, status badges for expired/expiring-soon) in src/components/products/BatchViewer.tsx
+- [x] T067 [US3] Create GET (list with search, category filter, isActive filter, pagination) and POST (create with validation) handlers for /api/products in src/app/api/products/route.ts
+- [x] T068 [US3] Create GET (full product with aggregated stock + batch list) and PUT (update with validation) handlers for /api/products/:id in src/app/api/products/[id]/route.ts
+- [x] T069 [US3] Create POST /api/stock/adjustments route handler (withPermission stock.adjust, validate productId+batchId+location+newQuantity+reason, update batch qty, log audit) in src/app/api/stock/adjustments/route.ts
+- [x] T070 [US3] Create product list page as Server Component (call Product.find directly, render ProductList) in src/app/(dashboard)/products/page.tsx
+- [x] T071 [US3] Create product detail page as Server Component (product info + ProductForm for editing + BatchViewer + stock adjustment controls) in src/app/(dashboard)/products/[id]/page.tsx
+- [x] T072 [US3] Create stock overview page showing all products with stock levels, alert panels (expired, expiring-soon, low stock, out of stock), and manual adjustment form in src/app/(dashboard)/stock/page.tsx
 
 **Checkpoint**: Full product catalog CRUD with batch-level stock visibility and alerts — US3 complete
 
@@ -155,27 +155,27 @@
 
 **Independent Test**: Create supplier, record invoice with 2 batches of same product (different expiry), verify warehouse stock added, make partial payment, check supplier balance, void invoice and verify stock reversed
 
-- [ ] T073 [P] [US4] Create Supplier model with schema (name required, phone, address, contactPerson, notes, totalOwed default 0, timestamps) with text index on name in src/lib/models/Supplier.ts
-- [ ] T074 [P] [US4] Create SupplierInvoice model with schema (invoiceNumber, supplierId ref, date, items[] embedded SupplierInvoiceItem with productId/batchNumber/expirationDate/quantity/unitCost/lineTotal, total, paidAmount, remainingBalance, status enum active/voided, notes, timestamps) in src/lib/models/SupplierInvoice.ts
-- [ ] T075 [P] [US4] Create SupplierPayment model with schema (supplierId ref, supplierInvoiceId ref nullable, amount, paidBy ref, createdAt) in src/lib/models/SupplierPayment.ts
-- [ ] T076 [P] [US4] Create SupplierReturn model with schema (supplierId ref, supplierInvoiceId ref nullable, items[] embedded ReturnItem with productId/batchId/quantity/unitCost/lineTotal, total, processedBy ref, createdAt) in src/lib/models/SupplierReturn.ts
-- [ ] T077 [US4] Update models barrel export to include Supplier, SupplierInvoice, SupplierPayment, SupplierReturn in src/lib/models/index.ts
-- [ ] T078 [US4] Create supplier service (createInvoice: create invoice + create Batch documents with warehouseQty for each item + update supplier.totalOwed; editInvoice: adjust batches to match updated items; voidInvoice: check no sold stock, reverse batches, update balance; recordPayment: create SupplierPayment, update invoice.paidAmount + supplier.totalOwed; processReturn: deduct batch stock, create SupplierReturn, adjust supplier balance; all operations log audit) in src/lib/services/supplier.service.ts
-- [ ] T079 [P] [US4] Create GET (list with search, pagination) and POST (create with validation) handlers for /api/suppliers in src/app/api/suppliers/route.ts
-- [ ] T080 [P] [US4] Create GET (profile with invoices, payments, returns) and PUT (update) handlers for /api/suppliers/:id in src/app/api/suppliers/[id]/route.ts
-- [ ] T081 [P] [US4] Create POST /api/suppliers/:id/adjustments route handler (withPermission balance.adjust, manual balance adjustment with reason) in src/app/api/suppliers/[id]/adjustments/route.ts
-- [ ] T082 [US4] Create GET (list with supplierId filter, status filter, pagination) and POST (create invoice, call supplier.service.createInvoice) handlers for /api/supplier-invoices in src/app/api/supplier-invoices/route.ts
-- [ ] T083 [US4] Create GET (full invoice details) and PUT (edit invoice, call supplier.service.editInvoice) handlers for /api/supplier-invoices/:id in src/app/api/supplier-invoices/[id]/route.ts
-- [ ] T084 [P] [US4] Create POST /api/supplier-invoices/:id/void route handler (call supplier.service.voidInvoice, return 409 if stock already sold) in src/app/api/supplier-invoices/[id]/void/route.ts
-- [ ] T085 [P] [US4] Create POST /api/supplier-invoices/:id/payments route handler (call supplier.service.recordPayment) in src/app/api/supplier-invoices/[id]/payments/route.ts
-- [ ] T086 [P] [US4] Create POST /api/supplier-returns route handler (call supplier.service.processReturn) in src/app/api/supplier-returns/route.ts
-- [ ] T087 [P] [US4] Create SupplierForm component (Ant Design Form: name, phone, address, contactPerson, notes) in src/components/suppliers/SupplierForm.tsx
-- [ ] T088 [P] [US4] Create InvoiceForm component (supplier selector, invoice number, date picker, dynamic line items table with product search + batchNumber + expirationDate + quantity + unitCost, auto-calculated totals) in src/components/suppliers/InvoiceForm.tsx
-- [ ] T089 [P] [US4] Create SupplierProfile component (balance summary with MoneyDisplay, invoice list with status badges, payment history, adjustment history) in src/components/suppliers/SupplierProfile.tsx
-- [ ] T090 [US4] Create supplier list page as Server Component in src/app/(dashboard)/suppliers/page.tsx
-- [ ] T091 [US4] Create supplier detail page with SupplierProfile, payment recording, and adjustment controls in src/app/(dashboard)/suppliers/[id]/page.tsx
-- [ ] T092 [US4] Create supplier invoice list page with filters in src/app/(dashboard)/supplier-invoices/page.tsx
-- [ ] T093 [US4] Create new supplier invoice page with InvoiceForm in src/app/(dashboard)/supplier-invoices/new/page.tsx
+- [x] T073 [P] [US4] Create Supplier model with schema (name required, phone, address, contactPerson, notes, totalOwed default 0, timestamps) with text index on name in src/lib/models/Supplier.ts
+- [x] T074 [P] [US4] Create SupplierInvoice model with schema (invoiceNumber, supplierId ref, date, items[] embedded SupplierInvoiceItem with productId/batchNumber/expirationDate/quantity/unitCost/lineTotal, total, paidAmount, remainingBalance, status enum active/voided, notes, timestamps) in src/lib/models/SupplierInvoice.ts
+- [x] T075 [P] [US4] Create SupplierPayment model with schema (supplierId ref, supplierInvoiceId ref nullable, amount, paidBy ref, createdAt) in src/lib/models/SupplierPayment.ts
+- [x] T076 [P] [US4] Create SupplierReturn model with schema (supplierId ref, supplierInvoiceId ref nullable, items[] embedded ReturnItem with productId/batchId/quantity/unitCost/lineTotal, total, processedBy ref, createdAt) in src/lib/models/SupplierReturn.ts
+- [x] T077 [US4] Update models barrel export to include Supplier, SupplierInvoice, SupplierPayment, SupplierReturn in src/lib/models/index.ts
+- [x] T078 [US4] Create supplier service (createInvoice: create invoice + create Batch documents with warehouseQty for each item + update supplier.totalOwed; editInvoice: adjust batches to match updated items; voidInvoice: check no sold stock, reverse batches, update balance; recordPayment: create SupplierPayment, update invoice.paidAmount + supplier.totalOwed; processReturn: deduct batch stock, create SupplierReturn, adjust supplier balance; all operations log audit) in src/lib/services/supplier.service.ts
+- [x] T079 [P] [US4] Create GET (list with search, pagination) and POST (create with validation) handlers for /api/suppliers in src/app/api/suppliers/route.ts
+- [x] T080 [P] [US4] Create GET (profile with invoices, payments, returns) and PUT (update) handlers for /api/suppliers/:id in src/app/api/suppliers/[id]/route.ts
+- [x] T081 [P] [US4] Create POST /api/suppliers/:id/adjustments route handler (withPermission balance.adjust, manual balance adjustment with reason) in src/app/api/suppliers/[id]/adjustments/route.ts
+- [x] T082 [US4] Create GET (list with supplierId filter, status filter, pagination) and POST (create invoice, call supplier.service.createInvoice) handlers for /api/supplier-invoices in src/app/api/supplier-invoices/route.ts
+- [x] T083 [US4] Create GET (full invoice details) and PUT (edit invoice, call supplier.service.editInvoice) handlers for /api/supplier-invoices/:id in src/app/api/supplier-invoices/[id]/route.ts
+- [x] T084 [P] [US4] Create POST /api/supplier-invoices/:id/void route handler (call supplier.service.voidInvoice, return 409 if stock already sold) in src/app/api/supplier-invoices/[id]/void/route.ts
+- [x] T085 [P] [US4] Create POST /api/supplier-invoices/:id/payments route handler (call supplier.service.recordPayment) in src/app/api/supplier-invoices/[id]/payments/route.ts
+- [x] T086 [P] [US4] Create POST /api/supplier-returns route handler (call supplier.service.processReturn) in src/app/api/supplier-returns/route.ts
+- [x] T087 [P] [US4] Create SupplierForm component (Ant Design Form: name, phone, address, contactPerson, notes) in src/components/suppliers/SupplierForm.tsx
+- [x] T088 [P] [US4] Create InvoiceForm component (supplier selector, invoice number, date picker, dynamic line items table with product search + batchNumber + expirationDate + quantity + unitCost, auto-calculated totals) in src/components/suppliers/InvoiceForm.tsx
+- [x] T089 [P] [US4] Create SupplierProfile component (balance summary with MoneyDisplay, invoice list with status badges, payment history, adjustment history) in src/components/suppliers/SupplierProfile.tsx
+- [x] T090 [US4] Create supplier list page as Server Component in src/app/(dashboard)/suppliers/page.tsx
+- [x] T091 [US4] Create supplier detail page with SupplierProfile, payment recording, and adjustment controls in src/app/(dashboard)/suppliers/[id]/page.tsx
+- [x] T092 [US4] Create supplier invoice list page with filters in src/app/(dashboard)/supplier-invoices/page.tsx
+- [x] T093 [US4] Create new supplier invoice page with InvoiceForm in src/app/(dashboard)/supplier-invoices/new/page.tsx
 
 **Checkpoint**: Full supplier lifecycle — create supplier, record invoices (auto-stock), payments, returns, edit/void — US4 complete
 
@@ -187,19 +187,19 @@
 
 **Independent Test**: Create credit sale for customer, verify debt on profile, make single payment covering parts of two invoices, verify balances update correctly
 
-- [ ] T094 [P] [US5] Create CustomerPayment model with schema (customerId ref, amount, allocations[] embedded PaymentAllocation with invoiceId/amount, receivedBy ref, createdAt) in src/lib/models/CustomerPayment.ts
-- [ ] T095 [P] [US5] Create BalanceAdjustment model with schema (entityType enum customer/supplier, entityId, amount integer positive=increase/negative=decrease, reason required, adjustedBy ref, createdAt) in src/lib/models/BalanceAdjustment.ts
-- [ ] T096 [US5] Update models barrel export to include CustomerPayment, BalanceAdjustment in src/lib/models/index.ts
-- [ ] T097 [US5] Create customer service (recordPayment: FIFO allocation across oldest unpaid invoices, create CustomerPayment with allocations, update invoice remainingBalance, update customer.totalOwed; adjustBalance: create BalanceAdjustment, update customer.totalOwed; getCustomerProfile: aggregate unpaid invoices + payments + adjustments) in src/lib/services/customer.service.ts
-- [ ] T098 [P] [US5] Create GET (list with search, hasDebt filter, pagination) and POST (create with validation) handlers for /api/customers in src/app/api/customers/route.ts
-- [ ] T099 [US5] Create GET (profile with debts, payments, adjustments) and PUT (update) handlers for /api/customers/:id in src/app/api/customers/[id]/route.ts
-- [ ] T100 [US5] Create POST /api/customers/:id/payments route handler (withPermission customers.payments, call customer.service.recordPayment) in src/app/api/customers/[id]/payments/route.ts
-- [ ] T101 [US5] Create POST /api/customers/:id/adjustments route handler (withPermission balance.adjust, call customer.service.adjustBalance) in src/app/api/customers/[id]/adjustments/route.ts
-- [ ] T102 [P] [US5] Create CustomerForm component (Ant Design Form: name required, phone optional) in src/components/customers/CustomerForm.tsx
-- [ ] T103 [P] [US5] Create CustomerProfile component (totalOwed with MoneyDisplay, unpaid invoices table, payment history table, adjustment history) in src/components/customers/CustomerProfile.tsx
-- [ ] T104 [P] [US5] Create PaymentDialog component (Ant Design Modal: amount input, allocation preview showing which invoices will be settled, confirm button) in src/components/customers/PaymentDialog.tsx
-- [ ] T105 [US5] Create customer list page as Server Component with search and debt filter in src/app/(dashboard)/customers/page.tsx
-- [ ] T106 [US5] Create customer detail page with CustomerProfile, PaymentDialog, and adjustment controls in src/app/(dashboard)/customers/[id]/page.tsx
+- [x] T094 [P] [US5] Create CustomerPayment model with schema (customerId ref, amount, allocations[] embedded PaymentAllocation with invoiceId/amount, receivedBy ref, createdAt) in src/lib/models/CustomerPayment.ts
+- [x] T095 [P] [US5] Create BalanceAdjustment model with schema (entityType enum customer/supplier, entityId, amount integer positive=increase/negative=decrease, reason required, adjustedBy ref, createdAt) in src/lib/models/BalanceAdjustment.ts
+- [x] T096 [US5] Update models barrel export to include CustomerPayment, BalanceAdjustment in src/lib/models/index.ts
+- [x] T097 [US5] Create customer service (recordPayment: FIFO allocation across oldest unpaid invoices, create CustomerPayment with allocations, update invoice remainingBalance, update customer.totalOwed; adjustBalance: create BalanceAdjustment, update customer.totalOwed; getCustomerProfile: aggregate unpaid invoices + payments + adjustments) in src/lib/services/customer.service.ts
+- [x] T098 [P] [US5] Create GET (list with search, hasDebt filter, pagination) and POST (create with validation) handlers for /api/customers in src/app/api/customers/route.ts
+- [x] T099 [US5] Create GET (profile with debts, payments, adjustments) and PUT (update) handlers for /api/customers/:id in src/app/api/customers/[id]/route.ts
+- [x] T100 [US5] Create POST /api/customers/:id/payments route handler (withPermission customers.payments, call customer.service.recordPayment) in src/app/api/customers/[id]/payments/route.ts
+- [x] T101 [US5] Create POST /api/customers/:id/adjustments route handler (withPermission balance.adjust, call customer.service.adjustBalance) in src/app/api/customers/[id]/adjustments/route.ts
+- [x] T102 [P] [US5] Create CustomerForm component (Ant Design Form: name required, phone optional) in src/components/customers/CustomerForm.tsx
+- [x] T103 [P] [US5] Create CustomerProfile component (totalOwed with MoneyDisplay, unpaid invoices table, payment history table, adjustment history) in src/components/customers/CustomerProfile.tsx
+- [x] T104 [P] [US5] Create PaymentDialog component (Ant Design Modal: amount input, allocation preview showing which invoices will be settled, confirm button) in src/components/customers/PaymentDialog.tsx
+- [x] T105 [US5] Create customer list page as Server Component with search and debt filter in src/app/(dashboard)/customers/page.tsx
+- [x] T106 [US5] Create customer detail page with CustomerProfile, PaymentDialog, and adjustment controls in src/app/(dashboard)/customers/[id]/page.tsx
 
 **Checkpoint**: Customer debt tracking with FIFO payment allocation works end-to-end — US5 complete
 
@@ -211,12 +211,12 @@
 
 **Independent Test**: Receive stock into warehouse via supplier invoice, transfer to floor, verify balances update, confirm only floor stock available for POS sale
 
-- [ ] T107 [P] [US6] Create StockTransfer model with schema (productId ref, batchId ref, quantity, direction enum to_floor/to_warehouse, reason required, transferredBy ref, createdAt) with indexes on productId+createdAt in src/lib/models/StockTransfer.ts
-- [ ] T108 [US6] Update models barrel export to include StockTransfer in src/lib/models/index.ts
-- [ ] T109 [US6] Add transfer methods to stock service (transferToFloor: validate warehouseQty >= quantity, decrement warehouseQty, increment floorQty, create StockTransfer, log audit; transferToWarehouse: reverse direction) in src/lib/services/stock.service.ts
-- [ ] T110 [US6] Create GET (list with productId, direction, date filters, pagination) and POST (withPermission stock.transfer, validate and execute transfer) handlers for /api/stock/transfers in src/app/api/stock/transfers/route.ts
-- [ ] T111 [US6] Create TransferForm component (product selector, batch selector showing current warehouse/floor qty, quantity input, direction toggle, reason input) in src/components/stock/TransferForm.tsx
-- [ ] T112 [US6] Update stock overview page to include TransferForm and transfer history table in src/app/(dashboard)/stock/page.tsx
+- [x] T107 [P] [US6] Create StockTransfer model with schema (productId ref, batchId ref, quantity, direction enum to_floor/to_warehouse, reason required, transferredBy ref, createdAt) with indexes on productId+createdAt in src/lib/models/StockTransfer.ts
+- [x] T108 [US6] Update models barrel export to include StockTransfer in src/lib/models/index.ts
+- [x] T109 [US6] Add transfer methods to stock service (transferToFloor: validate warehouseQty >= quantity, decrement warehouseQty, increment floorQty, create StockTransfer, log audit; transferToWarehouse: reverse direction) in src/lib/services/stock.service.ts
+- [x] T110 [US6] Create GET (list with productId, direction, date filters, pagination) and POST (withPermission stock.transfer, validate and execute transfer) handlers for /api/stock/transfers in src/app/api/stock/transfers/route.ts
+- [x] T111 [US6] Create TransferForm component (product selector, batch selector showing current warehouse/floor qty, quantity input, direction toggle, reason input) in src/components/stock/TransferForm.tsx
+- [x] T112 [US6] Update stock overview page to include TransferForm and transfer history table in src/app/(dashboard)/stock/page.tsx
 
 **Checkpoint**: Stock transfers between warehouse and floor work with reason tracking — US6 complete
 
