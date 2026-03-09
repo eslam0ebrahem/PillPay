@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Input, List, Button, Typography, Space, Tag, Modal, InputNumber, Radio } from 'antd';
+import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio } from 'antd';
 import { ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
@@ -112,26 +112,22 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                 </Button>
             </div>
 
-            <List
+            <Table
                 loading={isFetching}
                 dataSource={results || []}
-                renderItem={(item) => (
-                    <List.Item
-                        actions={[
-                            <Button
-                                key="add"
-                                type="primary"
-                                disabled={item.floorStock <= 0}
-                                onClick={() => openQtyModal(item)}
-                            >
-                                {ar.actions.add}
-                            </Button>,
-                        ]}
-                    >
-                        <List.Item.Meta
-                            title={item.nameAr}
-                            description={
-                                <Space>
+                rowKey="_id"
+                showHeader={false}
+                size="small"
+                pagination={false}
+                locale={{ emptyText: ar.actions.noData }}
+                columns={[
+                    {
+                        title: 'Product',
+                        key: 'product',
+                        render: (_, item: ProductSearchResult) => (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <Text strong>{item.nameAr}</Text>
+                                <Space wrap>
                                     <MoneyDisplay amount={item.sellingPrice} />
                                     {item.floorStock > 0 ? (
                                         <Tag color="green">
@@ -142,10 +138,25 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                                     )}
                                     {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}>{item.barcode}</Text>}
                                 </Space>
-                            }
-                        />
-                    </List.Item>
-                )}
+                            </div>
+                        ),
+                    },
+                    {
+                        title: 'Action',
+                        key: 'action',
+                        width: 100,
+                        align: 'right',
+                        render: (_, item: ProductSearchResult) => (
+                            <Button
+                                type="primary"
+                                disabled={item.floorStock <= 0}
+                                onClick={() => openQtyModal(item)}
+                            >
+                                {ar.actions.add}
+                            </Button>
+                        ),
+                    },
+                ]}
             />
 
             <BarcodeScanner

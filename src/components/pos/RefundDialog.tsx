@@ -538,17 +538,30 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                                         placeholder="الكمية"
                                     />
 
-                                    <InputNumber
-                                        min={0}
-                                        value={item.unitPrice}
-                                        onChange={(value) =>
-                                            updateStandaloneItem(item.id, {
-                                                unitPrice: Number(value ?? 0),
-                                            })
-                                        }
-                                        placeholder="سعر الوحدة"
-                                        addonAfter="ج.م"
-                                    />
+                                    <Space.Compact>
+                                        <InputNumber
+                                            min={0}
+                                            value={item.unitPrice}
+                                            onChange={(value) =>
+                                                updateStandaloneItem(item.id, {
+                                                    unitPrice: Number(value ?? 0),
+                                                })
+                                            }
+                                            placeholder="سعر الوحدة"
+                                        />
+                                        <div style={{
+                                            padding: '0 11px',
+                                            backgroundColor: '#f5f5f5',
+                                            border: '1px solid #d9d9d9',
+                                            borderLeft: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            borderRadius: '0 6px 6px 0',
+                                            whiteSpace: 'nowrap'
+                                        }}>
+                                            ج.م
+                                        </div>
+                                    </Space.Compact>
 
                                     <Button
                                         danger

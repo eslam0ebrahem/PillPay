@@ -142,6 +142,10 @@ export async function checkout(input: CheckoutInput): Promise<string> {
             // FEFO Allocation
             const allocationResult = await allocateBatchesFEFO(product._id, qtyInBaseUnits, session);
 
+            if (allocationResult.allocatedQuantity === 0) {
+                throw new Error(`لا يوجد مخزون متاح للمنتج ${product.nameAr}`);
+            }
+
             if (allocationResult.allocatedQuantity < qtyInBaseUnits) {
                 throw new Error(`المخزون غير كافي للمنتج ${product.nameAr}`);
             }
@@ -191,8 +195,8 @@ export async function checkout(input: CheckoutInput): Promise<string> {
             actualPaidAmount = 0;
             remainingBalance = total;
         } else if (paymentMode === 'partial') {
-            actualPaidAmount = paidAmount;
-            remainingBalance = Math.max(0, total - paidAmount);
+            actualPaidAmount = Math.min(total, Math.max(0, paidAmount));
+            remainingBalance = Math.max(0, total - actualPaidAmount);
         }
 
         let paymentStatus = 'paid';

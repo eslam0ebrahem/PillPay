@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Card, Col, Empty, List, Row, Space, Table, Tag, Typography } from 'antd';
+import { Card, Col, Empty, Row, Space, Table, Tag, Typography } from 'antd';
 import DashboardCards from '@/components/reports/DashboardCards';
 import { formatEGP } from '@/utils/money';
 import ar from '@/i18n/ar';
@@ -58,20 +58,28 @@ function AlertListCard({
             {items.length === 0 ? (
                 <Empty description={ar.actions.noData} image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
-                <List
+                <Table
                     dataSource={items}
-                    renderItem={(item) => (
-                        <List.Item>
-                            <Space orientation="vertical" size={2}>
-                                <Space>
-                                    <Tag color={color}>{item.nameAr}</Tag>
+                    rowKey="_id"
+                    showHeader={false}
+                    size="small"
+                    pagination={false}
+                    columns={[
+                        {
+                            title: 'Alert',
+                            key: 'alert',
+                            render: (_, item) => (
+                                <Space orientation="vertical" size={2}>
+                                    <Space>
+                                        <Tag color={color}>{item.nameAr}</Tag>
+                                    </Space>
+                                    {renderMeta ? (
+                                        <Text type="secondary">{renderMeta(item)}</Text>
+                                    ) : null}
                                 </Space>
-                                {renderMeta ? (
-                                    <Text type="secondary">{renderMeta(item)}</Text>
-                                ) : null}
-                            </Space>
-                        </List.Item>
-                    )}
+                            ),
+                        },
+                    ]}
                 />
             )}
         </Card>

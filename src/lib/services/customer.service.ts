@@ -14,6 +14,9 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
     try {
         const customer = await Customer.findById(customerId).session(session);
         if (!customer) throw new Error('العميل غير موجود');
+        if (customer.totalOwed <= 0) throw new Error('لا توجد مديونية مستحقة لهذا العميل');
+
+        const amountToApply = Math.min(amount, customer.totalOwed);
 
         // FIFO Allocation: Find oldest unpaid invoices
         const unpaidInvoices = await SaleInvoice.find({
@@ -21,7 +24,7 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
             paymentStatus: { $in: ['unpaid', 'partial'] }
         }).sort({ createdAt: 1 }).session(session);
 
-        let remainingAmount = amount;
+        let remainingAmount = amountToApply;
         const allocations = [];
 
         for (const invoice of unpaidInvoices) {
@@ -48,7 +51,7 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
 
         const payment = new CustomerPayment({
             customerId,
-            amount,
+            amount: amountToApply,
             allocations,
             receivedBy: userId
         });
@@ -56,18 +59,24 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
 
         // Update customer totalOwed (reduce Debt)
         const oldBalance = customer.totalOwed;
-        customer.totalOwed -= amount;
-        if (customer.totalOwed < 0) customer.totalOwed = 0; // Prevent negative debt for now unless we handle overpayments
+        customer.totalOwed = Math.max(0, customer.totalOwed - amountToApply);
         await customer.save({ session });
 
         await session.commitTransaction();
 
         await logAction({
             userId,
-            action: 'CUSTOMER_PAYMENT',
+            action: 'CUSTOMER_PAYMENT_RECORDED',
             entityType: 'CustomerPayment',
             entityId: payment._id.toString(),
-            details: { amount, customerId, allocations }
+            details: {
+                requestedAmount: amount,
+                appliedAmount: amountToApply,
+                oldBalance,
+                newBalance: customer.totalOwed,
+                customerId,
+                allocations,
+            }
         });
 
         return payment;
@@ -106,7 +115,7 @@ export async function adjustCustomerBalance(customerId: string, amountChange: nu
 
         await logAction({
             userId,
-            action: 'CUSTOMER_BALANCE_ADJUST',
+            action: 'CUSTOMER_BALANCE_ADJUSTED',
             entityType: 'BalanceAdjustment',
             entityId: adjustment._id.toString(),
             details: { oldBalance, newBalance: customer.totalOwed, amountChange, reason }

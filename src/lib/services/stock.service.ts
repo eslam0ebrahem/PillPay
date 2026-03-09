@@ -2,6 +2,7 @@ import { connectDB } from '@/lib/db/connection';
 import { ClientSession, Types } from 'mongoose';
 import mongoose from 'mongoose';
 import Batch from '@/lib/models/Batch';
+import Product from '@/lib/models/Product';
 import StockTransfer from '@/lib/models/StockTransfer';
 import { logAction } from './audit.service';
 import type { IBatchAllocation } from '@/lib/types';
@@ -58,15 +59,20 @@ export async function deductFloorStock(
     allocations: IBatchAllocation[],
     session: ClientSession
 ): Promise<void> {
-    const updates = allocations.map((alloc) =>
-        Batch.findByIdAndUpdate(
-            alloc.batchId,
-            { $inc: { floorQty: -Math.abs(alloc.quantity) } },
+    for (const allocation of allocations) {
+        const updatedBatch = await Batch.findOneAndUpdate(
+            {
+                _id: allocation.batchId,
+                floorQty: { $gte: Math.abs(allocation.quantity) },
+            },
+            { $inc: { floorQty: -Math.abs(allocation.quantity) } },
             { session, new: true }
-        )
-    );
+        );
 
-    await Promise.all(updates);
+        if (!updatedBatch) {
+            throw new Error('تم استهلاك المخزون بواسطة عملية أخرى. يرجى تحديث الشاشة وإعادة المحاولة');
+        }
+    }
 }
 
 /**
@@ -147,6 +153,7 @@ export async function transferToFloor(
             action: 'STOCK_TRANSFERRED',
             entityType: 'StockTransfer',
             entityId: transfer._id.toString(),
+            productId,
             details: { direction: 'to_floor', quantity, reason },
         });
 
@@ -196,11 +203,108 @@ export async function transferToWarehouse(
             action: 'STOCK_TRANSFERRED',
             entityType: 'StockTransfer',
             entityId: transfer._id.toString(),
+            productId,
             details: { direction: 'to_warehouse', quantity, reason },
         });
 
         await session.commitTransaction();
         return transfer;
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
+export interface AdjustStockQuantityInput {
+    productId: string;
+    batchId: string;
+    location: 'floor' | 'warehouse';
+    newQuantity: number;
+    reason: string;
+    userId: string;
+}
+
+export async function adjustStockQuantity({
+    productId,
+    batchId,
+    location,
+    newQuantity,
+    reason,
+    userId,
+}: AdjustStockQuantityInput) {
+    await connectDB();
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let adjustmentResult: {
+        batchId: string;
+        oldQuantity: number;
+        newQuantity: number;
+        quantityDiff: number;
+        changed: boolean;
+    } | null = null;
+
+    try {
+        const batch = await Batch.findOne({ _id: batchId, productId }).session(session);
+        if (!batch) {
+            throw new Error('التشغيلة غير موجودة');
+        }
+
+        const product = await Product.findById(productId).session(session);
+        if (!product) {
+            throw new Error('المنتج غير موجود');
+        }
+
+        const oldQuantity = location === 'floor' ? batch.floorQty : batch.warehouseQty;
+        const quantityDiff = newQuantity - oldQuantity;
+
+        if (quantityDiff === 0) {
+            adjustmentResult = {
+                batchId: batch._id.toString(),
+                oldQuantity,
+                newQuantity,
+                quantityDiff,
+                changed: false,
+            };
+            await session.commitTransaction();
+            return adjustmentResult;
+        }
+
+        if (location === 'floor') {
+            batch.floorQty = newQuantity;
+        } else {
+            batch.warehouseQty = newQuantity;
+        }
+
+        await batch.save({ session });
+        await session.commitTransaction();
+
+        adjustmentResult = {
+            batchId: batch._id.toString(),
+            oldQuantity,
+            newQuantity,
+            quantityDiff,
+            changed: true,
+        };
+
+        await logAction({
+            userId,
+            action: 'STOCK_ADJUSTED',
+            entityType: 'Batch',
+            entityId: batch._id.toString(),
+            productId: product._id.toString(),
+            details: {
+                location,
+                oldQuantity,
+                newQuantity,
+                diff: quantityDiff,
+                reason,
+            },
+        });
+
+        return adjustmentResult;
     } catch (error) {
         await session.abortTransaction();
         throw error;
