@@ -105,7 +105,7 @@ export default function ReportTable({
     };
 
     return (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
             <Card>
                 <Row gutter={[16, 16]} align="middle" justify="space-between">
                     <Col>

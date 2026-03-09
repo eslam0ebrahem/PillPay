@@ -62,7 +62,7 @@ function AlertListCard({
                     dataSource={items}
                     renderItem={(item) => (
                         <List.Item>
-                            <Space direction="vertical" size={2}>
+                            <Space orientation="vertical" size={2}>
                                 <Space>
                                     <Tag color={color}>{item.nameAr}</Tag>
                                 </Space>
@@ -154,7 +154,7 @@ export default function DashboardSummaryClient({ summary, alerts }: DashboardSum
             </Row>
 
             <Card variant="borderless" style={{ marginTop: 24 }}>
-                <Space direction="vertical" size={4}>
+                <Space orientation="vertical" size={4}>
                     <Text strong>ملخص اليوم</Text>
                     <Text type="secondary">
                         المبيعات: {formatEGP(summary.todaySales)} | الربح: {formatEGP(summary.netProfit)} |

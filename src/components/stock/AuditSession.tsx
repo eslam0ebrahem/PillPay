@@ -235,7 +235,7 @@ export default function AuditSession() {
             <Col xs={24} xl={17}>
                 <Card>
                     {selectedSession ? (
-                        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
                             <div>
                                 <Title level={4} style={{ marginBottom: 8 }}>
                                     جلسة الجرد
@@ -313,12 +313,12 @@ export default function AuditSession() {
                                                         current.map((count, currentIndex) =>
                                                             currentIndex === index
                                                                 ? {
-                                                                      ...count,
-                                                                      actualQty: Number(value ?? 0),
-                                                                      discrepancy:
-                                                                          Number(value ?? 0) -
-                                                                          count.expectedQty,
-                                                                  }
+                                                                    ...count,
+                                                                    actualQty: Number(value ?? 0),
+                                                                    discrepancy:
+                                                                        Number(value ?? 0) -
+                                                                        count.expectedQty,
+                                                                }
                                                                 : count
                                                         )
                                                     )
@@ -335,8 +335,8 @@ export default function AuditSession() {
                                                     record.discrepancy === 0
                                                         ? 'green'
                                                         : record.discrepancy > 0
-                                                          ? 'gold'
-                                                          : 'red'
+                                                            ? 'gold'
+                                                            : 'red'
                                                 }
                                             >
                                                 {record.discrepancy}
