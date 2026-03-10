@@ -104,7 +104,7 @@ function AlertListCard({
                                             <PictureOutlined style={{ fontSize: 14, color: '#d9d9d9' }} />
                                         </div>
                                     )}
-                                    <Space direction="vertical" size={2}>
+                                    <Space orientation="vertical" size={2}>
                                         <Space>
                                             <Tag color={color}>{item.nameAr}</Tag>
                                         </Space>
