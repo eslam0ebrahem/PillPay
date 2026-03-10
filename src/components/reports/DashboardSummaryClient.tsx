@@ -1,7 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Card, Col, Empty, Row, Space, Table, Tag, Typography } from 'antd';
+import { Card, Col, Empty, Row, Space, Table, Tag, Typography, Image } from 'antd';
+import { PictureOutlined } from '@ant-design/icons';
 import DashboardCards from '@/components/reports/DashboardCards';
 import PageHeader from '@/components/common/PageHeader';
 import { formatEGP } from '@/utils/money';
@@ -27,8 +28,26 @@ function ProductStatsTable({
                 columns={[
                     {
                         title: 'المنتج',
-                        dataIndex: 'name',
                         key: 'name',
+                        render: (_: any, record: DashboardProductStat) => (
+                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                {record.imageUrl ? (
+                                    <Image
+                                        src={record.imageUrl}
+                                        alt={record.name}
+                                        width={32}
+                                        height={32}
+                                        style={{ objectFit: 'cover', borderRadius: 4 }}
+                                        fallback="https://via.placeholder.com/32?text=No+Image"
+                                    />
+                                ) : (
+                                    <div style={{ width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                        <PictureOutlined style={{ fontSize: 14, color: '#d9d9d9' }} />
+                                    </div>
+                                )}
+                                <span>{record.name}</span>
+                            </div>
+                        ),
                     },
                     {
                         title: 'الكمية',
@@ -69,15 +88,31 @@ function AlertListCard({
                         {
                             title: 'Alert',
                             key: 'alert',
-                            render: (_, item) => (
-                                <Space orientation="vertical" size={2}>
-                                    <Space>
-                                        <Tag color={color}>{item.nameAr}</Tag>
+                            render: (_, item: any) => (
+                                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                    {item.imageUrl ? (
+                                        <Image
+                                            src={item.imageUrl}
+                                            alt={item.nameAr}
+                                            width={32}
+                                            height={32}
+                                            style={{ objectFit: 'cover', borderRadius: 4 }}
+                                            fallback="https://via.placeholder.com/32?text=No+Image"
+                                        />
+                                    ) : (
+                                        <div style={{ width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                            <PictureOutlined style={{ fontSize: 14, color: '#d9d9d9' }} />
+                                        </div>
+                                    )}
+                                    <Space direction="vertical" size={2}>
+                                        <Space>
+                                            <Tag color={color}>{item.nameAr}</Tag>
+                                        </Space>
+                                        {renderMeta ? (
+                                            <Text type="secondary">{renderMeta(item)}</Text>
+                                        ) : null}
                                     </Space>
-                                    {renderMeta ? (
-                                        <Text type="secondary">{renderMeta(item)}</Text>
-                                    ) : null}
-                                </Space>
+                                </div>
                             ),
                         },
                     ]}

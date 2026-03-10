@@ -8,6 +8,7 @@ export interface ExpiredBatchProduct {
     _id: string;
     nameAr: string;
     batchCount: number;
+    imageUrl?: string;
 }
 
 export interface ExpiringSoonProduct {
@@ -15,6 +16,7 @@ export interface ExpiringSoonProduct {
     nameAr: string;
     earliestExpiry: string;
     batchCount: number;
+    imageUrl?: string;
 }
 
 export interface LowStockProduct {
@@ -22,12 +24,14 @@ export interface LowStockProduct {
     nameAr: string;
     floorStock: number;
     lowStockThreshold: number;
+    imageUrl?: string;
 }
 
 export interface OutOfStockProduct {
     _id: string;
     nameAr: string;
     floorStock: number;
+    imageUrl?: string;
 }
 
 export interface AlertsDetail {
@@ -77,6 +81,7 @@ export async function getExpiredBatches(): Promise<ExpiredBatchProduct[]> {
             $project: {
                 _id: { $toString: '$_id' },
                 nameAr: '$product.nameAr',
+                imageUrl: '$product.imageUrl',
                 batchCount: 1,
             },
         },
@@ -123,6 +128,7 @@ export async function getExpiringSoonBatches(): Promise<ExpiringSoonProduct[]> {
             $project: {
                 _id: { $toString: '$_id' },
                 nameAr: '$product.nameAr',
+                imageUrl: '$product.imageUrl',
                 earliestExpiry: {
                     $dateToString: { format: '%Y-%m-%d', date: '$earliestExpiry' },
                 },
@@ -175,6 +181,7 @@ export async function getLowStockProducts(): Promise<LowStockProduct[]> {
             $project: {
                 _id: { $toString: '$_id' },
                 nameAr: '$product.nameAr',
+                imageUrl: '$product.imageUrl',
                 floorStock: 1,
                 lowStockThreshold: '$threshold',
             },
@@ -216,6 +223,7 @@ export async function getOutOfStockProducts(): Promise<OutOfStockProduct[]> {
             $project: {
                 _id: { $toString: '$_id' },
                 nameAr: '$product.nameAr',
+                imageUrl: '$product.imageUrl',
                 floorStock: 1,
             },
         },

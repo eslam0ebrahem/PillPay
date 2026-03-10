@@ -15,7 +15,7 @@ export default async function StockPage() {
 
     // Find all products and batches
     const products = await Product.find({ isActive: true }).lean<any[]>();
-    const batches = await Batch.find().populate('productId', 'nameAr nameEn baseUnit lowStockThreshold').lean<any[]>();
+    const batches = await Batch.find().populate('productId', 'nameAr nameEn baseUnit lowStockThreshold imageUrl').lean<any[]>();
 
     const expiredBatches: any[] = [];
     const expiringSoonBatches: any[] = [];
