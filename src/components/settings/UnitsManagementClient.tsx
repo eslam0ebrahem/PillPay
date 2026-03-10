@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Table, Button, Modal, Form, Input, Select, Space, Card, Typography, App, Popconfirm, Tabs, Flex, Grid } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import MobileFormWrapper from '../common/MobileFormWrapper';
 import ar from '@/i18n/ar';
 
 const { Title } = Typography;
@@ -207,60 +208,73 @@ export default function UnitsManagementClient() {
                 <Tabs items={tabItems} defaultActiveKey="base_unit" />
             </Card>
 
-            <Modal
+            <MobileFormWrapper
                 title={editingUnit ? ar.units.editUnit : ar.units.addUnit}
                 open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
-                onOk={() => form.submit()}
-                confirmLoading={createMutation.isPending || updateMutation.isPending}
+                onClose={() => setIsModalOpen(false)}
                 destroyOnHidden
             >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                    initialValues={{ type: 'base_unit' }}
-                >
-                    <Form.Item
-                        name="code"
-                        label={ar.units.code}
-                        rules={[{ required: true, message: 'مطلوب إدخال الكود' }]}
+                <div>
+                    <Form
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleSubmit}
+                        initialValues={{ type: 'base_unit' }}
                     >
-                        <Input placeholder="e.g., box, strip, ml" disabled={!!editingUnit} />
-                    </Form.Item>
-                    <Form.Item
-                        name="nameAr"
-                        label={ar.units.nameAr}
-                        rules={[{ required: true, message: 'مطلوب إدخال الاسم بالعربية' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item
-                        name="nameEn"
-                        label={ar.units.nameEn}
-                        rules={[{ required: true, message: 'مطلوب إدخال الاسم بالإنجليزية' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item
-                        name="type"
-                        label={ar.units.type}
-                        rules={[{ required: true }]}
-                    >
-                        <Select options={[
-                            { value: 'base_unit', label: ar.units.baseUnit },
-                            { value: 'sub_unit', label: ar.units.subUnit },
-                            { value: 'measurement', label: ar.units.measurement },
-                        ]} />
-                    </Form.Item>
-                    <Form.Item
-                        name="description"
-                        label={ar.units.description}
-                    >
-                        <Input.TextArea rows={2} />
-                    </Form.Item>
-                </Form>
-            </Modal>
+                        <Form.Item
+                            name="code"
+                            label={ar.units.code}
+                            rules={[{ required: true, message: 'مطلوب إدخال الكود' }]}
+                        >
+                            <Input placeholder="e.g., box, strip, ml" disabled={!!editingUnit} />
+                        </Form.Item>
+                        <Form.Item
+                            name="nameAr"
+                            label={ar.units.nameAr}
+                            rules={[{ required: true, message: 'مطلوب إدخال الاسم بالعربية' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            name="nameEn"
+                            label={ar.units.nameEn}
+                            rules={[{ required: true, message: 'مطلوب إدخال الاسم بالإنجليزية' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            name="type"
+                            label={ar.units.type}
+                            rules={[{ required: true }]}
+                        >
+                            <Select options={[
+                                { value: 'base_unit', label: ar.units.baseUnit },
+                                { value: 'sub_unit', label: ar.units.subUnit },
+                                { value: 'measurement', label: ar.units.measurement },
+                            ]} />
+                        </Form.Item>
+                        <Form.Item
+                            name="description"
+                            label={ar.units.description}
+                        >
+                            <Input.TextArea rows={2} />
+                        </Form.Item>
+                    </Form>
+                    <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+                        <Button block onClick={() => setIsModalOpen(false)}>
+                            {ar.actions.cancel}
+                        </Button>
+                        <Button
+                            type="primary"
+                            block
+                            onClick={() => form.submit()}
+                            loading={createMutation.isPending || updateMutation.isPending}
+                        >
+                            {ar.actions.save}
+                        </Button>
+                    </div>
+                </div>
+            </MobileFormWrapper>
         </div>
     );
 }

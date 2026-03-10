@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Col, Row, App } from 'antd';
+import { Button, Col, Row, App, Grid, Segmented, Badge } from 'antd';
 import ProductSearch from './ProductSearch';
 import Cart from './Cart';
 import Checkout from './Checkout';
@@ -14,13 +14,18 @@ import type {
     UnitSold,
 } from '@/lib/types';
 import { calcSubtotal } from '@/lib/utils/money';
+import ar from '@/i18n/ar';
+
+const { useBreakpoint } = Grid;
 
 export default function POSScreen() {
     const { message } = App.useApp();
+    const screens = useBreakpoint();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [invoiceDiscount, setInvoiceDiscount] = useState<DiscountObj | undefined>();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'search' | 'cart' | 'checkout'>('search');
 
     const calculateItemPriceAndSubtotal = (
         product: ProductSearchResult,
@@ -61,7 +66,7 @@ export default function POSScreen() {
 
             if (requestedBaseUnits > product.floorStock) {
                 message.warning(
-                    `المخزون المتاح لا يكفي. المتاح حالياً: ${product.floorStock} ${product.baseUnit}`
+                    `${ar.pos.insufficientStock}. المتاح حالياً: ${product.floorStock} ${product.baseUnit}`
                 );
                 return previousItems;
             }
@@ -166,7 +171,7 @@ export default function POSScreen() {
         customerId: string | null
     ) => {
         if (cartItems.length === 0) {
-            message.error('السلة فارغة');
+            message.error(ar.pos.emptyCart);
             return;
         }
 
@@ -196,9 +201,10 @@ export default function POSScreen() {
                 throw new Error(payload.error?.message || 'تعذر إتمام عملية البيع');
             }
 
-            message.success('تم إنشاء الفاتورة بنجاح');
+            message.success(ar.messages.saleCompleted);
             setCartItems([]);
             setInvoiceDiscount(undefined);
+            setActiveTab('search');
         } catch (error) {
             const messageText =
                 error instanceof Error ? error.message : 'تعذر إتمام عملية البيع';
@@ -217,46 +223,103 @@ export default function POSScreen() {
         invoiceDiscount?.type === 'amount'
             ? Math.max(0, invoiceSubtotal - invoiceDiscount.value)
             : invoiceDiscount?.type === 'percentage'
-              ? Math.max(
+                ? Math.max(
                     0,
                     invoiceSubtotal -
-                        Math.round((invoiceSubtotal * invoiceDiscount.value) / 10000)
+                    Math.round((invoiceSubtotal * invoiceDiscount.value) / 10000)
                 )
-              : invoiceSubtotal;
+                : invoiceSubtotal;
+
+    const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button danger onClick={() => setIsRefundDialogOpen(true)}>
-                    إرجاع أو إلغاء فاتورة
-                </Button>
-            </div>
-
-            <Row gutter={[16, 16]} style={{ flex: 1 }}>
-                <Col xs={24} lg={16}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
-                        <ProductSearch onAddToCart={handleAddToCart} />
-                        <div style={{ flex: 1, minHeight: 0 }}>
-                            <Cart
-                                items={cartItems}
-                                onUpdateQuantity={handleUpdateQuantity}
-                                onUpdateDiscount={handleUpdateDiscount}
-                                onRemoveItem={handleRemoveItem}
-                                invoiceDiscount={invoiceDiscount}
-                                onUpdateInvoiceDiscount={setInvoiceDiscount}
-                            />
-                        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: screens.md !== false ? 16 : 0, minHeight: '100%', height: screens.md !== false ? '100%' : '100dvh' }}>
+            {screens.md !== false ? (
+                // DESKTOP LAYOUT
+                <>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: 16 }}>
+                        <Button danger onClick={() => setIsRefundDialogOpen(true)}>
+                            إرجاع أو إلغاء فاتورة
+                        </Button>
                     </div>
-                </Col>
 
-                <Col xs={24} lg={8}>
-                    <Checkout
-                        total={total}
-                        isSubmitting={isSubmitting}
-                        onCheckout={handleCheckout}
-                    />
-                </Col>
-            </Row>
+                    <Row gutter={[16, 16]} style={{ flex: 1, minHeight: 0 }}>
+                        <Col xs={24} lg={16}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+                                <ProductSearch onAddToCart={handleAddToCart} />
+                                <div style={{ flex: 1, minHeight: 0 }}>
+                                    <Cart
+                                        items={cartItems}
+                                        onUpdateQuantity={handleUpdateQuantity}
+                                        onUpdateDiscount={handleUpdateDiscount}
+                                        onRemoveItem={handleRemoveItem}
+                                        invoiceDiscount={invoiceDiscount}
+                                        onUpdateInvoiceDiscount={setInvoiceDiscount}
+                                        onGoToCheckout={() => { }} // not needed on desktop
+                                    />
+                                </div>
+                            </div>
+                        </Col>
+
+                        <Col xs={24} lg={8} style={{ height: '100%', overflowY: 'auto' }}>
+                            <Checkout
+                                total={total}
+                                isSubmitting={isSubmitting}
+                                onCheckout={handleCheckout}
+                            />
+                        </Col>
+                    </Row>
+                </>
+            ) : (
+                // MOBILE LAYOUT
+                <>
+                    <div style={{ padding: 12, borderBottom: '1px solid #d9d9d9', background: 'white' }}>
+                        <Segmented
+                            block
+                            size="large"
+                            options={[
+                                { label: 'البحث', value: 'search' },
+                                { label: <Badge count={cartCount} offset={[10, 0]}><span>السلة</span></Badge>, value: 'cart' },
+                                { label: 'الدفع', value: 'checkout' },
+                            ]}
+                            value={activeTab}
+                            onChange={(val) => setActiveTab(val as any)}
+                        />
+                    </div>
+
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {activeTab === 'search' && (
+                            <div style={{ padding: 12 }}>
+                                <ProductSearch onAddToCart={handleAddToCart} />
+                            </div>
+                        )}
+
+                        {activeTab === 'cart' && (
+                            <div style={{ padding: 12 }}>
+                                <Cart
+                                    items={cartItems}
+                                    onUpdateQuantity={handleUpdateQuantity}
+                                    onUpdateDiscount={handleUpdateDiscount}
+                                    onRemoveItem={handleRemoveItem}
+                                    invoiceDiscount={invoiceDiscount}
+                                    onUpdateInvoiceDiscount={setInvoiceDiscount}
+                                    onGoToCheckout={() => setActiveTab('checkout')}
+                                />
+                            </div>
+                        )}
+
+                        {activeTab === 'checkout' && (
+                            <div style={{ padding: 0 }}>
+                                <Checkout
+                                    total={total}
+                                    isSubmitting={isSubmitting}
+                                    onCheckout={handleCheckout}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
 
             <RefundDialog
                 open={isRefundDialogOpen}

@@ -12,6 +12,10 @@
   --error: #ff4d4f;
   --sidebar-width: 260px;
   --header-height: 64px;
+  --bottom-nav-height: 56px;
+  --mobile-top-bar-height: 48px;
+  --touch-target-min: 44px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -56,15 +60,26 @@ body {
 }
 
 /* Form styling */
-.ant-form-item-label > label {
+.ant-form-item-label>label {
   font-weight: 500;
 }
 
 /* Button spacing fix for RTL */
-.ant-btn > .anticon + span,
-.ant-btn > span + .anticon {
+.ant-btn>.anticon+span,
+.ant-btn>span+.anticon {
   margin-inline-start: 8px;
   margin-inline-end: 0;
+}
+
+/* Enforce min touch target sizes for buttons/inputs on mobile */
+@media (max-width: 767px) {
+
+  .ant-btn,
+  .ant-input,
+  .ant-input-number,
+  .ant-select-selector {
+    min-height: var(--touch-target-min) !important;
+  }
 }
 
 /* Modal RTL fix */
@@ -113,6 +128,7 @@ input[dir='ltr'] {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
@@ -139,53 +155,141 @@ input[dir='ltr'] {
   margin-bottom: 32px;
 }
 
-/* Dashboard layout */
+/* Dashboard layout - MOBILE FIRST */
 .app-shell {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-sidebar {
-  background: #001529 !important;
-  overflow-y: auto;
-  position: fixed;
-  inset-inline-start: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 100;
-}
-
-.app-sidebar .logo {
-  height: var(--header-height);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 20px;
-  font-weight: 700;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: none;
+  /* Hidden on mobile */
 }
 
 .app-content {
-  margin-inline-start: var(--sidebar-width);
+  margin-inline-start: 0;
+  /* No sidebar on mobile */
   min-height: 100vh;
+  min-height: 100dvh;
   transition: margin-inline-start 0.2s;
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 16px);
+  /* bottom nav clearance */
 }
 
 .app-header {
-  background: white !important;
-  padding-inline: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: var(--header-height);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 99;
+  display: none;
+  /* Desktop header hidden on mobile */
 }
 
 .app-main {
-  padding: 24px;
+  padding: 12px;
+}
+
+/* Desktop Overrides */
+@media (min-width: 768px) {
+  .app-sidebar {
+    display: block;
+    background: #001529 !important;
+    overflow-y: auto;
+    position: fixed;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 100;
+  }
+
+  .app-sidebar .logo {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .app-content {
+    margin-inline-start: var(--sidebar-width);
+    padding-bottom: 0;
+  }
+
+  .app-header {
+    background: white !important;
+    padding-inline: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 99;
+  }
+
+  .app-main {
+    padding: 24px;
+  }
+}
+
+/* Mobile Bottom Navigation Bar */
+.bottom-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
+  background: white;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: var(--safe-area-bottom);
+  z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 10px;
+  height: 100%;
+  flex: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.bottom-tab-item.active {
+  color: var(--primary);
+}
+
+.bottom-tab-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+/* Mobile Top Bar */
+.mobile-top-bar {
+  position: sticky;
+  top: 0;
+  height: var(--mobile-top-bar-height);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  z-index: 99;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-top-bar-title {
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
 }
 
 /* Money display */
@@ -203,75 +307,71 @@ input[dir='ltr'] {
   color: var(--error);
 }
 
-/* POS layout */
+/* POS layout - MOBILE FIRST */
 .pos-layout {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 
 .pos-header {
-  height: 56px;
-  background: white;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-inline: 16px;
+  display: none;
+  /* Let pos mobile use segment control */
 }
 
 .pos-body {
   flex: 1;
   display: flex;
+  flex-direction: column;
+  /* Mobile */
   overflow: hidden;
 }
 
 .pos-search-panel {
+  padding: 12px;
+  border-inline-end: none;
+  border-bottom: 1px solid var(--border);
   flex: 1;
-  padding: 16px;
   overflow-y: auto;
-  border-inline-end: 1px solid var(--border);
 }
 
 .pos-cart-panel {
-  width: 420px;
+  width: 100%;
+  height: 60vh;
+  min-height: 60vh;
   display: flex;
   flex-direction: column;
   background: white;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .app-sidebar {
-    display: none;
-  }
-
-  .app-content {
-    margin-inline-start: 0;
-  }
-  
-  .app-main {
-    padding: 12px;
-  }
-  
-  .ant-card-body {
-    padding: 16px;
+/* POS Desktop override */
+@media (min-width: 768px) {
+  .pos-header {
+    height: 56px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline: 16px;
   }
 
   .pos-body {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .pos-search-panel {
-    padding: 12px;
-    border-inline-end: none;
-    border-bottom: 1px solid var(--border);
+    flex: 1;
+    padding: 16px;
+    border-inline-end: 1px solid var(--border);
+    border-bottom: none;
   }
 
   .pos-cart-panel {
-    width: 100%;
-    height: 60vh;
-    min-height: 60vh;
+    width: 420px;
+    height: auto;
+    min-height: 0;
   }
 }
 
@@ -365,10 +465,37 @@ input[dir='ltr'] {
   border: 4px solid var(--primary);
 }
 
-.scanner-corner-tl { top: -2px; left: -2px; border-right: none; border-bottom: none; border-top-left-radius: 12px; }
-.scanner-corner-tr { top: -2px; right: -2px; border-left: none; border-bottom: none; border-top-right-radius: 12px; }
-.scanner-corner-bl { bottom: -2px; left: -2px; border-right: none; border-top: none; border-bottom-left-radius: 12px; }
-.scanner-corner-br { bottom: -2px; right: -2px; border-left: none; border-top: none; border-bottom-right-radius: 12px; }
+.scanner-corner-tl {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 12px;
+}
+
+.scanner-corner-tr {
+  top: -2px;
+  right: -2px;
+  border-left: none;
+  border-bottom: none;
+  border-top-right-radius: 12px;
+}
+
+.scanner-corner-bl {
+  bottom: -2px;
+  left: -2px;
+  border-right: none;
+  border-top: none;
+  border-bottom-left-radius: 12px;
+}
+
+.scanner-corner-br {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 12px;
+}
 
 .scanner-laser {
   position: absolute;
@@ -383,8 +510,17 @@ input[dir='ltr'] {
 }
 
 @keyframes laser-scan {
-  0%, 100% { top: 10%; opacity: 0.4; }
-  50% { top: 90%; opacity: 0.8; }
+
+  0%,
+  100% {
+    top: 10%;
+    opacity: 0.4;
+  }
+
+  50% {
+    top: 90%;
+    opacity: 0.8;
+  }
 }
 
 .scanner-hint {
@@ -439,9 +575,11 @@ input[dir='ltr'] {
   .scanner-modal .ant-modal-content {
     border-radius: 16px;
   }
+
   .scanner-modal .ant-modal-body {
     height: 500px;
   }
+
   .scanner-cutout {
     width: 300px;
     height: 200px;

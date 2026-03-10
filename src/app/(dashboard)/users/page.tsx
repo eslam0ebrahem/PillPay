@@ -23,6 +23,7 @@ import {
     type TableColumnsType,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import MobileFormWrapper from '@/components/common/MobileFormWrapper';
 import PageHeader from '@/components/common/PageHeader';
 import {
     ALL_PERMISSIONS,
@@ -428,18 +429,33 @@ export default function UsersPage() {
                 />
             </Card>
 
-            <Modal
+            <MobileFormWrapper
                 title="إضافة مستخدم"
                 open={isCreateOpen}
                 width={900}
-                confirmLoading={createUserMutation.isPending}
-                okText="إنشاء"
-                cancelText="إلغاء"
-                onCancel={() => {
+                onClose={() => {
                     setIsCreateOpen(false);
                     createForm.resetFields();
                 }}
-                onOk={() => createForm.submit()}
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                        <Button
+                            onClick={() => {
+                                setIsCreateOpen(false);
+                                createForm.resetFields();
+                            }}
+                        >
+                            إلغاء
+                        </Button>
+                        <Button
+                            type="primary"
+                            loading={createUserMutation.isPending}
+                            onClick={() => createForm.submit()}
+                        >
+                            إنشاء
+                        </Button>
+                    </div>
+                }
             >
                 <Form<UserFormValues>
                     form={createForm}
@@ -525,19 +541,18 @@ export default function UsersPage() {
                         }}
                     </Form.Item>
                 </Form>
-            </Modal>
+            </MobileFormWrapper>
 
-            <Drawer
+            <MobileFormWrapper
                 title="تعديل المستخدم"
                 open={Boolean(editingUser)}
-                size={920}
-                destroyOnHidden
+                width={920}
                 onClose={() => {
                     setEditingUser(null);
                     editForm.resetFields();
                 }}
-                extra={
-                    <Space>
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                         <Button
                             onClick={() => {
                                 setEditingUser(null);
@@ -553,7 +568,7 @@ export default function UsersPage() {
                         >
                             حفظ
                         </Button>
-                    </Space>
+                    </div>
                 }
             >
                 <Form<UserFormValues>
@@ -636,7 +651,7 @@ export default function UsersPage() {
                         }}
                     </Form.Item>
                 </Form>
-            </Drawer>
+            </MobileFormWrapper>
         </div>
     );
 }

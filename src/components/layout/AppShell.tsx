@@ -1,44 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Drawer, Grid } from 'antd';
+import { Grid } from 'antd';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import MobileTopBar from './MobileTopBar';
+import BottomTabBar from './BottomTabBar';
 
 const { useBreakpoint } = Grid;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const pathname = usePathname();
     const screens = useBreakpoint();
-
-    // Close mobile menu when route changes
-    useEffect(() => {
-        setMobileMenuOpen(false);
-    }, [pathname]);
+    const pathname = usePathname();
 
     return (
         <div className="app-shell">
             {/* Desktop Sidebar */}
             {screens.md !== false && <Sidebar />}
 
-            {/* Mobile Sidebar Drawer */}
-            <Drawer
-                title="PillPay"
-                placement="right"
-                onClose={() => setMobileMenuOpen(false)}
-                open={mobileMenuOpen}
-                size="default"
-                styles={{ body: { padding: 0 } }}
-            >
-                <Sidebar isMobile />
-            </Drawer>
-
             <div className="app-content">
-                <Header onMenuClick={() => setMobileMenuOpen(true)} />
+                <MobileTopBar />
+                <Header />
                 <main className="app-main">{children}</main>
             </div>
+
+            <BottomTabBar />
         </div>
     );
 }

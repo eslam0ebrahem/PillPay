@@ -7,6 +7,7 @@ import MoneyDisplay from '@/components/common/MoneyDisplay';
 import dayjs from 'dayjs';
 import PaymentDialog from './PaymentDialog';
 import CustomerForm from './CustomerForm';
+import MobileFormWrapper from '../common/MobileFormWrapper';
 
 const { Title, Text } = Typography;
 
@@ -226,14 +227,14 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                 loading={loading}
             />
 
-            <Modal
+            <MobileFormWrapper
                 title="تسوية رصيد العميل"
                 open={isAdjustModalVisible}
-                onCancel={() => {
+                onClose={() => {
                     setIsAdjustModalVisible(false);
                     adjustForm.resetFields();
                 }}
-                footer={null}
+                destroyOnHidden
             >
                 <Form form={adjustForm} layout="vertical" onFinish={handleAdjustBalance}>
                     <Form.Item
@@ -258,13 +259,12 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                         </Button>
                     </Form.Item>
                 </Form>
-            </Modal>
+            </MobileFormWrapper>
 
-            <Modal
+            <MobileFormWrapper
                 title="تعديل بيانات العميل"
                 open={isEditModalVisible}
-                onCancel={() => setIsEditModalVisible(false)}
-                footer={null}
+                onClose={() => setIsEditModalVisible(false)}
                 destroyOnHidden
             >
                 {isEditModalVisible && (
@@ -275,7 +275,7 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                         isLoading={loading}
                     />
                 )}
-            </Modal>
+            </MobileFormWrapper>
 
         </Space>
     );

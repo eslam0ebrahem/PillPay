@@ -23,6 +23,7 @@ const ar = {
         users: 'المستخدمين',
         settings: 'الإعدادات',
         units: 'إدارة الوحدات',
+        more: 'المزيد',
     },
 
     // Auth

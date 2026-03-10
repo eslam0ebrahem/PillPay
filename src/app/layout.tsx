@@ -18,6 +18,13 @@ export const metadata: Metadata = {
     description: 'نظام إدارة الصيدلية ونقاط البيع',
 };
 
+export const viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    viewportFit: 'cover' as const,
+};
+
 export default function RootLayout({
     children,
 }: {
