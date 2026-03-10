@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio, Image } from 'antd';
+import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio, Image, message } from 'antd';
 import { ScanOutlined, SearchOutlined, PictureOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import MoneyDisplay from '../common/MoneyDisplay';
 
-const BarcodeScanner = dynamic(() => import('./BarcodeScanner'), { ssr: false });
+const BarcodeScanner = dynamic(() => import('../common/BarcodeScanner'), { ssr: false });
 import ar from '@/i18n/ar';
 import type { UnitSold } from '@/lib/types';
 
@@ -51,14 +51,14 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 300);
-    const [scannerOpen, setScannerOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
+    const inputRef = useRef<any>(null);
 
     // Quantity states
     const [qty, setQty] = useState<number>(1);
     const [unitType, setUnitType] = useState<UnitSold>('base');
 
-    const { data: results, isFetching } = useQuery({
+    const { data: results, isFetching, refetch } = useQuery({
         queryKey: ['productSearch', debouncedQuery],
         queryFn: async () => {
             if (!debouncedQuery) return [];
@@ -74,9 +74,55 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
         enabled: debouncedQuery.length > 1,
     });
 
-    const handleScan = (barcode: string) => {
-        setQuery(barcode);
-        // Scanning immediately initiates search via the debounced effect.
+    const handleAddToCart = (product: ProductSearchResult) => {
+        onAddToCart({
+            product: product,
+            quantity: 1, // Default to 1 for direct add
+            unitSold: 'base', // Default to base unit for direct add
+        });
+        setQuery(''); // clear search after add
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    };
+
+    const handleCameraScan = async (barcode: string) => {
+        setQuery(barcode); // Set query to show scanned barcode in input
+        // We'll perform a manual fetch rather than just setting the term,
+        // to immediately process the scanned item like `onPressEnter`
+        try {
+            const res = await fetch('/api/pos/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: barcode, type: 'barcode' }),
+            });
+            if (!res.ok) throw new Error('Search failed');
+            const data = await res.json();
+
+            if (data && data.length === 1) {
+                handleAddToCart(data[0]);
+                setQuery(''); // Clear input after successful add
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                }
+            } else if (data && data.length > 1) {
+                // If multiple products match, display them in the search results
+                // The debounced query will handle this automatically if we just setQuery
+                message.info('تم العثور على منتجات متعددة مطابقة للباركود');
+            } else {
+                message.error('لم يتم العثور على المنتج');
+            }
+        } catch (err) {
+            console.error('Camera scan fetch error:', err);
+            message.error('خطأ في البحث عن الباركود');
+        }
+    };
+
+    const handleSearch = () => {
+        // Manually trigger search if query is not empty
+        if (query.length > 1) {
+            refetch();
+        }
     };
 
     const openQtyModal = (product: ProductSearchResult) => {
@@ -94,24 +140,34 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
             });
             setSelectedProduct(null);
             setQuery(''); // clear search after add
+            if (inputRef.current) {
+                inputRef.current.focus();
+            }
         }
     };
 
     return (
         <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <Input
-                    size="large"
-                    placeholder={ar.pos.searchPlaceholder}
-                    prefix={<SearchOutlined />}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    allowClear
-                    autoFocus
-                />
-                <Button size="large" icon={<ScanOutlined />} onClick={() => setScannerOpen(true)}>
-                    {ar.pos.scanBarcode}
-                </Button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <Input
+                        size="large"
+                        placeholder={ar.pos.searchPlaceholder}
+                        prefix={<SearchOutlined />}
+                        suffix={<ScanOutlined style={{ color: '#1890ff' }} />}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onPressEnter={handleSearch}
+                        autoFocus
+                        ref={inputRef}
+                        style={{ flex: 1 }}
+                    />
+                    <BarcodeScanner
+                        onScan={handleCameraScan}
+                        buttonText=""
+                        buttonProps={{ size: 'large', type: 'primary' }}
+                    />
+                </div>
             </div>
 
             <Table
@@ -178,12 +234,6 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                         ),
                     },
                 ]}
-            />
-
-            <BarcodeScanner
-                open={scannerOpen}
-                onClose={() => setScannerOpen(false)}
-                onScan={handleScan}
             />
 
             <Modal

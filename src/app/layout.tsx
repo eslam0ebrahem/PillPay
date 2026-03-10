@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Cairo } from 'next/font/google';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App } from 'antd';
 import arEG from 'antd/locale/ar_EG';
 import './globals.css';
 import QueryProvider from '@/components/common/QueryProvider';
@@ -36,10 +36,12 @@ export default function RootLayout({
                             },
                         }}
                     >
-                        <QueryProvider>{children}</QueryProvider>
+                        <App>
+                            <QueryProvider>{children}</QueryProvider>
+                        </App>
                     </ConfigProvider>
                 </AntdRegistry>
             </body>
-        </html>
+        </html >
     );
 }
