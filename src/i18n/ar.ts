@@ -22,6 +22,7 @@ const ar = {
         auditLogs: 'سجل المراجعة',
         users: 'المستخدمين',
         settings: 'الإعدادات',
+        units: 'إدارة الوحدات',
     },
 
     // Auth
@@ -297,14 +298,23 @@ const ar = {
         importWarning: 'تحذير: سيتم استبدال جميع البيانات الحالية!',
     },
 
-    // Refunds
-    refunds: {
-        title: 'المرتجعات',
-        createRefund: 'إنشاء مرتجع',
-        refundNumber: 'رقم المرتجع',
-        originalInvoice: 'الفاتورة الأصلية',
-        searchInvoice: 'ابحث برقم الفاتورة',
+    // Units
+    units: {
+        title: 'إدارة الوحدات',
+        addUnit: 'إضافة وحدة',
+        editUnit: 'تعديل وحدة',
+        code: 'الكود',
+        nameAr: 'الاسم بالعربية',
+        nameEn: 'الاسم بالإنجليزية',
+        type: 'النوع',
+        baseUnit: 'وحدة أساسية',
+        subUnit: 'وحدة فرعية',
+        measurement: 'وحدة قياس',
+        description: 'الوصف',
+        confirmDelete: 'هل أنت متأكد من حذف هذه الوحدة؟',
     },
+
+    // Refunds
 
     // Errors
     errors: {
