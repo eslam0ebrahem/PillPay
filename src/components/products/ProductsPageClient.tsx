@@ -1,13 +1,15 @@
 'use client';
 
-import { Typography, Card, Button, Segmented } from 'antd';
+import { Typography, Card, Button, Segmented, Grid } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProductList from '@/components/products/ProductList';
+import PageHeader from '@/components/common/PageHeader';
 import ar from '@/i18n/ar';
 
 const { Title } = Typography;
+const { useBreakpoint } = Grid;
 
 interface ProductsPageClientProps {
     data: any[];
@@ -41,28 +43,28 @@ export default function ProductsPageClient({ data, view, selectedBrand, search, 
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    {ar.products.title}
-                </Title>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <Segmented
-                        value={view}
-                        options={[
-                            { label: ar.products.activeProducts, value: 'active' },
-                            { label: ar.products.catalog, value: 'catalog' },
-                        ]}
-                        onChange={(val) => {
-                            router.push(buildUrl({ view: val === 'catalog' ? 'catalog' : undefined }));
-                        }}
-                    />
-                    <Link href="/products/new">
-                        <Button type="primary" icon={<PlusOutlined />}>
-                            {ar.products.addProduct}
-                        </Button>
-                    </Link>
-                </div>
-            </div>
+            <PageHeader
+                title={ar.products.title}
+                extra={
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <Segmented
+                            value={view}
+                            options={[
+                                { label: ar.products.activeProducts, value: 'active' },
+                                { label: ar.products.catalog, value: 'catalog' },
+                            ]}
+                            onChange={(val) => {
+                                router.push(buildUrl({ view: val === 'catalog' ? 'catalog' : undefined }));
+                            }}
+                        />
+                        <Link href="/products/new">
+                            <Button type="primary" icon={<PlusOutlined />}>
+                                {ar.products.addProduct}
+                            </Button>
+                        </Link>
+                    </div>
+                }
+            />
 
             <Card>
                 <ProductList

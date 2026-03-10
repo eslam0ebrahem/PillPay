@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { Card, Col, Empty, Row, Space, Table, Tag, Typography } from 'antd';
 import DashboardCards from '@/components/reports/DashboardCards';
+import PageHeader from '@/components/common/PageHeader';
 import { formatEGP } from '@/utils/money';
 import ar from '@/i18n/ar';
 import type { DashboardProductStat, DashboardSummary } from '@/lib/services/report.service';
@@ -99,9 +100,7 @@ interface DashboardSummaryClientProps {
 export default function DashboardSummaryClient({ summary, alerts }: DashboardSummaryClientProps) {
     return (
         <div>
-            <Title level={2} style={{ marginBottom: 24 }}>
-                {ar.reports.dashboard}
-            </Title>
+            <PageHeader title={ar.reports.dashboard} />
 
             <DashboardCards summary={summary} />
 
