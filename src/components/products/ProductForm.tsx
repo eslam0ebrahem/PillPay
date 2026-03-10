@@ -3,7 +3,7 @@
 import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space, Typography, App, Select, Divider, DatePicker, Radio } from 'antd';
 import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { SearchOutlined, BarcodeOutlined, InboxOutlined } from '@ant-design/icons';
+import { SearchOutlined, BarcodeOutlined, InboxOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
 import { toEGP, toPiasters } from '@/lib/utils/money';
 import BarcodeScanner from '../common/BarcodeScanner';
@@ -58,6 +58,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
     const [form] = Form.useForm<ProductFormValues>();
     const [isSearching, setIsSearching] = useState(false);
     const [searchSource, setSearchSource] = useState<'barcode' | 'name' | null>(null);
+    const [isLocked, setIsLocked] = useState(mode === 'edit');
     const addInitialStock = Form.useWatch('addInitialStock', form);
     const [nameSearchOptions, setNameSearchOptions] = useState<any[]>([]);
     const searchTimer = useRef<NodeJS.Timeout | null>(null);
@@ -129,6 +130,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 if (product) {
                     message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
                     setSearchSource('barcode');
+                    setIsLocked(true); // Lock when found
                     const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
                     form.setFieldsValue({
                         ...product,
@@ -190,6 +192,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
         if (product) {
             // Reset form before loading new product
             form.resetFields();
+            setIsLocked(true); // Lock when found
             message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
             setSearchSource('name');
             const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
@@ -215,7 +218,24 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 baseUnit: 'علبة',
             }}
         >
-            <Card style={{ marginBottom: 24, border: '2px solid #1890ff', backgroundColor: '#e6f7ff' }}>
+            <Card style={{ marginBottom: 24, border: '2px solid #1890ff', backgroundColor: '#e6f7ff', position: 'relative' }}>
+                {(mode === 'edit' || searchSource) && (
+                    <Button
+                        type={isLocked ? "primary" : "default"}
+                        danger={!isLocked}
+                        icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+                        onClick={() => setIsLocked(!isLocked)}
+                        style={{
+                            position: 'absolute',
+                            top: 16,
+                            left: 16,
+                            zIndex: 10,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                        }}
+                    >
+                        {isLocked ? "فتح التعديل" : "قفل البيانات"}
+                    </Button>
+                )}
                 <div style={{ textAlign: 'center', marginBottom: 20 }}>
                     <BarcodeOutlined style={{ fontSize: 36, color: '#1890ff', marginBottom: 12 }} />
                     <Title level={4} style={{ margin: 0 }}>المسح الضوئي للباركود والبحث</Title>
@@ -272,174 +292,180 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
             </Card>
 
             <Card title="البيانات الأساسية" style={{ marginBottom: 16 }}>
-                <Row gutter={16}>
-                    <Col xs={24} md={12}>
-                        <Form.Item
-                            name="nameAr"
-                            label={ar.products.nameAr}
-                            rules={[{ required: true, message: 'مطلوب إدخال الاسم بالعربية' }]}
-                        >
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={12}>
-                        <Form.Item name="nameEn" label={ar.products.nameEn}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={12}>
-                        <Form.Item name="barcode2" label={ar.products.barcode2}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={12}>
-                        <Form.Item name="category" label={ar.products.category}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                </Row>
+                <fieldset disabled={isLocked} style={{ border: 'none', padding: 0, margin: 0 }}>
+                    <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                name="nameAr"
+                                label={ar.products.nameAr}
+                                rules={[{ required: true, message: 'مطلوب إدخال الاسم بالعربية' }]}
+                            >
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item name="nameEn" label={ar.products.nameEn}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item name="barcode2" label={ar.products.barcode2}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item name="category" label={ar.products.category}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </fieldset>
             </Card>
 
             <Card title="تفاصيل التسعير والوحدات" style={{ marginBottom: 16 }}>
-                <Row gutter={16}>
-                    <Col xs={24} md={8}>
-                        <Form.Item
-                            label={ar.products.sellingPrice}
-                            required
-                        >
-                            <Space.Compact style={{ width: '100%' }}>
-                                <Form.Item
-                                    name="sellingPrice"
-                                    noStyle
-                                    rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}
-                                >
-                                    <InputNumber
-                                        min={0}
-                                        step={0.25}
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                                <div style={{
-                                    padding: '0 11px',
-                                    backgroundColor: '#f5f5f5',
-                                    border: '1px solid #d9d9d9',
-                                    borderLeft: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    borderRadius: '0 6px 6px 0',
-                                    whiteSpace: 'nowrap',
-                                    color: 'rgba(0, 0, 0, 0.45)'
-                                }}>
-                                    ج.م
-                                </div>
-                            </Space.Compact>
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={8}>
-                        <Form.Item
-                            name="baseUnit"
-                            label={ar.products.baseUnit}
-                            rules={[{ required: true, message: 'مطلوب إدخال الوحدة الأساسية' }]}
-                        >
-                            <Select
-                                placeholder="اختر الوحدة (مثال: علبة)"
-                                allowClear
-                                showSearch
-                                optionFilterProp="label"
-                                loading={isLoadingUnits}
-                                options={(unitsData?.data?.base_units || []).map((u: any) => ({
-                                    value: u.nameAr,
-                                    label: u.nameAr,
-                                }))}
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={8}>
-                        <Form.Item name="subUnit" label={ar.products.subUnit}>
-                            <Select
-                                placeholder="اختر وحدة فرعية (اختياري)"
-                                allowClear
-                                showSearch
-                                optionFilterProp="label"
-                                loading={isLoadingUnits}
-                                options={(unitsData?.data?.sub_units || []).map((u: any) => ({
-                                    value: u.nameAr,
-                                    label: u.nameAr,
-                                }))}
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={8}>
-                        <Form.Item name="subUnitConversionFactor" label={ar.products.conversionFactor}>
-                            <InputNumber min={1} style={{ width: '100%' }} placeholder="كم وحدة فرعية في الأساسية؟" />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={8}>
-                        <Form.Item name="lowStockThreshold" label={ar.products.lowStockThreshold}>
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Col>
-                </Row>
+                <fieldset disabled={isLocked} style={{ border: 'none', padding: 0, margin: 0 }}>
+                    <Row gutter={16}>
+                        <Col xs={24} md={8}>
+                            <Form.Item
+                                label={ar.products.sellingPrice}
+                                required
+                            >
+                                <Space.Compact style={{ width: '100%' }}>
+                                    <Form.Item
+                                        name="sellingPrice"
+                                        noStyle
+                                        rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}
+                                    >
+                                        <InputNumber
+                                            min={0}
+                                            step={0.25}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </Form.Item>
+                                    <div style={{
+                                        padding: '0 11px',
+                                        backgroundColor: '#f5f5f5',
+                                        border: '1px solid #d9d9d9',
+                                        borderLeft: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        borderRadius: '0 6px 6px 0',
+                                        whiteSpace: 'nowrap',
+                                        color: 'rgba(0, 0, 0, 0.45)'
+                                    }}>
+                                        ج.م
+                                    </div>
+                                </Space.Compact>
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                            <Form.Item
+                                name="baseUnit"
+                                label={ar.products.baseUnit}
+                                rules={[{ required: true, message: 'مطلوب إدخال الوحدة الأساسية' }]}
+                            >
+                                <Select
+                                    placeholder="اختر الوحدة (مثال: علبة)"
+                                    allowClear
+                                    showSearch
+                                    optionFilterProp="label"
+                                    loading={isLoadingUnits}
+                                    options={(unitsData?.data?.base_units || []).map((u: any) => ({
+                                        value: u.nameAr,
+                                        label: u.nameAr,
+                                    }))}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                            <Form.Item name="subUnit" label={ar.products.subUnit}>
+                                <Select
+                                    placeholder="اختر وحدة فرعية (اختياري)"
+                                    allowClear
+                                    showSearch
+                                    optionFilterProp="label"
+                                    loading={isLoadingUnits}
+                                    options={(unitsData?.data?.sub_units || []).map((u: any) => ({
+                                        value: u.nameAr,
+                                        label: u.nameAr,
+                                    }))}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                            <Form.Item name="subUnitConversionFactor" label={ar.products.conversionFactor}>
+                                <InputNumber min={1} style={{ width: '100%' }} placeholder="كم وحدة فرعية في الأساسية؟" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                            <Form.Item name="lowStockThreshold" label={ar.products.lowStockThreshold}>
+                                <InputNumber min={0} style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </fieldset>
             </Card>
 
             <Card title="البيانات الطبية والإضافية" style={{ marginBottom: 16 }}>
-                <Row gutter={16}>
-                    <Col xs={24} md={8}>
-                        <Form.Item name="brand" label={ar.products.brand}>
-                            <Select
-                                placeholder="اختر الماركة التجارية"
-                                allowClear
-                                showSearch
-                                optionFilterProp="label"
-                                loading={isLoadingBrands}
-                                options={(brandsData?.data || []).map((b: any) => ({
-                                    value: b._id,
-                                    label: b.nameEn || b.nameAr,
-                                }))}
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={8}>
-                        <Form.Item name="manufacturer" label={ar.products.manufacturer}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={8}>
-                        <Form.Item name="activeIngredient" label={ar.products.activeIngredient}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={8}>
-                        <Form.Item name="dosageForm" label={ar.products.dosageForm}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={12}>
-                        <Form.Item name="pharmacology" label={ar.products.pharmacology}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24} md={12}>
-                        <Form.Item name="route" label={ar.products.route}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24}>
-                        <Form.Item name="uses" label={ar.products.uses}>
-                            <Input.TextArea rows={2} />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24}>
-                        <Form.Item name="description" label={ar.products.description}>
-                            <Input.TextArea rows={2} />
-                        </Form.Item>
-                    </Col>
-                    <Col xs={24}>
-                        <Form.Item name="imageUrl" label={ar.products.imageUrl}>
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                </Row>
+                <fieldset disabled={isLocked} style={{ border: 'none', padding: 0, margin: 0 }}>
+                    <Row gutter={16}>
+                        <Col xs={24} md={8}>
+                            <Form.Item name="brand" label={ar.products.brand}>
+                                <Select
+                                    placeholder="اختر الماركة التجارية"
+                                    allowClear
+                                    showSearch
+                                    optionFilterProp="label"
+                                    loading={isLoadingBrands}
+                                    options={(brandsData?.data || []).map((b: any) => ({
+                                        value: b._id,
+                                        label: b.nameEn || b.nameAr,
+                                    }))}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                            <Form.Item name="manufacturer" label={ar.products.manufacturer}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                            <Form.Item name="activeIngredient" label={ar.products.activeIngredient}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                            <Form.Item name="dosageForm" label={ar.products.dosageForm}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item name="pharmacology" label={ar.products.pharmacology}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item name="route" label={ar.products.route}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24}>
+                            <Form.Item name="uses" label={ar.products.uses}>
+                                <Input.TextArea rows={2} />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24}>
+                            <Form.Item name="description" label={ar.products.description}>
+                                <Input.TextArea rows={2} />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24}>
+                            <Form.Item name="imageUrl" label={ar.products.imageUrl}>
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </fieldset>
             </Card>
 
             {/* Show initial stock section in create mode, or if a product was found during the create flow */}
