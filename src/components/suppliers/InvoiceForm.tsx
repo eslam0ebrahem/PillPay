@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Form, Input, Button, DatePicker, Select, InputNumber, Row, Col, Space, Card, Divider, message, Typography } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import BarcodeScanner from '../common/BarcodeScanner';
+import { Flex } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -100,12 +102,33 @@ export default function InvoiceForm({ suppliers, products, onSubmit, isSubmittin
                                         rules={[{ required: true, message: 'مطلوب' }]}
                                         style={{ flex: 2, margin: 0 }}
                                     >
-                                        <Select
-                                            showSearch
-                                            placeholder="الصنف"
-                                            optionFilterProp="children"
-                                            options={products.map(p => ({ value: p._id, label: p.nameAr }))}
-                                        />
+                                        <Flex gap="small">
+                                            <Select
+                                                showSearch
+                                                placeholder="الصنف"
+                                                optionFilterProp="label"
+                                                style={{ flex: 1 }}
+                                                options={products.map(p => ({
+                                                    value: p._id,
+                                                    label: `${p.nameAr} ${p.barcode ? `| ${p.barcode}` : ''}`,
+                                                    searchText: `${p.nameAr} ${p.nameEn || ''} ${p.barcode || ''} ${p.barcode2 || ''}`
+                                                }))}
+                                                filterOption={(input, option) =>
+                                                    (option?.searchText ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                                }
+                                            />
+                                            <BarcodeScanner
+                                                onScan={(text) => {
+                                                    const product = products.find(p => p.barcode === text || p.barcode2 === text);
+                                                    if (product) {
+                                                        const items = form.getFieldValue('items') || [];
+                                                        items[name].productId = product._id;
+                                                        form.setFieldsValue({ items });
+                                                    }
+                                                }}
+                                                buttonProps={{ type: 'default', size: 'middle' }}
+                                            />
+                                        </Flex>
                                     </Form.Item>
                                     <Form.Item
                                         {...restField}
