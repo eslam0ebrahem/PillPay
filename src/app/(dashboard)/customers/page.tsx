@@ -141,7 +141,7 @@ export default function CustomersPage() {
                 open={isAddModalVisible}
                 onCancel={() => setIsAddModalVisible(false)}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
             >
                 {isAddModalVisible && (
                     <CustomerForm onSubmit={handleAddCustomer} isLoading={adding} />

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Form, Input, InputNumber, Button, Select, DatePicker, Radio, Flex } from 'antd';
+import { Form, Input, InputNumber, Button, Select, DatePicker, Radio, Flex, Space } from 'antd';
 import BarcodeScanner from '../common/BarcodeScanner';
 import { toPiasters } from '@/lib/utils/money';
 import ar from '@/i18n/ar';
@@ -107,7 +107,24 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                 label={ar.initialStock.purchasePrice}
                 rules={[{ required: true, message: 'سعر الشراء مطلوب' }]}
             >
-                <InputNumber min={0} step={0.25} style={{ width: '100%' }} placeholder="السعر بالجنيه" addonAfter="ج.م" />
+                <Space.Compact style={{ width: '100%' }}>
+                    <Form.Item name="purchasePrice" noStyle>
+                        <InputNumber min={0} step={0.25} style={{ width: '100%' }} placeholder="السعر بالجنيه" />
+                    </Form.Item>
+                    <div style={{
+                        padding: '0 11px',
+                        backgroundColor: '#f5f5f5',
+                        border: '1px solid #d9d9d9',
+                        borderLeft: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        borderRadius: '0 6px 6px 0',
+                        whiteSpace: 'nowrap',
+                        color: 'rgba(0, 0, 0, 0.45)'
+                    }}>
+                        ج.م
+                    </div>
+                </Space.Compact>
             </Form.Item>
 
             <Form.Item

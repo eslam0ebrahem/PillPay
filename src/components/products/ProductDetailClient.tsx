@@ -168,7 +168,7 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                 open={isInitialStockModalOpen}
                 onCancel={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
             >
                 {isInitialStockModalOpen && (
                     <InitialStockForm

@@ -38,7 +38,8 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
                 warehouseQty: item.quantity,
                 floorQty: 0,
                 supplierId: invoice.supplierId,
-                supplierInvoiceId: invoice._id
+                supplierInvoiceId: invoice._id,
+                source: 'supplier_invoice',
             });
             await batch.save({ session });
             productIdsInInvoice.push(item.productId);
