@@ -186,45 +186,42 @@ export async function getLowStockProducts(): Promise<LowStockProduct[]> {
 
 /**
  * Get active products with zero floor stock.
+ * Only includes products that have had batches (previously stocked).
+ * Catalog-only products (never stocked) are excluded.
  */
 export async function getOutOfStockProducts(): Promise<OutOfStockProduct[]> {
     await connectDB();
 
-    // Get all active products
-    const activeProducts = await Product.find({ isActive: true })
-        .select('_id nameAr')
-        .lean<{ _id: Types.ObjectId; nameAr: string }[]>();
-
-    if (activeProducts.length === 0) return [];
-
-    const productIds = activeProducts.map((p) => p._id);
-
-    // Get floor stock per product
-    const stockAgg = await Batch.aggregate([
-        { $match: { productId: { $in: productIds } } },
+    // Start from batches: aggregate floor stock per product, then filter to active products with 0 stock.
+    // This naturally excludes products that never had any batches (catalog-only items).
+    const results = await Batch.aggregate([
         {
             $group: {
                 _id: '$productId',
                 floorStock: { $sum: '$floorQty' },
             },
         },
+        { $match: { floorStock: { $lte: 0 } } },
+        {
+            $lookup: {
+                from: 'products',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'product',
+            },
+        },
+        { $unwind: '$product' },
+        { $match: { 'product.isActive': true } },
+        {
+            $project: {
+                _id: { $toString: '$_id' },
+                nameAr: '$product.nameAr',
+                floorStock: 1,
+            },
+        },
     ]);
 
-    const stockMap = new Map(stockAgg.map((s) => [s._id.toString(), s.floorStock]));
-
-    const outOfStock: OutOfStockProduct[] = [];
-    for (const product of activeProducts) {
-        const floorStock = stockMap.get(product._id.toString()) ?? 0;
-        if (floorStock === 0) {
-            outOfStock.push({
-                _id: product._id.toString(),
-                nameAr: product.nameAr,
-                floorStock: 0,
-            });
-        }
-    }
-
-    return outOfStock;
+    return results;
 }
 
 /**

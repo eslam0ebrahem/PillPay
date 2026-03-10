@@ -5,14 +5,23 @@ import { connectDB } from '@/lib/db/connection';
 import Product from '@/lib/models/Product';
 import Batch from '@/lib/models/Batch';
 
-export default async function ProductsPage() {
-    await connectDB();
+interface ProductsPageProps {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
 
-    // Fetch products
-    const products = await Product.find().sort({ nameAr: 1 }).lean<any[]>();
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+    await connectDB();
+    const params = await searchParams;
+    const view = params.view === 'catalog' ? 'catalog' : 'active';
+
+    // Fetch products based on view
+    const filter = view === 'catalog' ? { isActive: false } : { isActive: true };
+    const products = await Product.find(filter).sort({ nameAr: 1 }).lean<any[]>();
 
     // Calculate aggregated stock for display
+    const productIds = products.map((p) => p._id);
     const stockAgg = await Batch.aggregate([
+        { $match: { productId: { $in: productIds } } },
         {
             $group: {
                 _id: '$productId',
@@ -29,5 +38,5 @@ export default async function ProductsPage() {
         totalQty: stockMap.get(p._id.toString()) || 0,
     }));
 
-    return <ProductsPageClient data={data} />;
+    return <ProductsPageClient data={data} view={view} />;
 }

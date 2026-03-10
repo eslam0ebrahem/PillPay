@@ -90,6 +90,8 @@ const ar = {
         warehouseStock: 'مخزون المخزن',
         imageUrl: 'رابط الصورة',
         searchPlaceholder: 'ابحث بالاسم أو الباركود...',
+        activeProducts: 'منتجات الصيدلية',
+        catalog: 'كتالوج الأدوية',
     },
 
     // Batches

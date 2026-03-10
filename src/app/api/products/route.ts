@@ -34,6 +34,9 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
 
         if (isActive !== null && isActive !== undefined && isActive !== '') {
             filter.isActive = isActive === 'true';
+        } else {
+            // Default: only show active (stocked) products, hide catalog-only items
+            filter.isActive = true;
         }
 
         const skip = (page - 1) * limit;

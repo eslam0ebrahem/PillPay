@@ -4,6 +4,7 @@ import SupplierInvoice from '@/lib/models/SupplierInvoice';
 import SupplierPayment from '@/lib/models/SupplierPayment';
 import SupplierReturn from '@/lib/models/SupplierReturn';
 import Batch from '@/lib/models/Batch';
+import Product from '@/lib/models/Product';
 import { logAction } from '@/lib/services/audit.service';
 import mongoose from 'mongoose';
 
@@ -27,6 +28,7 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
         });
         await invoice.save({ session });
 
+        const productIdsInInvoice: string[] = [];
         for (const item of invoiceData.items) {
             const batch = new Batch({
                 productId: item.productId,
@@ -39,6 +41,15 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
                 supplierInvoiceId: invoice._id
             });
             await batch.save({ session });
+            productIdsInInvoice.push(item.productId);
+        }
+
+        // Auto-activate catalog products on first stock receipt
+        if (productIdsInInvoice.length > 0) {
+            await Product.updateMany(
+                { _id: { $in: productIdsInInvoice }, isActive: false },
+                { $set: { isActive: true } }
+            ).session(session);
         }
 
         const supplier = await Supplier.findById(invoice.supplierId).session(session);
