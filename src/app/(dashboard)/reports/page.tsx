@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Tabs, Typography } from 'antd';
+import { Card, Tabs, Typography, Image } from 'antd';
+import { PictureOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import ReportFilters, {
     type ReportFilterValue,
@@ -72,7 +73,36 @@ function getColumns(reportKey: ReportKey): ReportColumn[] {
             ];
         case 'stock':
             return [
-                { title: 'المنتج', dataIndex: 'nameAr', key: 'nameAr' },
+                {
+                    title: 'المنتج',
+                    key: 'nameAr',
+                    render: (_: any, record: any) => (
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                            <div>
+                                {record.imageUrl ? (
+                                    <Image
+                                        src={record.imageUrl}
+                                        alt={record.nameAr}
+                                        width={40}
+                                        height={40}
+                                        style={{ objectFit: 'cover', borderRadius: 4 }}
+                                        fallback="https://via.placeholder.com/40?text=No+Image"
+                                    />
+                                ) : (
+                                    <div style={{ width: 40, height: 40, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                        <PictureOutlined style={{ fontSize: 16, color: '#d9d9d9' }} />
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <div>{record.nameAr}</div>
+                                {record.nameEn && (
+                                    <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{record.nameEn}</div>
+                                )}
+                            </div>
+                        </div>
+                    ),
+                },
                 { title: 'التصنيف', dataIndex: 'category', key: 'category' },
                 { title: 'المخزن', dataIndex: 'warehouseQty', key: 'warehouseQty' },
                 { title: 'الرف', dataIndex: 'floorQty', key: 'floorQty' },
@@ -220,9 +250,9 @@ export default function ReportsPage() {
                 comparisonItems={
                     data?.comparison
                         ? getSummaryItems(activeReport, data.comparison.summary).map((item) => ({
-                              ...item,
-                              label: `${data.comparison?.label}: ${item.label}`,
-                          }))
+                            ...item,
+                            label: `${data.comparison?.label}: ${item.label}`,
+                        }))
                         : undefined
                 }
             />

@@ -1,7 +1,7 @@
 'use client';
 
-import { Table, InputNumber, Button, Space, Select, Typography, Row } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { Table, InputNumber, Button, Space, Select, Typography, Row, Image } from 'antd';
+import { DeleteOutlined, PictureOutlined } from '@ant-design/icons';
 import MoneyDisplay from '../common/MoneyDisplay';
 import ar from '@/i18n/ar';
 import type { CartItem, DiscountObj } from '@/lib/types';
@@ -42,8 +42,33 @@ export default function Cart({
     const columns = [
         {
             title: ar.products.nameAr,
-            dataIndex: ['product', 'nameAr'],
             key: 'name',
+            render: (_: any, record: CartItem) => (
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div>
+                        {record.product.imageUrl ? (
+                            <Image
+                                src={record.product.imageUrl}
+                                alt={record.product.nameAr}
+                                width={40}
+                                height={40}
+                                style={{ objectFit: 'cover', borderRadius: 4 }}
+                                fallback="https://via.placeholder.com/40?text=No+Image"
+                            />
+                        ) : (
+                            <div style={{ width: 40, height: 40, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                <PictureOutlined style={{ fontSize: 16, color: '#d9d9d9' }} />
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <div>{record.product.nameAr}</div>
+                        {record.product.nameEn && (
+                            <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{record.product.nameEn}</div>
+                        )}
+                    </div>
+                </div>
+            ),
         },
         {
             title: ar.pos.quantity,

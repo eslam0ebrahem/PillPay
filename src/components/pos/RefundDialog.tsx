@@ -11,10 +11,11 @@ import {
     Popconfirm,
     Segmented,
     Select,
-    Space,
     Table,
     Typography,
     message,
+    Image,
+    Space,
 } from 'antd';
 import {
     DeleteOutlined,
@@ -22,6 +23,7 @@ import {
     SearchOutlined,
     StopOutlined,
     UndoOutlined,
+    PictureOutlined,
 } from '@ant-design/icons';
 import type { ProductSearchResult } from '@/lib/types';
 import { formatEGP } from '@/utils/money';
@@ -37,6 +39,8 @@ interface InvoiceLookupItem {
     saleItemId: string;
     productId: string;
     productNameAr: string;
+    productNameEn?: string;
+    imageUrl?: string;
     quantity: number;
     refundedQuantity: number;
     refundableQuantity: number;
@@ -69,6 +73,8 @@ interface StandaloneRefundItem {
     id: string;
     productId?: string;
     productName?: string;
+    productNameEn?: string;
+    imageUrl?: string;
     quantity: number;
     unitPrice: number;
 }
@@ -320,8 +326,33 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
     const invoiceColumns = [
         {
             title: 'الصنف',
-            dataIndex: 'productNameAr',
             key: 'productNameAr',
+            render: (_: any, record: InvoiceLookupItem) => (
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div>
+                        {record.imageUrl ? (
+                            <Image
+                                src={record.imageUrl}
+                                alt={record.productNameAr}
+                                width={40}
+                                height={40}
+                                style={{ objectFit: 'cover', borderRadius: 4 }}
+                                fallback="https://via.placeholder.com/40?text=No+Image"
+                            />
+                        ) : (
+                            <div style={{ width: 40, height: 40, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                <PictureOutlined style={{ fontSize: 16, color: '#d9d9d9' }} />
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <div>{record.productNameAr}</div>
+                        {record.productNameEn && (
+                            <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{record.productNameEn}</div>
+                        )}
+                    </div>
+                </div>
+            ),
         },
         {
             title: 'المباع',
@@ -517,13 +548,35 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                                             updateStandaloneItem(item.id, {
                                                 productId: value,
                                                 productName: selectedProduct?.nameAr ?? '',
+                                                productNameEn: selectedProduct?.nameEn ?? '',
+                                                imageUrl: selectedProduct?.imageUrl,
                                                 unitPrice:
                                                     (selectedProduct?.sellingPrice ?? 0) / 100,
                                             });
                                         }}
                                         options={productOptions.map((product) => ({
                                             value: product._id,
-                                            label: product.nameAr,
+                                            label: (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    {product.imageUrl ? (
+                                                        <Image
+                                                            src={product.imageUrl}
+                                                            alt={product.nameAr}
+                                                            width={24}
+                                                            height={24}
+                                                            style={{ objectFit: 'cover', borderRadius: 2 }}
+                                                            preview={false}
+                                                            fallback="https://via.placeholder.com/24?text=NA"
+                                                        />
+                                                    ) : (
+                                                        <PictureOutlined style={{ color: '#d9d9d9' }} />
+                                                    )}
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <Text>{product.nameAr}</Text>
+                                                        {product.nameEn && <Text type="secondary" style={{ fontSize: 11 }}>{product.nameEn}</Text>}
+                                                    </div>
+                                                </div>
+                                            ),
                                             sellingPrice: product.sellingPrice,
                                         }))}
                                     />

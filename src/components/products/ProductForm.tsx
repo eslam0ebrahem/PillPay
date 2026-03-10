@@ -1,7 +1,7 @@
 'use client';
 
-import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space } from 'antd';
-import { useEffect } from 'react';
+import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space, message } from 'antd';
+import { useEffect, useState } from 'react';
 import ar from '@/i18n/ar';
 import { toEGP, toPiasters } from '@/lib/utils/money';
 
@@ -31,10 +31,13 @@ interface ProductFormProps {
     initialValues?: Partial<ProductFormValues>;
     onSubmit: (values: ProductFormValues) => Promise<void>;
     isSubmitting: boolean;
+    onProductFound?: (product: any) => void;
+    mode?: 'create' | 'edit';
 }
 
-export default function ProductForm({ initialValues, onSubmit, isSubmitting }: ProductFormProps) {
+export default function ProductForm({ initialValues, onSubmit, isSubmitting, onProductFound, mode = 'create' }: ProductFormProps) {
     const [form] = Form.useForm<ProductFormValues>();
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         if (initialValues) {
@@ -51,6 +54,34 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting }: P
             sellingPrice: toPiasters(values.sellingPrice || 0),
         };
         await onSubmit(payload);
+    };
+
+    const handleBarcodeSearch = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+        const barcode = (e.target as HTMLInputElement).value;
+        if (!barcode || mode === 'edit') return;
+
+        setIsSearching(true);
+        try {
+            const res = await fetch(`/api/products?search=${barcode}`);
+            if (res.ok) {
+                const json = await res.json();
+                const product = json.data.find((p: any) => p.barcode === barcode || p.barcode2 === barcode);
+                if (product) {
+                    message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
+                    form.setFieldsValue({
+                        ...product,
+                        sellingPrice: product.sellingPrice ? toEGP(product.sellingPrice) : undefined,
+                    });
+                    if (onProductFound) {
+                        onProductFound(product);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error searching by barcode:', error);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     return (
@@ -81,8 +112,13 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting }: P
                         </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
-                        <Form.Item name="barcode" label={ar.products.barcode}>
-                            <Input />
+                        <Form.Item name="barcode" label={ar.products.barcode} tooltip="قم بمسح الباركود للبحث عن منتج موجود تلقائياً">
+                            <Input
+                                autoFocus
+                                onPressEnter={handleBarcodeSearch}
+                                placeholder="امسح الباركود هنا..."
+                                disabled={isSearching}
+                            />
                         </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
@@ -201,7 +237,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting }: P
 
             <Form.Item>
                 <Button type="primary" htmlType="submit" loading={isSubmitting} block size="large">
-                    {ar.actions.save}
+                    {mode === 'edit' ? 'حفظ التعديلات' : ar.actions.save}
                 </Button>
             </Form.Item>
         </Form>

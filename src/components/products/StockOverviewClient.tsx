@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Table, Button, Modal, Form, InputNumber, Select, Input, message, Tag } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, InputNumber, Select, Input, message, Tag, Image } from 'antd';
+import { EditOutlined, PictureOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import ar from '@/i18n/ar';
 import dayjs from 'dayjs';
@@ -66,8 +66,37 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
     const columns = [
         {
             title: ar.products.nameAr,
-            dataIndex: ['productId', 'nameAr'],
             key: 'productName',
+            render: (_: any, record: any) => {
+                const product = record.productId;
+                if (!product) return '-';
+                return (
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <div>
+                            {product.imageUrl ? (
+                                <Image
+                                    src={product.imageUrl}
+                                    alt={product.nameAr}
+                                    width={40}
+                                    height={40}
+                                    style={{ objectFit: 'cover', borderRadius: 4 }}
+                                    fallback="https://via.placeholder.com/40?text=No+Image"
+                                />
+                            ) : (
+                                <div style={{ width: 40, height: 40, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                    <PictureOutlined style={{ fontSize: 16, color: '#d9d9d9' }} />
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <div>{product.nameAr}</div>
+                            {product.nameEn && (
+                                <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{product.nameEn}</div>
+                            )}
+                        </div>
+                    </div>
+                );
+            },
         },
         {
             title: ar.batches.batchNumber,
