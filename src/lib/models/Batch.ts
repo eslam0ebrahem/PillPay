@@ -8,6 +8,8 @@ export interface IBatch extends Document {
     warehouseQty: number;
     floorQty: number;
     supplierInvoiceId?: Types.ObjectId;
+    source: 'supplier_invoice' | 'initial_stock' | 'adjustment';
+    notes?: string;
     createdAt: Date;
 }
 
@@ -45,6 +47,15 @@ const batchSchema = new Schema<IBatch>({
         type: Schema.Types.ObjectId,
         ref: 'SupplierInvoice',
     },
+    source: {
+        type: String,
+        enum: ['supplier_invoice', 'initial_stock', 'adjustment'],
+        default: 'supplier_invoice',
+    },
+    notes: {
+        type: String,
+        trim: true,
+    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -59,6 +70,8 @@ batchSchema.index({ productId: 1, floorQty: 1 });
 batchSchema.index({ expirationDate: 1 });
 // Supplier invoice lookup
 batchSchema.index({ supplierInvoiceId: 1 });
+// Source filter
+batchSchema.index({ source: 1 });
 
 const Batch = models.Batch || model<IBatch>('Batch', batchSchema);
 

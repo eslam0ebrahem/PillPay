@@ -212,6 +212,32 @@ const ar = {
         transferHistory: 'سجل النقل',
     },
 
+    // Initial Stock Entry
+    initialStock: {
+        title: 'تسجيل مخزون أولي',
+        addInitialStock: 'إضافة مخزون أولي',
+        product: 'المنتج',
+        batchNumber: 'رقم التشغيلة',
+        expirationDate: 'تاريخ الانتهاء',
+        quantity: 'الكمية',
+        purchasePrice: 'سعر الشراء التقريبي',
+        location: 'الموقع',
+        floor: 'الصيدلية (على الرف)',
+        warehouse: 'المخزن',
+        notes: 'ملاحظات (مصدر المخزون)',
+        notesPlaceholder: 'مثال: مخزون موجود على الرف، مورد غير معروف',
+        submit: 'تسجيل المخزون',
+        success: 'تم تسجيل المخزون الأولي بنجاح',
+    },
+
+    // Batch Source
+    batchSource: {
+        supplier_invoice: 'فاتورة مورد',
+        initial_stock: 'مخزون أولي',
+        adjustment: 'تعديل',
+        source: 'المصدر',
+    },
+
     // Reports
     reports: {
         title: 'التقارير',

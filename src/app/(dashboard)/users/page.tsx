@@ -216,8 +216,6 @@ export default function UsersPage() {
     const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
     const [createForm] = Form.useForm<UserFormValues>();
     const [editForm] = Form.useForm<UserFormValues>();
-    const createRole = Form.useWatch('role', createForm) ?? 'cashier';
-    const editRole = Form.useWatch('role', editForm) ?? editingUser?.role ?? 'cashier';
 
     const usersQuery = useQuery({
         queryKey: ['users', page, pageSize, roleFilter, statusFilter],
@@ -509,11 +507,22 @@ export default function UsersPage() {
                     </Row>
 
                     <Divider>الصلاحيات</Divider>
-                    {createRole === 'owner' ? (
-                        <Text type="secondary">المالك يمتلك جميع الصلاحيات بشكل تلقائي.</Text>
-                    ) : null}
-                    <Form.Item name="permissions">
-                        <PermissionMatrix disabled={createRole === 'owner'} />
+                    <Form.Item noStyle shouldUpdate={(prev, curr) => prev.role !== curr.role}>
+                        {({ getFieldValue }) => {
+                            const role = getFieldValue('role') ?? 'cashier';
+                            return (
+                                <>
+                                    {role === 'owner' ? (
+                                        <div style={{ marginBottom: 16 }}>
+                                            <Text type="secondary">المالك يمتلك جميع الصلاحيات بشكل تلقائي.</Text>
+                                        </div>
+                                    ) : null}
+                                    <Form.Item name="permissions">
+                                        <PermissionMatrix disabled={role === 'owner'} />
+                                    </Form.Item>
+                                </>
+                            );
+                        }}
                     </Form.Item>
                 </Form>
             </Modal>
@@ -609,11 +618,22 @@ export default function UsersPage() {
                     </Row>
 
                     <Divider>الصلاحيات</Divider>
-                    {editRole === 'owner' ? (
-                        <Text type="secondary">المالك يمتلك جميع الصلاحيات بشكل تلقائي.</Text>
-                    ) : null}
-                    <Form.Item name="permissions">
-                        <PermissionMatrix disabled={editRole === 'owner'} />
+                    <Form.Item noStyle shouldUpdate={(prev, curr) => prev.role !== curr.role}>
+                        {({ getFieldValue }) => {
+                            const role = getFieldValue('role') ?? editingUser?.role ?? 'cashier';
+                            return (
+                                <>
+                                    {role === 'owner' ? (
+                                        <div style={{ marginBottom: 16 }}>
+                                            <Text type="secondary">المالك يمتلك جميع الصلاحيات بشكل تلقائي.</Text>
+                                        </div>
+                                    ) : null}
+                                    <Form.Item name="permissions">
+                                        <PermissionMatrix disabled={role === 'owner'} />
+                                    </Form.Item>
+                                </>
+                            );
+                        }}
                     </Form.Item>
                 </Form>
             </Drawer>

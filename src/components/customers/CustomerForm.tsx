@@ -41,16 +41,16 @@ export default function CustomerForm({ initialValues, onSubmit, isLoading, isEdi
 
             {!isEdit && (
                 <Form.Item
-                    name="totalOwed"
                     label="الرصيد الافتتاحي (مديونية)"
                     help="أدخل أي ديون سابقة على العميل عند تسجيله لأول مرة"
-                    initialValue={0}
                 >
                     <Space.Compact style={{ width: '100%' }}>
-                        <InputNumber
-                            style={{ width: '100%' }}
-                            min={0}
-                        />
+                        <Form.Item name="totalOwed" noStyle initialValue={0}>
+                            <InputNumber
+                                style={{ width: '100%' }}
+                                min={0}
+                            />
+                        </Form.Item>
                         <div style={{
                             padding: '0 11px',
                             backgroundColor: '#f5f5f5',

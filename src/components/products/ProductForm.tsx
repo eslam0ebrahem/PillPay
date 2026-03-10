@@ -269,10 +269,14 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                     <Col xs={24} md={8}>
                         <Form.Item
                             label={ar.products.sellingPrice}
-                            rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}
+                            required
                         >
                             <Space.Compact style={{ width: '100%' }}>
-                                <Form.Item name="sellingPrice" noStyle>
+                                <Form.Item
+                                    name="sellingPrice"
+                                    noStyle
+                                    rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}
+                                >
                                     <InputNumber
                                         min={0}
                                         step={0.25}
