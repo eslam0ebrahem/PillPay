@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 const { Title, Text } = Typography;
 
 export interface ProductFormValues {
+    _id?: string;
     barcode?: string;
     barcode2?: string;
     nameAr: string;
@@ -109,7 +110,15 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
 
     const handleBarcodeSearch = async (e: React.KeyboardEvent<HTMLInputElement> | { target: { value: string } }) => {
         const barcode = (e.target as HTMLInputElement).value;
-        if (!barcode || (mode === 'edit' && searchSource === 'barcode')) return;
+        if (!barcode) return;
+
+        // If we are in a hard-coded edit page (e.g. /products/[id]/edit), don't search
+        if (mode === 'edit' && initialValues?._id) return;
+
+        // Reset form but keep the barcode we just scanned/typed
+        form.resetFields();
+        form.setFieldsValue({ barcode });
+        if (onProductFound) onProductFound(null);
 
         setIsSearching(true);
         try {
@@ -179,6 +188,8 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
     const handleProductSelect = (productId: string, option: any) => {
         const product = option?.product;
         if (product) {
+            // Reset form before loading new product
+            form.resetFields();
             message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
             setSearchSource('name');
             const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
@@ -249,7 +260,11 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                     <BarcodeScanner
                         onScan={(text) => {
                             form.setFieldsValue({ barcode: text });
-                            handleBarcodeSearch({ target: { value: text } } as any);
+                            // In creation wrapper, we want scan to always trigger a search (which now resets form)
+                            // In a real edit page (fixed mode='edit'), we just update the field.
+                            if (mode === 'create' || (mode === 'edit' && !initialValues?._id)) {
+                                handleBarcodeSearch({ target: { value: text } } as any);
+                            }
                         }}
                         buttonProps={{ size: 'large', type: 'dashed' }}
                     />
