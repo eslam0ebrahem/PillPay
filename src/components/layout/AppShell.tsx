@@ -29,7 +29,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 placement="right"
                 onClose={() => setMobileMenuOpen(false)}
                 open={mobileMenuOpen}
-                width={280}
+                size="default"
                 styles={{ body: { padding: 0 } }}
             >
                 <Sidebar isMobile />
