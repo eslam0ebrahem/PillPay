@@ -217,6 +217,71 @@ export async function transferToWarehouse(
     }
 }
 
+export interface CreateInitialStockBatchInput {
+    productId: string;
+    batchNumber: string;
+    expirationDate: string;
+    quantity: number;
+    purchasePrice: number;
+    location: 'floor' | 'warehouse';
+    notes?: string;
+    userId: string;
+}
+
+export async function createInitialStockBatch(input: CreateInitialStockBatchInput) {
+    await connectDB();
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const product = await Product.findById(input.productId).session(session);
+        if (!product) {
+            throw new Error('المنتج غير موجود');
+        }
+
+        const batch = new Batch({
+            productId: input.productId,
+            batchNumber: input.batchNumber,
+            expirationDate: new Date(input.expirationDate),
+            purchasePrice: input.purchasePrice,
+            warehouseQty: input.location === 'warehouse' ? input.quantity : 0,
+            floorQty: input.location === 'floor' ? input.quantity : 0,
+            source: 'initial_stock',
+            notes: input.notes || '',
+        });
+        await batch.save({ session });
+
+        if (!product.isActive) {
+            product.isActive = true;
+            await product.save({ session });
+        }
+
+        await session.commitTransaction();
+
+        await logAction({
+            userId: input.userId,
+            action: 'INITIAL_STOCK_CREATED',
+            entityType: 'Batch',
+            entityId: batch._id.toString(),
+            productId: input.productId,
+            details: {
+                batchNumber: input.batchNumber,
+                quantity: input.quantity,
+                location: input.location,
+                purchasePrice: input.purchasePrice,
+                notes: input.notes,
+            },
+        });
+
+        return batch;
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
 export interface AdjustStockQuantityInput {
     productId: string;
     batchId: string;

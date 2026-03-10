@@ -265,14 +265,16 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                 open={isEditModalVisible}
                 onCancel={() => setIsEditModalVisible(false)}
                 footer={null}
-                destroyOnHidden
+                destroyOnClose
             >
-                <CustomerForm
-                    initialValues={customer}
-                    onSubmit={handleUpdateCustomer}
-                    isEdit
-                    isLoading={loading}
-                />
+                {isEditModalVisible && (
+                    <CustomerForm
+                        initialValues={customer}
+                        onSubmit={handleUpdateCustomer}
+                        isEdit
+                        isLoading={loading}
+                    />
+                )}
             </Modal>
 
         </Space>

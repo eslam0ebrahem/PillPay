@@ -15,10 +15,19 @@ export default async function SupplierInvoicesPage() {
     const safeInvoices = invoices.map(inv => ({
         ...inv,
         _id: inv._id.toString(),
-        supplierId: {
+        supplierId: inv.supplierId ? {
             ...inv.supplierId,
-            _id: inv.supplierId?._id?.toString() || ''
-        }
+            _id: inv.supplierId._id?.toString() || ''
+        } : null,
+        items: inv.items?.map((item: any) => ({
+            ...item,
+            _id: item._id?.toString(),
+            productId: item.productId?.toString(),
+            expirationDate: item.expirationDate?.toISOString(),
+        })),
+        date: inv.date?.toISOString(),
+        createdAt: inv.createdAt?.toISOString(),
+        updatedAt: inv.updatedAt?.toISOString(),
     }));
 
     return <SupplierInvoicesListClient invoices={safeInvoices} />;

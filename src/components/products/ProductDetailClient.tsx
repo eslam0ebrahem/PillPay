@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { Tabs, Card, Button, Modal, Row, Col, Statistic, Image, Typography, App } from 'antd';
-import { EditOutlined, RetweetOutlined, PictureOutlined } from '@ant-design/icons';
+import { EditOutlined, PlusOutlined, PictureOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import ProductForm, { ProductFormValues } from '@/components/products/ProductForm';
 import BatchViewer from '@/components/products/BatchViewer';
+import InitialStockForm from '@/components/stock/InitialStockForm';
 import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
 
@@ -23,6 +25,30 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
     const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+    const [isInitialStockModalOpen, setIsInitialStockModalOpen] = useState(false);
+
+    const initialStockMutation = useMutation({
+        mutationFn: async (values: any) => {
+            const res = await fetch('/api/stock/initial-entry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(values),
+            });
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error?.message || 'فشل تسجيل المخزون');
+            }
+            return res.json();
+        },
+        onSuccess: () => {
+            message.success(ar.initialStock.success);
+            setIsInitialStockModalOpen(false);
+            router.refresh();
+        },
+        onError: (error: any) => {
+            message.error(error.message);
+        },
+    });
 
     const handleUpdate = async (values: ProductFormValues) => {
         setIsSubmitting(true);
@@ -65,8 +91,14 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                             <Statistic title={ar.products.warehouseStock} value={stockSummary.totalWarehouseQty} suffix={product.baseUnit} />
                         </Col>
                     </Row>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                         <h3>سجل التشغيلات (Batches)</h3>
+                        <Button
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsInitialStockModalOpen(true)}
+                        >
+                            {ar.initialStock.addInitialStock}
+                        </Button>
                     </div>
                     <BatchViewer batches={batches} expiringSoonDays={90} />
                 </Card>
@@ -130,6 +162,23 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
             </div>
 
             <Tabs defaultActiveKey="1" items={items} />
+
+            <Modal
+                title={ar.initialStock.title}
+                open={isInitialStockModalOpen}
+                onCancel={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
+                footer={null}
+                destroyOnClose
+            >
+                {isInitialStockModalOpen && (
+                    <InitialStockForm
+                        products={[{ _id: product._id, nameAr: product.nameAr, barcode: product.barcode, barcode2: product.barcode2 }]}
+                        preselectedProductId={product._id}
+                        onSubmit={async (values) => await initialStockMutation.mutateAsync(values)}
+                        isLoading={initialStockMutation.isPending}
+                    />
+                )}
+            </Modal>
         </div>
     );
 }

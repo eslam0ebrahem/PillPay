@@ -191,18 +191,22 @@ export default function SettingsPage() {
                         </Form.Item>
 
                         <Form.Item
-                            name="maxDiscountPercentageDisplay"
                             label="أقصى نسبة خصم مسموحة"
-                            rules={[{ required: true, message: 'هذا الحقل مطلوب' }]}
-                            extra="القيمة المعروضة بالنسبة المئوية العادية، وليست بوحدة basis points."
+                            required
                         >
                             <Space.Compact style={{ width: '100%' }}>
-                                <InputNumber
-                                    min={0}
-                                    max={100}
-                                    step={0.5}
-                                    style={{ width: '100%' }}
-                                />
+                                <Form.Item
+                                    name="maxDiscountPercentageDisplay"
+                                    noStyle
+                                    rules={[{ required: true, message: 'هذا الحقل مطلوب' }]}
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        max={100}
+                                        step={0.5}
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
                                 <div style={{
                                     padding: '0 11px',
                                     backgroundColor: '#f5f5f5',
@@ -216,6 +220,9 @@ export default function SettingsPage() {
                                     %
                                 </div>
                             </Space.Compact>
+                            <Text type="secondary" style={{ fontSize: '12px', marginTop: 4, display: 'block' }}>
+                                القيمة المعروضة بالنسبة المئوية العادية، وليست بوحدة basis points.
+                            </Text>
                         </Form.Item>
 
                         <Button
