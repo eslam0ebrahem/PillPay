@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import '@/lib/models'; // Register all models
 
 interface MongooseCache {
     conn: typeof mongoose | null;
