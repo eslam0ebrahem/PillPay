@@ -122,14 +122,22 @@ export const supplierInvoiceSchema = z.object({
 });
 
 // --- Initial Stock Entry ---
-export const initialStockEntrySchema = z.object({
-    productId: z.string().min(1, 'مطلوب إدخال معرف المنتج'),
+export const initialStockEntryBatchSchema = z.object({
     batchNumber: z.string().min(1, 'رقم التشغيلة مطلوب'),
     expirationDate: z.string().min(1, 'تاريخ الانتهاء مطلوب'),
     quantity: z.number().int().min(1, 'الكمية يجب أن تكون 1 أو أكثر'),
     purchasePrice: z.number().int().min(0, 'سعر الشراء يجب أن يكون 0 أو أكثر'),
     location: z.enum(['floor', 'warehouse']).default('floor'),
     notes: z.string().optional(),
+});
+
+export const initialStockEntrySchema = initialStockEntryBatchSchema.extend({
+    productId: z.string().min(1, 'مطلوب إدخال معرف المنتج'),
+});
+
+export const initialStockMultiEntrySchema = z.object({
+    productId: z.string().min(1, 'مطلوب إدخال معرف المنتج'),
+    batches: z.array(initialStockEntryBatchSchema).min(1, 'يجب إضافة تشغيلة واحدة على الأقل'),
 });
 
 // --- Stock Adjustment ---

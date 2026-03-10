@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPermission } from '@/lib/auth/middleware';
-import { createInitialStockBatch } from '@/lib/services/stock.service';
-import { initialStockEntrySchema } from '@/lib/utils/validation';
+import { initialStockMultiEntrySchema } from '@/lib/utils/validation';
+import { createMultipleInitialStockBatches } from '@/lib/services/stock.service';
 import { z } from 'zod';
 
 export const POST = withPermission('stock.adjust', async (req: NextRequest, context) => {
     try {
         const body = await req.json();
-        const parsed = initialStockEntrySchema.parse(body);
+        const { productId, batches } = initialStockMultiEntrySchema.parse(body);
 
-        const batch = await createInitialStockBatch({
-            ...parsed,
-            userId: context.user._id,
-        });
+        const createdBatches = await createMultipleInitialStockBatches(
+            productId,
+            batches,
+            context.user._id
+        );
 
         return NextResponse.json(
-            { message: 'تم تسجيل المخزون الأولي بنجاح', data: batch },
+            { message: 'تم تسجيل المخزون الأولي بنجاح', data: createdBatches },
             { status: 201 }
         );
     } catch (error) {
