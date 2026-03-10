@@ -1,7 +1,7 @@
 'use client';
 
 import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space, Typography, App, Select } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SearchOutlined, BarcodeOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
@@ -45,6 +45,8 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
     const { message } = App.useApp();
     const [form] = Form.useForm<ProductFormValues>();
     const [isSearching, setIsSearching] = useState(false);
+    const [nameSearchOptions, setNameSearchOptions] = useState<any[]>([]);
+    const searchTimer = useRef<NodeJS.Timeout | null>(null);
 
     const { data: brandsData, isLoading: isLoadingBrands } = useQuery({
         queryKey: ['brands-filter'],
@@ -115,6 +117,57 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
         }
     };
 
+    const handleProductNameSearch = (value: string) => {
+        if (searchTimer.current) clearTimeout(searchTimer.current);
+
+        if (!value || value.length < 2) {
+            setNameSearchOptions([]);
+            return;
+        }
+
+        searchTimer.current = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await fetch(`/api/products?search=${encodeURIComponent(value)}&allStatus=true&limit=10`);
+                if (res.ok) {
+                    const json = await res.json();
+                    setNameSearchOptions(json.data.map((p: any) => ({
+                        label: (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                <span style={{ fontWeight: 500 }}>{p.nameAr}</span>
+                                <span style={{ color: '#8c8c8c', fontSize: '12px', marginLeft: 16 }}>{p.nameEn || ''}</span>
+                            </div>
+                        ),
+                        value: p._id,
+                        product: p,
+                        // Search matches on both for local filtering if needed, though we use remote
+                        searchText: `${p.nameAr} ${p.nameEn || ''}`
+                    })));
+                }
+            } catch (error) {
+                console.error('Error searching products by name:', error);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 400);
+    };
+
+    const handleProductSelect = (productId: string, option: any) => {
+        const product = option?.product;
+        if (product) {
+            message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
+            const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
+            form.setFieldsValue({
+                ...product,
+                brand: brandId,
+                sellingPrice: product.sellingPrice ? toEGP(product.sellingPrice) : undefined,
+            });
+            if (onProductFound) {
+                onProductFound(product);
+            }
+        }
+    };
+
     return (
         <Form
             form={form}
@@ -127,38 +180,57 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
             }}
         >
             <Card style={{ marginBottom: 24, border: '2px solid #1890ff', backgroundColor: '#e6f7ff' }}>
-                <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                    <BarcodeOutlined style={{ fontSize: 32, color: '#1890ff', marginBottom: 8 }} />
-                    <Title level={4} style={{ margin: 0 }}>المسح الضوئي للباركود</Title>
-                    <Text type="secondary">امسح الباركود للبحث عن منتج موجود أو لإضافة منتج جديد</Text>
+                <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                    <BarcodeOutlined style={{ fontSize: 36, color: '#1890ff', marginBottom: 12 }} />
+                    <Title level={4} style={{ margin: 0 }}>المسح الضوئي للباركود والبحث</Title>
+                    <Text type="secondary">امسح الباركود للبحث عن منتج موجود أو ابحث بالاسم (عربي/إنجليزي)</Text>
                 </div>
 
-                <Row justify="center">
-                    <Col xs={24} md={16} lg={12}>
-                        <Form.Item name="barcode" style={{ marginBottom: 0 }}>
+                <Row justify="center" gutter={24}>
+                    <Col xs={24} md={11}>
+                        <Form.Item name="barcode" label="الباركود (سكان)" style={{ marginBottom: 12 }}>
                             <Input
                                 size="large"
                                 autoFocus
-                                prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                                prefix={<BarcodeOutlined style={{ color: '#bfbfbf' }} />}
                                 onPressEnter={handleBarcodeSearch}
-                                placeholder="امسح الباركود هنا أو أدخله يدوياً واضغط Enter..."
+                                placeholder="امسح الباركود هنا..."
                                 disabled={isSearching || mode === 'edit'}
                                 style={{ textAlign: 'center', fontSize: '18px' }}
                             />
                         </Form.Item>
-                        {mode === 'create' && (
-                            <div style={{ textAlign: 'center', marginTop: 12 }}>
-                                <BarcodeScanner
-                                    onScan={(text) => {
-                                        form.setFieldsValue({ barcode: text });
-                                        handleBarcodeSearch({ target: { value: text } } as any);
-                                    }}
-                                    buttonProps={{ size: 'large', type: 'dashed' }}
-                                />
-                            </div>
-                        )}
+                    </Col>
+                    <Col xs={24} md={11}>
+                        <Form.Item label="البحث بالاسم (عربي / English)" style={{ marginBottom: 12 }}>
+                            <Select
+                                showSearch
+                                size="large"
+                                placeholder="ابحث باسم المنتج..."
+                                filterOption={false}
+                                onSearch={handleProductNameSearch}
+                                onSelect={handleProductSelect}
+                                options={nameSearchOptions}
+                                loading={isSearching}
+                                disabled={mode === 'edit'}
+                                style={{ width: '100%' }}
+                                allowClear
+                                styles={{ popup: { root: { minWidth: 300 } } }}
+                                prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                            />
+                        </Form.Item>
                     </Col>
                 </Row>
+                {mode === 'create' && (
+                    <div style={{ textAlign: 'center', marginTop: 12 }}>
+                        <BarcodeScanner
+                            onScan={(text) => {
+                                form.setFieldsValue({ barcode: text });
+                                handleBarcodeSearch({ target: { value: text } } as any);
+                            }}
+                            buttonProps={{ size: 'large', type: 'dashed' }}
+                        />
+                    </div>
+                )}
             </Card>
 
             <Card title="البيانات الأساسية" style={{ marginBottom: 16 }}>

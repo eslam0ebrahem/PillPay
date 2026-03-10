@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Space, Card, Typography, App, Popconfirm, Tabs } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, Space, Card, Typography, App, Popconfirm, Tabs, Flex, Grid } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ar from '@/i18n/ar';
 
 const { Title } = Typography;
+const { useBreakpoint } = Grid;
 
 interface Unit {
     _id: string;
@@ -18,6 +19,7 @@ interface Unit {
 }
 
 export default function UnitsManagementClient() {
+    const screens = useBreakpoint();
     const { message } = App.useApp();
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,12 +126,12 @@ export default function UnitsManagementClient() {
     };
 
     const columns = [
-        { title: ar.units.code, dataIndex: 'code', key: 'code' },
+        { title: ar.units.code, dataIndex: 'code', key: 'code', responsive: ['md'] as any },
         { title: ar.units.nameAr, dataIndex: 'nameAr', key: 'nameAr' },
-        { title: ar.units.nameEn, dataIndex: 'nameEn', key: 'nameEn' },
-        { title: ar.units.description, dataIndex: 'description', key: 'description' },
+        { title: ar.units.nameEn, dataIndex: 'nameEn', key: 'nameEn', responsive: ['sm'] as any },
+        { title: ar.units.description, dataIndex: 'description', key: 'description', responsive: ['lg'] as any },
         {
-            title: ar.actions.search,
+            title: ar.actions.actions,
             key: 'actions',
             render: (_: any, record: Unit) => (
                 <Space>
@@ -158,6 +160,7 @@ export default function UnitsManagementClient() {
                     rowKey="_id"
                     loading={isLoading}
                     pagination={false}
+                    scroll={{ x: 'max-content' }}
                 />
             ),
         },
@@ -171,6 +174,7 @@ export default function UnitsManagementClient() {
                     rowKey="_id"
                     loading={isLoading}
                     pagination={false}
+                    scroll={{ x: 'max-content' }}
                 />
             ),
         },
@@ -184,20 +188,21 @@ export default function UnitsManagementClient() {
                     rowKey="_id"
                     loading={isLoading}
                     pagination={false}
+                    scroll={{ x: 'max-content' }}
                 />
             ),
         },
     ];
 
     return (
-        <div style={{ padding: 24 }}>
+        <div>
             <Card>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                    <Title level={2} style={{ margin: 0 }}>{ar.units.title}</Title>
+                <Flex justify="space-between" align="center" style={{ marginBottom: 24 }} wrap="wrap" gap="middle">
+                    <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>{ar.units.title}</Title>
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                         {ar.units.addUnit}
                     </Button>
-                </div>
+                </Flex>
 
                 <Tabs items={tabItems} defaultActiveKey="base_unit" />
             </Card>
