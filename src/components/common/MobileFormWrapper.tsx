@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Drawer, Grid } from 'antd';
 
 const { useBreakpoint } = Grid;
@@ -21,20 +21,33 @@ export function MobileFormWrapper({
     title,
     children,
     footer,
-    destroyOnHidden = true,
+    destroyOnHidden = false,
     width = 600
 }: MobileFormWrapperProps) {
     const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
 
-    if (screens.md !== false) {
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Return null or a consistent placeholder during SSR and first client pass
+    if (!mounted) {
+        return null;
+    }
+
+    const isDesktop = screens.md !== false;
+
+    if (isDesktop) {
         return (
             <Modal
                 title={title}
                 open={open}
                 onCancel={onClose}
-                footer={footer}
+                footer={footer === undefined ? null : footer}
                 destroyOnHidden={destroyOnHidden}
                 width={width}
+                forceRender
             >
                 {children}
             </Modal>
@@ -49,7 +62,8 @@ export function MobileFormWrapper({
             open={open}
             onClose={onClose}
             destroyOnHidden={destroyOnHidden}
-            footer={footer}
+            footer={footer === undefined ? null : footer}
+            forceRender
         >
             {children}
         </Drawer>

@@ -234,7 +234,6 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                     setIsAdjustModalVisible(false);
                     adjustForm.resetFields();
                 }}
-                destroyOnHidden
             >
                 <Form form={adjustForm} layout="vertical" onFinish={handleAdjustBalance}>
                     <Form.Item
@@ -265,7 +264,6 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                 title="تعديل بيانات العميل"
                 open={isEditModalVisible}
                 onClose={() => setIsEditModalVisible(false)}
-                destroyOnHidden
             >
                 {isEditModalVisible && (
                     <CustomerForm

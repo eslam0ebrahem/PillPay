@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Grid } from 'antd';
 import Sidebar from './Sidebar';
@@ -11,12 +12,20 @@ const { useBreakpoint } = Grid;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
     const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // SSR safe responsive logic
+    const isDesktop = !mounted || screens.md !== false;
 
     return (
         <div className="app-shell">
             {/* Desktop Sidebar */}
-            {screens.md !== false && <Sidebar />}
+            {isDesktop && <Sidebar />}
 
             <div className="app-content">
                 <MobileTopBar />

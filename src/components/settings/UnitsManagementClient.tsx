@@ -212,7 +212,6 @@ export default function UnitsManagementClient() {
                 title={editingUnit ? ar.units.editUnit : ar.units.addUnit}
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                destroyOnHidden
             >
                 <div>
                     <Form

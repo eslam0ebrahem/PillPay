@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Grid } from 'antd';
 import {
@@ -17,12 +17,17 @@ const { useBreakpoint } = Grid;
 
 export default function BottomTabBar() {
     const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const { hasPermission } = usePermissions();
 
-    // Renders only on mobile
-    if (screens.md) {
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Renders only on mobile after mount
+    if (!mounted || screens.md) {
         return null;
     }
 

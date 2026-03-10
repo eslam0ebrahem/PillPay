@@ -60,30 +60,35 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
             </Form.Item>
 
             <Form.Item
-                name="productId"
                 label="المنتج"
-                rules={[{ required: true, message: 'يرجى اختيار المنتج' }]}
+                required
             >
                 <Flex gap="small">
-                    <Select
-                        showSearch
-                        placeholder="اختر منتج"
-                        onChange={(val) => {
-                            setSelectedProduct(val);
-                            form.setFieldValue('batchId', undefined);
-                            form.setFieldValue('quantity', undefined);
-                        }}
-                        options={products.map(p => ({
-                            value: p._id as string,
-                            label: `${p.nameAr} | ${p.barcode}`,
-                            barcode: p.barcode,
-                            barcode2: p.barcode2,
-                        }))}
-                        filterOption={(input, option) =>
-                            (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                        }
-                        style={{ flex: 1 }}
-                    />
+                    <Form.Item
+                        name="productId"
+                        noStyle
+                        rules={[{ required: true, message: 'يرجى اختيار المنتج' }]}
+                    >
+                        <Select
+                            showSearch
+                            placeholder="اختر منتج"
+                            onChange={(val) => {
+                                setSelectedProduct(val);
+                                form.setFieldValue('batchId', undefined);
+                                form.setFieldValue('quantity', undefined);
+                            }}
+                            options={products.map(p => ({
+                                value: p._id as string,
+                                label: `${p.nameAr} | ${p.barcode}`,
+                                barcode: p.barcode,
+                                barcode2: p.barcode2,
+                            }))}
+                            filterOption={(input, option) =>
+                                (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                            }
+                            style={{ flex: 1 }}
+                        />
+                    </Form.Item>
                     <BarcodeScanner
                         onScan={(text) => {
                             const product = products.find(p => p.barcode === text || p.barcode2 === text);

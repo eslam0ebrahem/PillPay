@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button, Space, Typography, Grid } from 'antd';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,8 +12,16 @@ const { useBreakpoint } = Grid;
 export default function Header() {
     const { user, logout, isLoggingOut } = useAuth();
     const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
 
-    if (screens.md === false) return null;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // SSR safe: default to showing on desktop
+    const isDesktop = !mounted || screens.md !== false;
+
+    if (!isDesktop) return null;
 
     return (
         <div className="app-header">
