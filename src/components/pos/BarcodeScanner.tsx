@@ -1,10 +1,9 @@
 'use client';
 
-import { Modal, Typography, Space, Button } from 'antd';
+import { Modal, Button } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
 import { useBarcodeScan } from '@/hooks/useBarcodeScan';
 import ar from '@/i18n/ar';
-
-const { Text } = Typography;
 
 interface BarcodeScannerProps {
     open: boolean;
@@ -13,12 +12,9 @@ interface BarcodeScannerProps {
 }
 
 export default function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
-    const SCANNER_ID = 'reader-container';
+    const SCANNER_ID = 'pos-barcode-reader';
 
     const handleScanSuccess = (decodedText: string) => {
-        // We get a hit, close the modal and emit the barcode
-        // In some cases it might scan multiple times fast, so emit once and close.
-        // The closing of the modal will stop the scanner via the hook.
         onScan(decodedText);
         onClose();
     };
@@ -31,24 +27,51 @@ export default function BarcodeScanner({ open, onClose, onScan }: BarcodeScanner
 
     return (
         <Modal
-            title={ar.pos.scanBarcode}
             open={open}
             onCancel={onClose}
-            footer={[
-                <Button key="close" onClick={onClose}>
-                    {ar.actions.cancel}
-                </Button>,
-            ]}
+            footer={null}
+            closeIcon={null}
             destroyOnHidden
+            className="scanner-modal"
+            width="100%"
+            centered
+            styles={{
+                body: { padding: 0, height: '100vh', overflow: 'hidden', background: '#000' }
+            }}
         >
-            <div style={{ textAlign: 'center', minHeight: 250 }}>
-                {hasCameraPermission === false && (
-                    <Space orientation="vertical" style={{ marginTop: 50 }}>
-                        <Text type="danger">{ar.pos.cameraError}</Text>
-                        <Text type="secondary">{error}</Text>
-                    </Space>
+            <div className="scanner-container">
+                <button className="scanner-close-btn" onClick={onClose}>
+                    <CloseOutlined />
+                </button>
+
+                <div id={SCANNER_ID} className="scanner-video-wrapper"></div>
+
+                {hasCameraPermission !== false && (
+                    <div className="scanner-overlay">
+                        <div className="scanner-cutout">
+                            <div className="scanner-corner scanner-corner-tl" />
+                            <div className="scanner-corner scanner-corner-tr" />
+                            <div className="scanner-corner scanner-corner-bl" />
+                            <div className="scanner-corner scanner-corner-br" />
+                            <div className="scanner-laser" />
+                        </div>
+                        <div className="scanner-hint">
+                            {ar.pos.scanBarcode}
+                        </div>
+                    </div>
                 )}
-                <div id={SCANNER_ID} style={{ width: '100%' }}></div>
+
+                {hasCameraPermission === false && (
+                    <div className="scanner-overlay" style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.8)' }}>
+                        <div style={{ color: 'white', textAlign: 'center', padding: 20 }}>
+                            <p style={{ fontSize: 18, marginBottom: 8 }}>{ar.pos.cameraError}</p>
+                            <p style={{ opacity: 0.7 }}>{error}</p>
+                            <Button ghost onClick={onClose} style={{ marginTop: 24 }}>
+                                {ar.actions.close}
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </Modal>
     );
