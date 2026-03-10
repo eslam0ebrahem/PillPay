@@ -105,7 +105,6 @@ saleInvoiceSchema.index({ createdAt: -1, status: 1 });
 // For customer history
 saleInvoiceSchema.index({ customerId: 1, createdAt: -1 });
 // For invoice lookup
-saleInvoiceSchema.index({ invoiceNumber: 1 });
 // For refunds lookup inside items
 saleInvoiceSchema.index({ 'items.productId': 1 });
 

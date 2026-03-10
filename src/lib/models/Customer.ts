@@ -32,8 +32,6 @@ const customerSchema = new Schema<ICustomer>(
 
 // Text index for name search
 customerSchema.index({ name: 'text' });
-// Phone lookup
-customerSchema.index({ phone: 1 }, { sparse: true });
 
 const Customer = models.Customer || model<ICustomer>('Customer', customerSchema);
 

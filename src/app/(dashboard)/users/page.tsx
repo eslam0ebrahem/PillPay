@@ -67,74 +67,74 @@ const permissionGroups: Array<{
     title: string;
     permissions: Array<{ key: PermissionKey; label: string }>;
 }> = [
-    {
-        title: 'نقطة البيع',
-        permissions: [
-            { key: 'pos.search', label: 'بحث المنتجات' },
-            { key: 'pos.checkout', label: 'إتمام البيع' },
-            { key: 'pos.cancel', label: 'إلغاء الفاتورة' },
-        ],
-    },
-    {
-        title: 'المنتجات',
-        permissions: [
-            { key: 'products.view', label: 'عرض المنتجات' },
-            { key: 'products.manage', label: 'إدارة المنتجات' },
-        ],
-    },
-    {
-        title: 'العملاء',
-        permissions: [
-            { key: 'customers.view', label: 'عرض العملاء' },
-            { key: 'customers.create', label: 'إنشاء عميل' },
-            { key: 'customers.manage', label: 'إدارة العملاء' },
-            { key: 'customers.payments', label: 'مدفوعات العملاء' },
-        ],
-    },
-    {
-        title: 'المرتجعات',
-        permissions: [
-            { key: 'refunds.create', label: 'إنشاء مرتجع' },
-            { key: 'refunds.view', label: 'عرض المرتجعات' },
-        ],
-    },
-    {
-        title: 'المخزون',
-        permissions: [
-            { key: 'stock.view', label: 'عرض المخزون' },
-            { key: 'stock.transfer', label: 'نقل المخزون' },
-            { key: 'stock.adjust', label: 'تعديل المخزون' },
-        ],
-    },
-    {
-        title: 'الموردون',
-        permissions: [
-            { key: 'suppliers.view', label: 'عرض الموردين' },
-            { key: 'suppliers.manage', label: 'إدارة الموردين' },
-            { key: 'supplier-invoices.view', label: 'عرض فواتير الموردين' },
-            { key: 'supplier-invoices.manage', label: 'إدارة فواتير الموردين' },
-            { key: 'supplier-invoices.payments', label: 'مدفوعات الموردين' },
-        ],
-    },
-    {
-        title: 'التقارير والجرد',
-        permissions: [
-            { key: 'reports.view', label: 'عرض التقارير' },
-            { key: 'inventory-audits.manage', label: 'إدارة الجرد' },
-        ],
-    },
-    {
-        title: 'النظام',
-        permissions: [
-            { key: 'balance.adjust', label: 'تعديل الأرصدة' },
-            { key: 'users.manage', label: 'إدارة المستخدمين' },
-            { key: 'settings.view', label: 'عرض الإعدادات' },
-            { key: 'settings.manage', label: 'إدارة الإعدادات' },
-            { key: 'backup.manage', label: 'النسخ الاحتياطي' },
-            { key: 'audit-logs.view', label: 'عرض سجل المراجعة' },
-        ],
-    },
-];
+        {
+            title: 'نقطة البيع',
+            permissions: [
+                { key: 'pos.search', label: 'بحث المنتجات' },
+                { key: 'pos.checkout', label: 'إتمام البيع' },
+                { key: 'pos.cancel', label: 'إلغاء الفاتورة' },
+            ],
+        },
+        {
+            title: 'المنتجات',
+            permissions: [
+                { key: 'products.view', label: 'عرض المنتجات' },
+                { key: 'products.manage', label: 'إدارة المنتجات' },
+            ],
+        },
+        {
+            title: 'العملاء',
+            permissions: [
+                { key: 'customers.view', label: 'عرض العملاء' },
+                { key: 'customers.create', label: 'إنشاء عميل' },
+                { key: 'customers.manage', label: 'إدارة العملاء' },
+                { key: 'customers.payments', label: 'مدفوعات العملاء' },
+            ],
+        },
+        {
+            title: 'المرتجعات',
+            permissions: [
+                { key: 'refunds.create', label: 'إنشاء مرتجع' },
+                { key: 'refunds.view', label: 'عرض المرتجعات' },
+            ],
+        },
+        {
+            title: 'المخزون',
+            permissions: [
+                { key: 'stock.view', label: 'عرض المخزون' },
+                { key: 'stock.transfer', label: 'نقل المخزون' },
+                { key: 'stock.adjust', label: 'تعديل المخزون' },
+            ],
+        },
+        {
+            title: 'الموردون',
+            permissions: [
+                { key: 'suppliers.view', label: 'عرض الموردين' },
+                { key: 'suppliers.manage', label: 'إدارة الموردين' },
+                { key: 'supplier-invoices.view', label: 'عرض فواتير الموردين' },
+                { key: 'supplier-invoices.manage', label: 'إدارة فواتير الموردين' },
+                { key: 'supplier-invoices.payments', label: 'مدفوعات الموردين' },
+            ],
+        },
+        {
+            title: 'التقارير والجرد',
+            permissions: [
+                { key: 'reports.view', label: 'عرض التقارير' },
+                { key: 'inventory-audits.manage', label: 'إدارة الجرد' },
+            ],
+        },
+        {
+            title: 'النظام',
+            permissions: [
+                { key: 'balance.adjust', label: 'تعديل الأرصدة' },
+                { key: 'users.manage', label: 'إدارة المستخدمين' },
+                { key: 'settings.view', label: 'عرض الإعدادات' },
+                { key: 'settings.manage', label: 'إدارة الإعدادات' },
+                { key: 'backup.manage', label: 'النسخ الاحتياطي' },
+                { key: 'audit-logs.view', label: 'عرض سجل المراجعة' },
+            ],
+        },
+    ];
 
 function PermissionMatrix({
     value = [],
@@ -148,7 +148,7 @@ function PermissionMatrix({
     const selectedPermissions = value ?? [];
 
     return (
-        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             {permissionGroups.map((group) => (
                 <div key={group.title}>
                     <Text strong>{group.title}</Text>
@@ -522,7 +522,7 @@ export default function UsersPage() {
             <Drawer
                 title="تعديل المستخدم"
                 open={Boolean(editingUser)}
-                width={920}
+                size={920}
                 destroyOnHidden
                 onClose={() => {
                     setEditingUser(null);

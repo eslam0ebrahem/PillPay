@@ -13,51 +13,69 @@ export function useBarcodeScan({ elementId, onScanSuccess, onScanFailure, isActi
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // Use refs for callbacks to prevent effect re-runs when they change
+    const onScanSuccessRef = useRef(onScanSuccess);
+    const onScanFailureRef = useRef(onScanFailure);
+
     useEffect(() => {
-        let active = true;
+        onScanSuccessRef.current = onScanSuccess;
+        onScanFailureRef.current = onScanFailure;
+    }, [onScanSuccess, onScanFailure]);
+
+    useEffect(() => {
+        let isMounted = true;
 
         const startScanner = async () => {
+            // Wait for next tick to ensure DOM is ready
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            if (!isMounted || !isActive) return;
+
             try {
-                const hasPerms = await Html5Qrcode.getCameras();
-                if (hasPerms && hasPerms.length > 0) {
-                    if (active) setHasCameraPermission(true);
+                const element = document.getElementById(elementId);
+                if (!element) {
+                    console.debug(`Scanner element #${elementId} not found yet, skipping.`);
+                    return;
+                }
 
-                    if (!scannerRef.current) {
-                        scannerRef.current = new Html5Qrcode(elementId);
-                    }
+                // Initialize if not exists
+                if (!scannerRef.current) {
+                    scannerRef.current = new Html5Qrcode(elementId);
+                }
 
-                    if (scannerRef.current.isScanning) {
-                        await scannerRef.current.stop();
-                    }
+                // If already scanning, don't start again
+                if (scannerRef.current.isScanning) {
+                    return;
+                }
 
-                    if (active) {
-                        await scannerRef.current.start(
-                            { facingMode: 'environment' }, // Prefer back camera
-                            {
-                                fps: 10,
-                                qrbox: { width: 250, height: 150 },
-                                aspectRatio: 1.0,
-                            },
-                            (decodedText) => {
-                                // Success callback
-                                onScanSuccess(decodedText);
-                            },
-                            (errorMessage) => {
-                                // Failure callback (happens constantly when no code in view, usually ignore)
-                                if (onScanFailure) onScanFailure(errorMessage);
-                            }
-                        );
-                    }
+                const cameras = await Html5Qrcode.getCameras();
+                if (cameras && cameras.length > 0) {
+                    if (isMounted) setHasCameraPermission(true);
+
+                    await scannerRef.current.start(
+                        { facingMode: 'environment' },
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 150 },
+                            aspectRatio: 1.0,
+                        },
+                        (text) => onScanSuccessRef.current?.(text),
+                        (err) => onScanFailureRef.current?.(err)
+                    );
                 } else {
-                    if (active) {
+                    if (isMounted) {
                         setHasCameraPermission(false);
                         setError('No cameras found.');
                     }
                 }
             } catch (err) {
-                if (active) {
+                if (isMounted) {
                     setHasCameraPermission(false);
-                    setError(err instanceof Error ? err.message : String(err));
+                    // Ignore errors caused by transitions if we are trying to start/stop quickly
+                    if (!(err instanceof Error && err.message.includes('transition'))) {
+                        setError(err instanceof Error ? err.message : String(err));
+                        console.error('Barcode scanner start error:', err);
+                    }
                 }
             }
         };
@@ -68,7 +86,10 @@ export function useBarcodeScan({ elementId, onScanSuccess, onScanFailure, isActi
                     await scannerRef.current.stop();
                 }
             } catch (err) {
-                console.warn("Error stopping scanner", err);
+                // Ignore "already under transition" errors during stop
+                if (!(err instanceof Error && err.message.includes('transition'))) {
+                    console.warn('Error stopping scanner:', err);
+                }
             }
         };
 
@@ -79,10 +100,10 @@ export function useBarcodeScan({ elementId, onScanSuccess, onScanFailure, isActi
         }
 
         return () => {
-            active = false;
+            isMounted = false;
             stopScanner();
         };
-    }, [elementId, isActive, onScanSuccess, onScanFailure]);
+    }, [elementId, isActive]); // Removed onScanSuccess/Failure from dependencies
 
     return { hasCameraPermission, error };
 }

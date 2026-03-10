@@ -53,8 +53,7 @@ const auditLogSchema = new Schema<IAuditLog>({
 auditLogSchema.index({ userId: 1, timestamp: -1 });
 auditLogSchema.index({ action: 1, timestamp: -1 });
 auditLogSchema.index({ entityType: 1, entityId: 1 });
-auditLogSchema.index({ invoiceNumber: 1 }, { sparse: true });
-auditLogSchema.index({ productId: 1 }, { sparse: true });
+// For reports: filtering by date and status
 auditLogSchema.index({ timestamp: -1 });
 
 // IMMUTABILITY: Block update and delete operations
