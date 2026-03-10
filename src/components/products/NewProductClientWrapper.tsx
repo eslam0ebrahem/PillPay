@@ -14,7 +14,7 @@ export default function NewProductClientWrapper() {
     const handleSubmit = async (values: ProductFormValues) => {
         setIsSubmitting(true);
         try {
-            const { initialStock, addInitialStock, ...productValues } = values;
+            const { initialStocks, addInitialStock, ...productValues } = values;
             const url = editingProductId ? `/api/products/${editingProductId}` : '/api/products';
             const method = editingProductId ? 'PUT' : 'POST';
 
@@ -32,14 +32,14 @@ export default function NewProductClientWrapper() {
             const product = await res.json();
             const productId = editingProductId || product._id;
 
-            // Handle initial stock if provided (works for both new and found products in this wrapper)
-            if (addInitialStock && initialStock) {
+            // Handle initial stocks if provided
+            if (addInitialStock && initialStocks && initialStocks.length > 0) {
                 const stockRes = await fetch('/api/stock/initial-entry', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        ...initialStock,
                         productId,
+                        batches: initialStocks
                     }),
                 });
 
@@ -66,7 +66,7 @@ export default function NewProductClientWrapper() {
         <ProductForm
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
-            onProductFound={(product) => setEditingProductId(product._id)}
+            onProductFound={(product) => product && setEditingProductId(product._id)}
             mode={editingProductId ? 'edit' : 'create'}
         />
     );

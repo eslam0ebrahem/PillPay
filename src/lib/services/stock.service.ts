@@ -229,27 +229,55 @@ export interface CreateInitialStockBatchInput {
 }
 
 export async function createInitialStockBatch(input: CreateInitialStockBatchInput) {
+    return createMultipleInitialStockBatches(input.productId, [input], input.userId);
+}
+
+export async function createMultipleInitialStockBatches(
+    productId: string,
+    batchesInput: Omit<CreateInitialStockBatchInput, 'productId' | 'userId'>[],
+    userId: string
+) {
     await connectDB();
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const product = await Product.findById(input.productId).session(session);
+        const product = await Product.findById(productId).session(session);
         if (!product) {
             throw new Error('المنتج غير موجود');
         }
 
-        const batch = new Batch({
-            productId: input.productId,
-            batchNumber: input.batchNumber,
-            expirationDate: new Date(input.expirationDate),
-            purchasePrice: input.purchasePrice,
-            warehouseQty: input.location === 'warehouse' ? input.quantity : 0,
-            floorQty: input.location === 'floor' ? input.quantity : 0,
-            source: 'initial_stock',
-            notes: input.notes || '',
-        });
-        await batch.save({ session });
+        const createdBatches = [];
+
+        for (const input of batchesInput) {
+            const batch = new Batch({
+                productId,
+                batchNumber: input.batchNumber,
+                expirationDate: new Date(input.expirationDate),
+                purchasePrice: input.purchasePrice,
+                warehouseQty: input.location === 'warehouse' ? input.quantity : 0,
+                floorQty: input.location === 'floor' ? input.quantity : 0,
+                source: 'initial_stock',
+                notes: input.notes || '',
+            });
+            await batch.save({ session });
+            createdBatches.push(batch);
+
+            await logAction({
+                userId,
+                action: 'INITIAL_STOCK_CREATED',
+                entityType: 'Batch',
+                entityId: batch._id.toString(),
+                productId,
+                details: {
+                    batchNumber: input.batchNumber,
+                    quantity: input.quantity,
+                    location: input.location,
+                    purchasePrice: input.purchasePrice,
+                    notes: input.notes,
+                },
+            });
+        }
 
         if (!product.isActive) {
             product.isActive = true;
@@ -257,23 +285,7 @@ export async function createInitialStockBatch(input: CreateInitialStockBatchInpu
         }
 
         await session.commitTransaction();
-
-        await logAction({
-            userId: input.userId,
-            action: 'INITIAL_STOCK_CREATED',
-            entityType: 'Batch',
-            entityId: batch._id.toString(),
-            productId: input.productId,
-            details: {
-                batchNumber: input.batchNumber,
-                quantity: input.quantity,
-                location: input.location,
-                purchasePrice: input.purchasePrice,
-                notes: input.notes,
-            },
-        });
-
-        return batch;
+        return createdBatches;
     } catch (error) {
         await session.abortTransaction();
         throw error;
