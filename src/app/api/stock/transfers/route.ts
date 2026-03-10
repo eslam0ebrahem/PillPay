@@ -55,12 +55,12 @@ export const GET = withPermission('stock.view', async (request: NextRequest) => 
     }
 });
 
-export const POST = withPermission('stock.transfer', async (request: NextRequest) => {
+export const POST = withPermission('stock.transfer', async (request: NextRequest, context) => {
     try {
         const body = await request.json();
         const validatedPayload = transferSchema.parse(body);
 
-        const userId = request.headers.get('x-user-id') as string;
+        const userId = context.user._id;
 
         let transfer;
         if (validatedPayload.direction === 'to_floor') {

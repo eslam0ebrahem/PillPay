@@ -18,6 +18,7 @@ export interface DashboardProductStat {
     id: string;
     name: string;
     quantity: number;
+    imageUrl?: string;
 }
 
 export interface DashboardSummary {
@@ -97,6 +98,7 @@ export interface StockReportRow {
     totalQty: number;
     stockValue: number;
     earliestExpiry: string | null;
+    imageUrl?: string;
 }
 
 export interface StockReportSummary {
@@ -440,6 +442,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
                     name: {
                         $ifNull: [{ $arrayElemAt: ['$product.nameAr', 0] }, 'منتج غير متاح'],
                     },
+                    imageUrl: { $arrayElemAt: ['$product.imageUrl', 0] },
                     quantity: 1,
                 },
             },
@@ -472,6 +475,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
                 $project: {
                     _id: '$product._id',
                     nameAr: '$product.nameAr',
+                    imageUrl: '$product.imageUrl',
                 },
             },
         ]),
@@ -485,6 +489,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
         .map((product) => ({
             id: product._id.toString(),
             name: product.nameAr,
+            imageUrl: product.imageUrl,
             quantity: soldQuantityMap.get(product._id.toString()) ?? 0,
         }))
         .sort(
@@ -528,9 +533,9 @@ export async function getSalesReport(
         summary: current.summary,
         comparison: comparison
             ? {
-                  label: range.comparisonRange!.label,
-                  summary: comparison.summary,
-              }
+                label: range.comparisonRange!.label,
+                summary: comparison.summary,
+            }
             : null,
     };
 }
@@ -559,9 +564,9 @@ export async function getProfitReport(
         summary: current.summary,
         comparison: comparison
             ? {
-                  label: range.comparisonRange!.label,
-                  summary: comparison.summary,
-              }
+                label: range.comparisonRange!.label,
+                summary: comparison.summary,
+            }
             : null,
     };
 }
@@ -574,8 +579,8 @@ export async function getStockReport(
     const range = resolveReportRange(filters);
     const [products, batches] = await Promise.all([
         Product.find({ isActive: true })
-            .select('_id nameAr category')
-            .lean<Array<{ _id: { toString(): string }; nameAr: string; category?: string }>>(),
+            .select('_id nameAr category imageUrl')
+            .lean<Array<{ _id: { toString(): string }; nameAr: string; category?: string; imageUrl?: string }>>(),
         Batch.find()
             .select('productId warehouseQty floorQty purchasePrice expirationDate')
             .lean<
@@ -640,6 +645,7 @@ export async function getStockReport(
                 totalQty: stock.warehouseQty + stock.floorQty,
                 stockValue: stock.stockValue,
                 earliestExpiry: stock.earliestExpiry ? formatDate(stock.earliestExpiry) : null,
+                imageUrl: product.imageUrl,
             };
         })
         .sort((left, right) => right.totalQty - left.totalQty);

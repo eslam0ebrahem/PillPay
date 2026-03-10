@@ -23,7 +23,7 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
             const res = await fetch(`/api/products/${selectedProduct}`);
             if (!res.ok) throw new Error('Failed to load product batches');
             const data = await res.json();
-            return data.data.batches as any[];
+            return data.batches as any[];
         },
         enabled: !!selectedProduct,
     });
