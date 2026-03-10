@@ -3,7 +3,7 @@
 import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space, Typography, App, Select, Divider, DatePicker, Radio } from 'antd';
 import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { SearchOutlined, BarcodeOutlined, InboxOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import { SearchOutlined, BarcodeOutlined, InboxOutlined, LockOutlined, UnlockOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
 import { toEGP, toPiasters } from '@/lib/utils/money';
 import BarcodeScanner from '../common/BarcodeScanner';
@@ -35,14 +35,15 @@ export interface ProductFormValues {
     isActive: boolean;
     // Initial Stock fields
     addInitialStock?: boolean;
-    initialStock?: {
+    initialStocks?: Array<{
         batchNumber: string;
         expirationDate: any;
         quantity: number;
         purchasePrice: number;
+        discount?: number;
         location: 'floor' | 'warehouse';
         notes?: string;
-    };
+    }>;
 }
 
 interface ProductFormProps {
@@ -98,12 +99,12 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
             sellingPrice: toPiasters(values.sellingPrice || 0),
         };
 
-        if (values.addInitialStock && values.initialStock) {
-            payload.initialStock = {
-                ...values.initialStock,
-                expirationDate: values.initialStock.expirationDate?.endOf('month').toISOString(),
-                purchasePrice: toPiasters(values.initialStock.purchasePrice || 0),
-            };
+        if (values.addInitialStock && values.initialStocks) {
+            payload.initialStocks = values.initialStocks.map((stock: any) => ({
+                ...stock,
+                expirationDate: stock.expirationDate?.endOf('month').toISOString(),
+                purchasePrice: toPiasters(stock.purchasePrice || 0),
+            }));
         }
 
         await onSubmit(payload);
@@ -207,11 +208,62 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
         }
     };
 
+    const handleValuesChange = (changedValues: any, allValues: any) => {
+        const sellingPrice = allValues.sellingPrice;
+
+        // Sync purchasePrice and discount for initial stocks
+        if (allValues.addInitialStock && allValues.initialStocks) {
+            const changedStocks = changedValues.initialStocks;
+            if (changedStocks) {
+                // Find which index was changed
+                const index = changedStocks.findIndex((s: any) => s !== undefined);
+                if (index !== -1) {
+                    const changedItem = changedStocks[index];
+                    const currentStocks = [...allValues.initialStocks];
+                    const currentItem = currentStocks[index];
+
+                    // If discount changed, recalculate purchasePrice
+                    if (changedItem.discount !== undefined) {
+                        const discount = changedItem.discount;
+                        if (sellingPrice) {
+                            const newPurchasePrice = sellingPrice * (1 - discount / 100);
+                            currentItem.purchasePrice = Number(newPurchasePrice.toFixed(2));
+                            form.setFieldsValue({ initialStocks: currentStocks });
+                        }
+                    }
+
+                    // If purchasePrice changed, recalculate discount
+                    if (changedItem.purchasePrice !== undefined) {
+                        const purchasePrice = changedItem.purchasePrice;
+                        if (sellingPrice && sellingPrice > 0) {
+                            const newDiscount = (1 - purchasePrice / sellingPrice) * 100;
+                            currentItem.discount = Number(newDiscount.toFixed(2));
+                            form.setFieldsValue({ initialStocks: currentStocks });
+                        }
+                    }
+                }
+            }
+
+            // If sellingPrice changed, recalculate all purchasePrices based on discounts
+            if (changedValues.sellingPrice !== undefined) {
+                const currentStocks = allValues.initialStocks.map((stock: any) => {
+                    if (stock && stock.discount !== undefined && stock.discount !== null) {
+                        const newPurchasePrice = sellingPrice * (1 - stock.discount / 100);
+                        return { ...stock, purchasePrice: Number(newPurchasePrice.toFixed(2)) };
+                    }
+                    return stock;
+                });
+                form.setFieldsValue({ initialStocks: currentStocks });
+            }
+        }
+    };
+
     return (
         <Form
             form={form}
             layout="vertical"
             onFinish={handleFinish}
+            onValuesChange={handleValuesChange}
             initialValues={{
                 isActive: true,
                 lowStockThreshold: 10,
@@ -493,68 +545,117 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                     )}
 
                     {addInitialStock && (
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name={['initialStock', 'batchNumber']}
-                                    label={ar.initialStock.batchNumber}
-                                    rules={[{ required: true, message: 'رقم التشغيلة مطلوب' }]}
-                                >
-                                    <Input placeholder="مثال: Shelf-1" />
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name={['initialStock', 'expirationDate']}
-                                    label={ar.initialStock.expirationDate}
-                                    rules={[{ required: true, message: 'تاريخ الانتهاء مطلوب' }]}
-                                >
-                                    <DatePicker
-                                        picker="month"
-                                        format="YYYY-MM"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name={['initialStock', 'quantity']}
-                                    label={ar.initialStock.quantity}
-                                    rules={[{ required: true, message: 'الكمية مطلوبة' }]}
-                                >
-                                    <InputNumber min={1} style={{ width: '100%' }} />
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name={['initialStock', 'purchasePrice']}
-                                    label={ar.initialStock.purchasePrice}
-                                    rules={[{ required: true, message: 'سعر الشراء مطلوب' }]}
-                                >
-                                    <InputNumber min={0} step={0.25} style={{ width: '100%' }} />
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name={['initialStock', 'location']}
-                                    label={ar.initialStock.location}
-                                    initialValue="floor"
-                                >
-                                    <Radio.Group>
-                                        <Radio value="floor">{ar.initialStock.floor}</Radio>
-                                        <Radio value="warehouse">{ar.initialStock.warehouse}</Radio>
-                                    </Radio.Group>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24}>
-                                <Form.Item
-                                    name={['initialStock', 'notes']}
-                                    label={ar.initialStock.notes}
-                                >
-                                    <Input.TextArea rows={1} />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        <Form.List name="initialStocks" initialValue={[{ location: 'floor', quantity: 1 }]}>
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map(({ key, name, ...restField }) => (
+                                        <div key={key} style={{ marginBottom: 24, padding: 16, backgroundColor: '#f9f9f9', borderRadius: 8, border: '1px solid #f0f0f0', position: 'relative' }}>
+                                            {fields.length > 1 && (
+                                                <Button
+                                                    type="text"
+                                                    danger
+                                                    icon={<DeleteOutlined />}
+                                                    onClick={() => remove(name)}
+                                                    style={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}
+                                                />
+                                            )}
+                                            <Row gutter={16}>
+                                                <Col xs={24} md={12}>
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'batchNumber']}
+                                                        label={ar.initialStock.batchNumber}
+                                                        rules={[{ required: true, message: 'رقم التشغيلة مطلوب' }]}
+                                                    >
+                                                        <Input placeholder="مثال: Shelf-1" />
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24} md={12}>
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'expirationDate']}
+                                                        label={ar.initialStock.expirationDate}
+                                                        rules={[{ required: true, message: 'تاريخ الانتهاء مطلوب' }]}
+                                                    >
+                                                        <DatePicker
+                                                            picker="month"
+                                                            format="YYYY-MM"
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24} md={6}>
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'quantity']}
+                                                        label={ar.initialStock.quantity}
+                                                        rules={[{ required: true, message: 'الكمية مطلوبة' }]}
+                                                    >
+                                                        <InputNumber min={1} style={{ width: '100%' }} />
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24} md={6}>
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'discount']}
+                                                        label="خصم %"
+                                                    >
+                                                        <InputNumber
+                                                            min={0}
+                                                            max={100}
+                                                            step={0.1}
+                                                            style={{ width: '100%' }}
+                                                            suffix="%"
+                                                            placeholder="%"
+                                                        />
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24} md={6}>
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'purchasePrice']}
+                                                        label={ar.initialStock.purchasePrice}
+                                                        rules={[{ required: true, message: 'سعر الشراء مطلوب' }]}
+                                                    >
+                                                        <InputNumber
+                                                            min={0}
+                                                            step={0.25}
+                                                            style={{ width: '100%' }}
+                                                            suffix="ج.م"
+                                                        />
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24} md={6}>
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'location']}
+                                                        label={ar.initialStock.location}
+                                                        initialValue="floor"
+                                                    >
+                                                        <Radio.Group>
+                                                            <Radio value="floor">{ar.initialStock.floor}</Radio>
+                                                            <Radio value="warehouse">{ar.initialStock.warehouse}</Radio>
+                                                        </Radio.Group>
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24}>
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'notes']}
+                                                        label={ar.initialStock.notes}
+                                                    >
+                                                        <Input.TextArea rows={1} />
+                                                    </Form.Item>
+                                                </Col>
+                                            </Row>
+                                        </div>
+                                    ))}
+                                    <Button type="dashed" onClick={() => add({ location: 'floor', quantity: 1, batchNumber: '' })} block icon={<PlusOutlined />}>
+                                        إضافة تشغيلة أخرى
+                                    </Button>
+                                </>
+                            )}
+                        </Form.List>
                     )}
                 </Card>
             )}
