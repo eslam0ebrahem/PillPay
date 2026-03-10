@@ -145,7 +145,7 @@ function mapProduct(data, lineNumber) {
         subUnit,
         subUnitConversionFactor,
         lowStockThreshold: 10,
-        isActive: true,
+        isActive: false,
         // Stored for future use
         sourceId: data.id ?? null,
         brandId: data.brand?.id ?? null,
@@ -336,16 +336,21 @@ async function main() {
         for (let i = 0; i < products.length; i += batchSize) {
             const batch = products.slice(i, i + batchSize);
 
-            const operations = batch.map((product) => ({
-                updateOne: {
-                    filter: buildFilter(product),
-                    update: {
-                        $set: { ...product, updatedAt: now },
-                        $setOnInsert: { createdAt: now },
+            const operations = batch.map((product) => {
+                // Separate isActive so it only applies on insert (new catalog items).
+                // Re-running the import must NOT deactivate products already activated by the pharmacy.
+                const { isActive, ...rest } = product;
+                return {
+                    updateOne: {
+                        filter: buildFilter(product),
+                        update: {
+                            $set: { ...rest, updatedAt: now },
+                            $setOnInsert: { createdAt: now, isActive: isActive ?? false },
+                        },
+                        upsert: true,
                     },
-                    upsert: true,
-                },
-            }));
+                };
+            });
 
             const result = await collection.bulkWrite(operations, { ordered: false });
 
