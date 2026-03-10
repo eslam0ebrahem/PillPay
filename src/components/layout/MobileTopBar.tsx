@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Grid } from 'antd';
 import ar from '@/i18n/ar';
@@ -9,10 +9,15 @@ const { useBreakpoint } = Grid;
 
 export default function MobileTopBar({ rightAction }: { rightAction?: React.ReactNode }) {
     const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
 
-    // Renders only on mobile
-    if (screens.md !== false) {
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Renders only on mobile after mount
+    if (!mounted || screens.md !== false) {
         return null;
     }
 

@@ -171,7 +171,6 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
                 title="تحويل رصيد"
                 open={isTransferModalOpen}
                 onClose={() => !transferMutation.isPending && setIsTransferModalOpen(false)}
-                destroyOnHidden
             >
                 {isTransferModalOpen && (
                     <TransferForm
@@ -186,7 +185,6 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
                 title={ar.initialStock.title}
                 open={isInitialStockModalOpen}
                 onClose={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
-                destroyOnHidden
             >
                 {isInitialStockModalOpen && (
                     <InitialStockForm

@@ -168,7 +168,6 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                 title={ar.initialStock.title}
                 open={isInitialStockModalOpen}
                 onClose={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
-                destroyOnHidden
             >
                 {isInitialStockModalOpen && (
                     <InitialStockForm

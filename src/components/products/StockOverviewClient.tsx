@@ -158,7 +158,6 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
                 title={`تعديل الرصيد - ${selectedBatch?.productId?.nameAr}`}
                 open={isAdjusting}
                 onClose={() => setIsAdjusting(false)}
-                destroyOnHidden
             >
                 <Form form={form} layout="vertical" onFinish={handleAdjust} onValuesChange={handleFormChange}>
                     <Form.Item name="location" label="الموقع" rules={[{ required: true }]}>

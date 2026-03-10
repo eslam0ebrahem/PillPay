@@ -26,10 +26,19 @@ export function ResponsiveDataView<T>({
     tableProps
 }: ResponsiveDataViewProps<T>) {
     const screens = useBreakpoint();
+    const [mounted, setMounted] = React.useState(false);
     const [currentPage, setCurrentPage] = React.useState(1);
     const pageSize = (pagination as any)?.pageSize || (pagination as any)?.defaultPageSize || 10;
 
-    if (screens.md !== false) {
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // On server and first client pass, we default to desktop view (Table)
+    // because screens.md is undefined on server, and undefined !== false is true.
+    const isDesktop = !mounted || screens.md !== false;
+
+    if (isDesktop) {
         return (
             <Table
                 dataSource={data}
