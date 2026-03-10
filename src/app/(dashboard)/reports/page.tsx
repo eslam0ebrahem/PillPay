@@ -11,6 +11,7 @@ import ReportTable, {
     type ReportColumn,
     type ReportSummaryItem,
 } from '@/components/reports/ReportTable';
+import PageHeader from '@/components/common/PageHeader';
 
 const { Title } = Typography;
 
@@ -210,9 +211,7 @@ export default function ReportsPage() {
 
     return (
         <div>
-            <Title level={2} style={{ marginBottom: 24 }}>
-                التقارير
-            </Title>
+            <PageHeader title="التقارير" />
 
             <Card style={{ marginBottom: 16 }}>
                 <ReportFilters value={filters} onChange={setFilters} />

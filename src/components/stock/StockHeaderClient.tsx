@@ -2,9 +2,8 @@
 
 import { Typography, Row, Col, Card, Statistic, Alert } from 'antd';
 import { WarningOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import PageHeader from '@/components/common/PageHeader';
 import ar from '@/i18n/ar';
-
-const { Title } = Typography;
 
 interface StockHeaderClientProps {
     outOfStockCount: number;
@@ -21,9 +20,7 @@ export default function StockHeaderClient({
 }: StockHeaderClientProps) {
     return (
         <div>
-            <Title level={2} style={{ marginBottom: 24 }}>
-                {ar.nav.stock}
-            </Title>
+            <PageHeader title={ar.nav.stock} />
 
             <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                 <Col xs={24} sm={12} md={6}>

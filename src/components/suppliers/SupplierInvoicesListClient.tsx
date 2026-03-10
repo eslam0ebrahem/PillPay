@@ -7,6 +7,7 @@ import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
 import dayjs from 'dayjs';
 import ResponsiveDataView from '../common/ResponsiveDataView';
+import PageHeader from '../common/PageHeader';
 
 const { Title, Text } = Typography;
 
@@ -118,16 +119,16 @@ export default function SupplierInvoicesListClient({ invoices }: SupplierInvoice
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    {ar.nav.supplierInvoices}
-                </Title>
-                <Link href="/supplier-invoices/new">
-                    <Button type="primary" icon={<PlusOutlined />}>
-                        تسجيل فاتورة جديدة
-                    </Button>
-                </Link>
-            </div>
+            <PageHeader
+                title={ar.nav.supplierInvoices}
+                extra={
+                    <Link href="/supplier-invoices/new">
+                        <Button type="primary" icon={<PlusOutlined />}>
+                            تسجيل فاتورة جديدة
+                        </Button>
+                    </Link>
+                }
+            />
 
             <ResponsiveDataView
                 data={invoices}

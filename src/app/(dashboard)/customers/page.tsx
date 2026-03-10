@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Button, Input, Space, Switch, App, Row, Col } from 'antd';
+import { Typography, Card, Button, Input, Space, Switch, App, Row, Col, Grid } from 'antd';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -9,8 +9,10 @@ import MoneyDisplay from '@/components/common/MoneyDisplay';
 import CustomerForm from '@/components/customers/CustomerForm';
 import ResponsiveDataView from '@/components/common/ResponsiveDataView';
 import MobileFormWrapper from '@/components/common/MobileFormWrapper';
+import PageHeader from '@/components/common/PageHeader';
 
 const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 export default function CustomersPage() {
     const { message } = App.useApp();
@@ -131,16 +133,18 @@ export default function CustomersPage() {
 
     return (
         <div style={{ maxWidth: 1152, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={2} style={{ margin: 0 }}>العملاء والمديونيات</Title>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => setIsAddModalVisible(true)}
-                >
-                    إضافة عميل
-                </Button>
-            </div>
+            <PageHeader
+                title="العملاء والمديونيات"
+                extra={
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsAddModalVisible(true)}
+                    >
+                        إضافة عميل
+                    </Button>
+                }
+            />
 
             <Card style={{ marginBottom: 24, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>

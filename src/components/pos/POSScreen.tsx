@@ -233,7 +233,7 @@ export default function POSScreen() {
     const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: screens.md !== false ? 16 : 0, minHeight: '100%', height: screens.md !== false ? '100%' : '100dvh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: screens.md !== false ? 16 : 0, minHeight: 'calc(100vh - 120px)' }}>
             {screens.md !== false ? (
                 // DESKTOP LAYOUT
                 <>
