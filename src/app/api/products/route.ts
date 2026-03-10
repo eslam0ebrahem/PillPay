@@ -16,12 +16,12 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
         const category = searchParams.get('category') || '';
         const brandFilter = searchParams.get('brand') || '';
         const isActive = searchParams.get('isActive');
+        const allStatus = searchParams.get('allStatus') === 'true';
 
         const filter: any = {};
 
         if (search) {
             filter.$or = [
-                { $text: { $search: search } },
                 { nameAr: { $regex: search, $options: 'i' } },
                 { nameEn: { $regex: search, $options: 'i' } },
                 { barcode: search },
@@ -37,7 +37,9 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
             filter.brand = brandFilter;
         }
 
-        if (isActive !== null && isActive !== undefined && isActive !== '') {
+        if (allStatus) {
+            // Bypass isActive filtering
+        } else if (isActive !== null && isActive !== undefined && isActive !== '') {
             filter.isActive = isActive === 'true';
         } else {
             // Default: only show active (stocked) products, hide catalog-only items

@@ -16,6 +16,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     const view = params.view === 'catalog' ? 'catalog' : 'active';
     const brandParam = typeof params.brand === 'string' ? params.brand : '';
     const searchParam = typeof params.search === 'string' ? params.search : '';
+    const pageParam = typeof params.page === 'string' ? parseInt(params.page, 10) : 1;
+    const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
 
     // Build filter
     const filter: any = view === 'catalog' ? { isActive: false } : { isActive: true };
@@ -33,11 +37,15 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         ];
     }
 
-    const products = await Product.find(filter)
-        .populate('brand', 'nameAr nameEn image')
-        .sort({ nameAr: 1 })
-        .limit(100)
-        .lean<any[]>();
+    const [products, total] = await Promise.all([
+        Product.find(filter)
+            .populate('brand', 'nameAr nameEn image')
+            .sort({ nameAr: 1 })
+            .skip(skip)
+            .limit(pageSize)
+            .lean<any[]>(),
+        Product.countDocuments(filter)
+    ]);
 
     // Calculate aggregated stock for display
     const productIds = products.map((p) => p._id);
@@ -60,5 +68,15 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         totalQty: stockMap.get(p._id.toString()) || 0,
     }));
 
-    return <ProductsPageClient data={data} view={view} selectedBrand={brandParam} search={searchParam} />;
+    return (
+        <ProductsPageClient
+            data={data}
+            view={view}
+            selectedBrand={brandParam}
+            search={searchParam}
+            total={total}
+            currentPage={page}
+            pageSize={pageSize}
+        />
+    );
 }

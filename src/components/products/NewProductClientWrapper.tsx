@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { message } from 'antd';
+import { App } from 'antd';
 import { useState } from 'react';
 import ProductForm, { ProductFormValues } from '@/components/products/ProductForm';
 
 export default function NewProductClientWrapper() {
+    const { message } = App.useApp();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingProductId, setEditingProductId] = useState<string | null>(null);

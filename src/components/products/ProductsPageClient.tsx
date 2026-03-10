@@ -14,9 +14,12 @@ interface ProductsPageClientProps {
     view: 'active' | 'catalog';
     selectedBrand?: string;
     search?: string;
+    total: number;
+    currentPage: number;
+    pageSize: number;
 }
 
-export default function ProductsPageClient({ data, view, selectedBrand, search }: ProductsPageClientProps) {
+export default function ProductsPageClient({ data, view, selectedBrand, search, total, currentPage, pageSize }: ProductsPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -26,6 +29,7 @@ export default function ProductsPageClient({ data, view, selectedBrand, search }
             view: view === 'catalog' ? 'catalog' : undefined,
             brand: selectedBrand || undefined,
             search: search || undefined,
+            page: currentPage > 1 ? currentPage.toString() : undefined,
             ...overrides,
         };
         for (const [key, val] of Object.entries(current)) {
@@ -64,8 +68,15 @@ export default function ProductsPageClient({ data, view, selectedBrand, search }
                 <ProductList
                     data={data}
                     loading={false}
-                    pagination={{ pageSize: 20 }}
-                    onTableChange={() => {}}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: pageSize,
+                        total: total,
+                        showSizeChanger: false
+                    }}
+                    onTableChange={(pagination) => {
+                        router.push(buildUrl({ page: pagination.current?.toString() }));
+                    }}
                     onSearch={(val) => {
                         router.push(buildUrl({ search: val || undefined }));
                     }}
