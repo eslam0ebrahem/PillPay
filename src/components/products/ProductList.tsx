@@ -1,7 +1,7 @@
 'use client';
 
-import { Table, Input, Button, Space, Tag, Select } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Input, Tag, Select, Typography, Image } from 'antd';
+import { EyeOutlined, PictureOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import ar from '@/i18n/ar';
@@ -48,6 +48,32 @@ export default function ProductList({
             title: ar.products.nameAr,
             dataIndex: 'nameAr',
             key: 'nameAr',
+            render: (_: any, record: any) => (
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div>
+                        {record.imageUrl ? (
+                            <Image
+                                src={record.imageUrl}
+                                alt={record.nameAr}
+                                width={48}
+                                height={48}
+                                style={{ objectFit: 'cover', borderRadius: 4 }}
+                                fallback="https://via.placeholder.com/48?text=No+Image"
+                            />
+                        ) : (
+                            <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <div>{record.nameAr}</div>
+                        {record.nameEn && (
+                            <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{record.nameEn}</div>
+                        )}
+                    </div>
+                </div>
+            ),
         },
         {
             title: ar.products.brand,

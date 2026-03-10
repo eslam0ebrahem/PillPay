@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio } from 'antd';
-import { ScanOutlined, SearchOutlined } from '@ant-design/icons';
+import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio, Image } from 'antd';
+import { ScanOutlined, SearchOutlined, PictureOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import MoneyDisplay from '../common/MoneyDisplay';
@@ -19,6 +19,7 @@ export interface ProductSearchResult {
     barcode2?: string | null;
     nameAr: string;
     nameEn?: string;
+    imageUrl?: string;
     sellingPrice: number;
     baseUnit: string;
     subUnit?: string | null;
@@ -126,19 +127,38 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                         title: 'Product',
                         key: 'product',
                         render: (_, item: ProductSearchResult) => (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <Text strong>{item.nameAr}</Text>
-                                <Space wrap>
-                                    <MoneyDisplay amount={item.sellingPrice} />
-                                    {item.floorStock > 0 ? (
-                                        <Tag color="green">
-                                            {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
-                                        </Tag>
+                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                <div>
+                                    {item.imageUrl ? (
+                                        <Image
+                                            src={item.imageUrl}
+                                            alt={item.nameAr}
+                                            width={48}
+                                            height={48}
+                                            style={{ objectFit: 'cover', borderRadius: 4 }}
+                                            fallback="https://via.placeholder.com/48?text=No+Image"
+                                        />
                                     ) : (
-                                        <Tag color="red">{ar.pos.outOfStock}</Tag>
+                                        <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                            <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
+                                        </div>
                                     )}
-                                    {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}>{item.barcode}</Text>}
-                                </Space>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                                    <Text strong>{item.nameAr}</Text>
+                                    {item.nameEn && <Text type="secondary" style={{ fontSize: 13 }}>{item.nameEn}</Text>}
+                                    <Space wrap>
+                                        <MoneyDisplay amount={item.sellingPrice} />
+                                        {item.floorStock > 0 ? (
+                                            <Tag color="green">
+                                                {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
+                                            </Tag>
+                                        ) : (
+                                            <Tag color="red">{ar.pos.outOfStock}</Tag>
+                                        )}
+                                        {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}>{item.barcode}</Text>}
+                                    </Space>
+                                </div>
                             </div>
                         ),
                     },
@@ -176,7 +196,10 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
             >
                 {selectedProduct && (
                     <Space orientation="vertical" style={{ width: '100%' }} size="large">
-                        <Text strong>{selectedProduct.nameAr}</Text>
+                        <div>
+                            <Text strong style={{ display: 'block' }}>{selectedProduct.nameAr}</Text>
+                            {selectedProduct.nameEn && <Text type="secondary">{selectedProduct.nameEn}</Text>}
+                        </div>
 
                         <div>
                             <Text>{ar.pos.quantity}: </Text>

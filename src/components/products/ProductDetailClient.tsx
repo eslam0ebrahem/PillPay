@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Tabs, Card, Button, Modal, Row, Col, Statistic, message } from 'antd';
-import { EditOutlined, RetweetOutlined } from '@ant-design/icons';
+import { Tabs, Card, Button, Modal, Row, Col, Statistic, message, Image, Typography } from 'antd';
+import { EditOutlined, RetweetOutlined, PictureOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import ProductForm, { ProductFormValues } from '@/components/products/ProductForm';
 import BatchViewer from '@/components/products/BatchViewer';
@@ -14,6 +14,8 @@ interface ProductDetailClientProps {
     batches: any[];
     stockSummary: any;
 }
+
+const { Title, Text } = Typography;
 
 export default function ProductDetailClient({ product, batches, stockSummary }: ProductDetailClientProps) {
     const router = useRouter();
@@ -101,8 +103,29 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h2>{product.nameAr} {product.nameEn ? `(${product.nameEn})` : ''}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+                <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+                    <div>
+                        {product.imageUrl ? (
+                            <Image
+                                src={product.imageUrl}
+                                alt={product.nameAr}
+                                width={120}
+                                height={120}
+                                style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #f0f0f0' }}
+                                fallback="https://via.placeholder.com/120?text=No+Image"
+                            />
+                        ) : (
+                            <div style={{ width: 120, height: 120, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+                                <PictureOutlined style={{ fontSize: 40, color: '#d9d9d9' }} />
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <Title level={2} style={{ margin: 0, marginBottom: 8 }}>{product.nameAr}</Title>
+                        {product.nameEn && <Title level={4} type="secondary" style={{ margin: 0 }}>{product.nameEn}</Title>}
+                    </div>
+                </div>
             </div>
 
             <Tabs defaultActiveKey="1" items={items} />

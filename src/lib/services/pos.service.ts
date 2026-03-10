@@ -33,6 +33,7 @@ interface ProductSearchResult {
     barcode2?: string | null;
     nameAr: string;
     nameEn?: string;
+    imageUrl?: string;
     sellingPrice: number;
     baseUnit: string;
     subUnit?: string | null;
@@ -89,6 +90,7 @@ export async function searchProducts(
             barcode2: p.barcode2 || null,
             nameAr: p.nameAr,
             nameEn: p.nameEn,
+            imageUrl: p.imageUrl,
             sellingPrice: p.sellingPrice,
             baseUnit: p.baseUnit,
             subUnit: p.subUnit,

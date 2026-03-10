@@ -113,6 +113,7 @@ export interface ProductSearchResult {
     barcode2?: string | null;
     nameAr: string;
     nameEn?: string;
+    imageUrl?: string;
     sellingPrice: number;
     baseUnit: string;
     subUnit?: string | null;
