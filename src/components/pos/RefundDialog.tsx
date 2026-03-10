@@ -440,6 +440,7 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                                             <Empty description="لا توجد أصناف متاحة للإرجاع" />
                                         ),
                                     }}
+                                    scroll={{ x: 'max-content' }}
                                 />
 
                                 <Space

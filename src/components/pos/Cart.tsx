@@ -121,7 +121,7 @@ export default function Cart({
                 columns={columns}
                 rowKey="id"
                 pagination={false}
-                scroll={{ y: 300 }}
+                scroll={{ x: 'max-content', y: 300 }}
             />
 
             <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>

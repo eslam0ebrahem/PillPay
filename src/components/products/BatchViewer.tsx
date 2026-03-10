@@ -76,6 +76,7 @@ export default function BatchViewer({ batches, loading, expiringSoonDays }: Batc
             loading={loading}
             pagination={false}
             size="small"
+            scroll={{ x: 'max-content' }}
         />
     );
 }
