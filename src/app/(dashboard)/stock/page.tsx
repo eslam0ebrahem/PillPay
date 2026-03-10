@@ -44,16 +44,9 @@ export default async function StockPage() {
         }
     });
 
-    // Make batch data safe for client
-    const safeBatches = batches.map(b => ({
-        ...b,
-        _id: b._id.toString(),
-        productId: {
-            ...b.productId,
-            _id: b.productId?._id?.toString() || ''
-        },
-        supplierInvoiceId: b.supplierInvoiceId ? b.supplierInvoiceId.toString() : null
-    }));
+    // Make data safe for client components (Next.js requirement)
+    const safeBatches = JSON.parse(JSON.stringify(batches));
+    const safeProducts = JSON.parse(JSON.stringify(products));
 
     return (
         <div>
@@ -66,7 +59,7 @@ export default async function StockPage() {
 
             <StockManagerClient
                 safeBatches={safeBatches}
-                products={products.map(p => ({ ...p, _id: p._id.toString() }))}
+                products={safeProducts}
             />
         </div>
     );
