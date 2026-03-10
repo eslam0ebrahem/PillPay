@@ -61,6 +61,7 @@ const ar = {
         loading: 'جاري التحميل...',
         noData: 'لا توجد بيانات',
         selectAll: 'تحديد الكل',
+        actions: 'الإجراءات',
     },
 
     // Products
