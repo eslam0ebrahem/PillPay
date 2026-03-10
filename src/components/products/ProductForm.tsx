@@ -93,6 +93,15 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
         }
     }, [initialValues, form]);
 
+    const handleReset = () => {
+        form.resetFields();
+        setIsLocked(false);
+        setSearchSource(null);
+        setNameSearchOptions([]);
+        if (onProductFound) onProductFound(null);
+        message.info('تمت إعادة ضبط النموذج للبحث من جديد');
+    };
+
     const handleFinish = async (values: any) => {
         const payload = {
             ...values,
@@ -295,20 +304,21 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 </div>
 
                 <Row justify="center" gutter={24}>
-                    <Col xs={24} md={11}>
+                    <Col xs={24} md={10}>
                         <Form.Item name="barcode" label="الباركود (سكان)" style={{ marginBottom: 12 }}>
                             <Input
                                 size="large"
                                 autoFocus
                                 prefix={<BarcodeOutlined style={{ color: '#bfbfbf' }} />}
-                                onPressEnter={handleBarcodeSearch}
-                                placeholder="امسح الباركود هنا..."
+                                onPressEnter={(e) => handleBarcodeSearch(e)}
+                                placeholder="امسح الباركود هنا واضغط Enter..."
                                 disabled={isSearching || (mode === 'edit' && searchSource === 'barcode')}
                                 style={{ textAlign: 'center', fontSize: '18px' }}
+                                allowClear
                             />
                         </Form.Item>
                     </Col>
-                    <Col xs={24} md={11}>
+                    <Col xs={24} md={10}>
                         <Form.Item label="البحث بالاسم (عربي / English)" style={{ marginBottom: 12 }}>
                             <Select
                                 showSearch
@@ -327,16 +337,22 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                             />
                         </Form.Item>
                     </Col>
+                    <Col xs={24} md={2} style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 12 }}>
+                        <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={handleReset}
+                            size="large"
+                            block
+                            title="إعادة ضبط وبحث جديد"
+                        />
+                    </Col>
                 </Row>
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
                     <BarcodeScanner
                         onScan={(text) => {
                             form.setFieldsValue({ barcode: text });
-                            // In creation wrapper, we want scan to always trigger a search (which now resets form)
-                            // In a real edit page (fixed mode='edit'), we just update the field.
-                            if (mode === 'create' || (mode === 'edit' && !initialValues?._id)) {
-                                handleBarcodeSearch({ target: { value: text } } as any);
-                            }
+                            message.success('تم مسح الباركود بنجاح. اضغط Enter للبحث.');
                         }}
                         buttonProps={{ size: 'large', type: 'dashed' }}
                     />
