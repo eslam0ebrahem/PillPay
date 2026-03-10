@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Col, Row, message } from 'antd';
+import { Button, Col, Row, App } from 'antd';
 import ProductSearch from './ProductSearch';
 import Cart from './Cart';
 import Checkout from './Checkout';
@@ -16,6 +16,7 @@ import type {
 import { calcSubtotal } from '@/lib/utils/money';
 
 export default function POSScreen() {
+    const { message } = App.useApp();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [invoiceDiscount, setInvoiceDiscount] = useState<DiscountObj | undefined>();
     const [isSubmitting, setIsSubmitting] = useState(false);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Tabs, Card, Button, Modal, Row, Col, Statistic, message, Image, Typography } from 'antd';
+import { Tabs, Card, Button, Modal, Row, Col, Statistic, Image, Typography, App } from 'antd';
 import { EditOutlined, RetweetOutlined, PictureOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import ProductForm, { ProductFormValues } from '@/components/products/ProductForm';
@@ -18,6 +18,7 @@ interface ProductDetailClientProps {
 const { Title, Text } = Typography;
 
 export default function ProductDetailClient({ product, batches, stockSummary }: ProductDetailClientProps) {
+    const { message } = App.useApp();
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);

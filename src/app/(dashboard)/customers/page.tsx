@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Table, Button, Input, Space, Switch, Modal, message } from 'antd';
+import { Typography, Card, Table, Button, Input, Space, Switch, Modal, App } from 'antd';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import MoneyDisplay from '@/components/common/MoneyDisplay';
@@ -10,6 +10,7 @@ import CustomerForm from '@/components/customers/CustomerForm';
 const { Title } = Typography;
 
 export default function CustomersPage() {
+    const { message } = App.useApp();
     const router = useRouter();
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);

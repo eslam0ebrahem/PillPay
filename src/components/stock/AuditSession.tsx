@@ -12,7 +12,7 @@ import {
     Table,
     Tag,
     Typography,
-    message,
+    App,
 } from 'antd';
 import { CheckCircleOutlined, PlayCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +46,7 @@ interface SessionDetail {
 }
 
 export default function AuditSession() {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
     const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
     const [counts, setCounts] = useState<SessionCount[]>([]);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, Table, Tag, Typography, Button, Space, Modal, Form, InputNumber, Input, message } from 'antd';
+import { Card, Table, Tag, Typography, Button, Space, Modal, Form, InputNumber, Input, App } from 'antd';
 import { DollarOutlined, HistoryOutlined, FileTextOutlined, EditOutlined, ToolOutlined } from '@ant-design/icons';
 import MoneyDisplay from '@/components/common/MoneyDisplay';
 import dayjs from 'dayjs';
@@ -19,6 +19,7 @@ interface CustomerProfileProps {
 }
 
 export default function CustomerProfile({ customer, unpaidInvoices, recentPayments, recentAdjustments, onRefresh }: CustomerProfileProps) {
+    const { message } = App.useApp();
     const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
     const [isAdjustModalVisible, setIsAdjustModalVisible] = useState(false);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);

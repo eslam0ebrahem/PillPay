@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Tabs, Card, Button, Row, Col, Statistic, message } from 'antd';
+import { Tabs, Card, Button, Row, Col, Statistic, App } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import SupplierForm, { SupplierFormValues } from '@/components/suppliers/SupplierForm';
@@ -16,6 +16,7 @@ interface SupplierDetailClientProps {
 }
 
 export default function SupplierDetailClient({ supplier, recentInvoices, recentPayments }: SupplierDetailClientProps) {
+    const { message } = App.useApp();
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Form, Input, Button, DatePicker, Select, InputNumber, Row, Col, Space, Card, Divider, message, Typography } from 'antd';
+import { Form, Input, Button, DatePicker, Select, InputNumber, Row, Col, Space, Card, Divider, Typography, App } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import BarcodeScanner from '../common/BarcodeScanner';
@@ -17,6 +17,7 @@ interface InvoiceFormProps {
 }
 
 export default function InvoiceForm({ suppliers, products, onSubmit, isSubmitting }: InvoiceFormProps) {
+    const { message } = App.useApp();
     const [form] = Form.useForm();
     const [total, setTotal] = useState(0);
 

@@ -19,7 +19,7 @@ import {
     Table,
     Tag,
     Typography,
-    message,
+    App,
     type TableColumnsType,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -206,8 +206,8 @@ function buildUsersQueryString(page: number, pageSize: number, role?: string, is
 }
 
 export default function UsersPage() {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
-    const [messageApi, contextHolder] = message.useMessage();
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [roleFilter, setRoleFilter] = useState<string>();
@@ -252,13 +252,13 @@ export default function UsersPage() {
             return data;
         },
         onSuccess: () => {
-            messageApi.success('تم إنشاء المستخدم بنجاح');
+            message.success('تم إنشاء المستخدم بنجاح');
             setIsCreateOpen(false);
             createForm.resetFields();
             queryClient.invalidateQueries({ queryKey: ['users'] });
         },
         onError: (error) => {
-            messageApi.error(error instanceof Error ? error.message : 'تعذر إنشاء المستخدم');
+            message.error(error instanceof Error ? error.message : 'تعذر إنشاء المستخدم');
         },
     });
 
@@ -284,13 +284,13 @@ export default function UsersPage() {
             return data;
         },
         onSuccess: () => {
-            messageApi.success('تم تحديث المستخدم بنجاح');
+            message.success('تم تحديث المستخدم بنجاح');
             setEditingUser(null);
             editForm.resetFields();
             queryClient.invalidateQueries({ queryKey: ['users'] });
         },
         onError: (error) => {
-            messageApi.error(error instanceof Error ? error.message : 'تعذر تحديث المستخدم');
+            message.error(error instanceof Error ? error.message : 'تعذر تحديث المستخدم');
         },
     });
 
@@ -354,7 +354,6 @@ export default function UsersPage() {
 
     return (
         <div>
-            {contextHolder}
             <PageHeader title="إدارة المستخدمين" />
 
             <Card style={{ marginBottom: 16 }}>

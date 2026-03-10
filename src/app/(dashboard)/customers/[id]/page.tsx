@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Button, message, Skeleton } from 'antd';
+import { Button, App, Skeleton } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import CustomerProfile from '@/components/customers/CustomerProfile';
 
 export default function CustomerDetailPage() {
+    const { message } = App.useApp();
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;

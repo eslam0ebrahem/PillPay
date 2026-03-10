@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { message } from 'antd';
+import { App } from 'antd';
 import { useState } from 'react';
 import SupplierForm, { SupplierFormValues } from '@/components/suppliers/SupplierForm';
 
 export default function NewSupplierClientWrapper() {
+    const { message } = App.useApp();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 

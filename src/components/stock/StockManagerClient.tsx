@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Table, Button, Modal, Tabs, message, Space, Tag } from 'antd';
+import { Table, Button, Modal, Tabs, Space, Tag, App } from 'antd';
 import { SyncOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import StockOverviewClient from '@/components/products/StockOverviewClient';
@@ -14,6 +14,7 @@ interface StockManagerClientProps {
 }
 
 export default function StockManagerClient({ safeBatches, products }: StockManagerClientProps) {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
