@@ -96,18 +96,17 @@ export default function InvoiceForm({ suppliers, products, onSubmit, isSubmittin
                         <>
                             {fields.map(({ key, name, ...restField }) => (
                                 <div key={key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 16 }}>
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'productId']}
-                                        rules={[{ required: true, message: 'مطلوب' }]}
-                                        style={{ flex: 2, margin: 0 }}
-                                    >
-                                        <Flex gap="small">
+                                    <div style={{ display: 'flex', gap: 8, flex: 2 }}>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'productId']}
+                                            rules={[{ required: true, message: 'مطلوب' }]}
+                                            style={{ flex: 1, margin: 0 }}
+                                        >
                                             <Select
                                                 showSearch
                                                 placeholder="الصنف"
                                                 optionFilterProp="label"
-                                                style={{ flex: 1 }}
                                                 options={products.map(p => ({
                                                     value: p._id,
                                                     label: `${p.nameAr} ${p.barcode ? `| ${p.barcode}` : ''}`,
@@ -117,19 +116,21 @@ export default function InvoiceForm({ suppliers, products, onSubmit, isSubmittin
                                                     (option?.searchText ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                                 }
                                             />
-                                            <BarcodeScanner
-                                                onScan={(text) => {
-                                                    const product = products.find(p => p.barcode === text || p.barcode2 === text);
-                                                    if (product) {
-                                                        const items = form.getFieldValue('items') || [];
-                                                        items[name].productId = product._id;
-                                                        form.setFieldsValue({ items });
-                                                    }
-                                                }}
-                                                buttonProps={{ type: 'default', size: 'middle' }}
-                                            />
-                                        </Flex>
-                                    </Form.Item>
+                                        </Form.Item>
+                                        <BarcodeScanner
+                                            onScan={(text) => {
+                                                const product = products.find(p => p.barcode === text || p.barcode2 === text);
+                                                if (product) {
+                                                    form.setFieldValue(['items', name, 'productId'], product._id);
+                                                    // Trigger total calculation after scan
+                                                    handleValuesChange(null, form.getFieldsValue());
+                                                } else {
+                                                    message.warning('الصنف غير موجود');
+                                                }
+                                            }}
+                                            buttonProps={{ type: 'default', size: 'middle' }}
+                                        />
+                                    </div>
                                     <Form.Item
                                         {...restField}
                                         name={[name, 'batchNumber']}
