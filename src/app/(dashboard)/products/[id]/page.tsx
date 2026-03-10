@@ -10,7 +10,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     await connectDB();
     const { id } = await params;
 
-    const product = await Product.findById(id).lean<any>();
+    const product = await Product.findById(id).populate('brand', 'nameAr nameEn').lean<any>();
     if (!product) {
         notFound();
     }
@@ -27,14 +27,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         totalWarehouseQty += b.warehouseQty;
     });
 
-    // Need string copies for client
-    const safeProduct = { ...product, _id: product._id.toString() };
-    const safeBatches = batches.map(b => ({
-        ...b,
-        _id: b._id.toString(),
-        productId: b.productId.toString(),
-        supplierInvoiceId: b.supplierInvoiceId ? b.supplierInvoiceId.toString() : null
-    }));
+    // JSON serialization to ensure plain objects for client components
+    const safeProduct = JSON.parse(JSON.stringify(product));
+    const safeBatches = JSON.parse(JSON.stringify(batches));
 
     const stockSummary = {
         totalFloorQty,
