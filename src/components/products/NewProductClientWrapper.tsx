@@ -32,8 +32,8 @@ export default function NewProductClientWrapper() {
             const product = await res.json();
             const productId = editingProductId || product._id;
 
-            // Handle initial stock if provided and in creation mode
-            if (!editingProductId && addInitialStock && initialStock) {
+            // Handle initial stock if provided (works for both new and found products in this wrapper)
+            if (addInitialStock && initialStock) {
                 const stockRes = await fetch('/api/stock/initial-entry', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

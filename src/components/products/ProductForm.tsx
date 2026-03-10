@@ -442,7 +442,8 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 </Row>
             </Card>
 
-            {mode === 'create' && (
+            {/* Show initial stock section in create mode, or if a product was found during the create flow */}
+            {(mode === 'create' || searchSource) && (
                 <Card
                     title={
                         <Space>
