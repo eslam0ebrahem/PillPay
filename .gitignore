@@ -44,5 +44,12 @@ next-env.d.ts
 # logs
 *.log
 
+# Data and scripts
 dataSet/
 scripts/
+logs/
+.agent/
+.claude/
+.codex/
+.gemini/commands/
+.specify/
