@@ -18,7 +18,7 @@ interface ResponsiveDataViewProps<T> {
 
 export function ResponsiveDataView<T>({
     data,
-    loading,
+    loading = false,
     tableColumns,
     renderCard,
     pagination,
