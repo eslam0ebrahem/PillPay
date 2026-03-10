@@ -41,7 +41,7 @@ const menuItems: MenuItem[] = [
     { key: '/settings', icon: <SettingOutlined />, label: ar.nav.settings, permission: 'settings.view' },
 ];
 
-export default function Sidebar({ collapsed }: { collapsed?: boolean }) {
+export default function Sidebar({ collapsed, isMobile }: { collapsed?: boolean; isMobile?: boolean }) {
     const pathname = usePathname();
     const router = useRouter();
     const { hasPermission, isOwner } = usePermissions();
@@ -63,17 +63,20 @@ export default function Sidebar({ collapsed }: { collapsed?: boolean }) {
     )?.key;
 
     return (
-        <div className="app-sidebar" style={{ width: collapsed ? 80 : 260 }}>
-            <div className="logo">
+        <div className={isMobile ? "mobile-sidebar" : "app-sidebar"} style={isMobile ? { height: '100%', display: 'flex', flexDirection: 'column' } : { width: collapsed ? 80 : 260 }}>
+            <div className="logo" style={isMobile ? { color: '#001529' } : {}}>
                 {collapsed ? 'PP' : 'PillPay'}
             </div>
             <Menu
-                theme="dark"
+                theme={isMobile ? "light" : "dark"}
                 mode="inline"
                 selectedKeys={activeKey ? [activeKey] : []}
                 items={antdItems}
-                onClick={({ key }) => router.push(key)}
-                inlineCollapsed={collapsed}
+                onClick={({ key }) => {
+                    router.push(key);
+                }}
+                inlineCollapsed={isMobile ? false : collapsed}
+                style={isMobile ? { borderRight: 0 } : {}}
             />
         </div>
     );

@@ -187,6 +187,7 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                     rowKey="_id"
                     pagination={false}
                     size="middle"
+                    scroll={{ x: 'max-content' }}
                 />
             </Card>
 
@@ -199,6 +200,7 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                         rowKey="_id"
                         pagination={false}
                         size="small"
+                        scroll={{ x: 'max-content' }}
                     />
                 </Card>
                 <Card title={<><ToolOutlined className="mr-2" /> سجل التسويات (أخر 10)</>} className="shadow-sm">
@@ -208,6 +210,7 @@ export default function CustomerProfile({ customer, unpaidInvoices, recentPaymen
                         rowKey="_id"
                         pagination={false}
                         size="small"
+                        scroll={{ x: 'max-content' }}
                     />
                 </Card>
             </div>

@@ -120,6 +120,7 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
                 dataSource={batches}
                 rowKey="_id"
                 pagination={{ pageSize: 20 }}
+                scroll={{ x: 'max-content' }}
             />
 
             <Modal
