@@ -15,12 +15,14 @@ const discountSchema = z.object({
 // --- Product ---
 export const productSchema = z.object({
     barcode: z.string().nullable().optional(),
+    barcode2: z.string().nullable().optional(),
     nameAr: z.string().min(1, 'اسم المنتج بالعربية مطلوب'),
     nameEn: z.string().optional(),
     imageUrl: z.string().optional(),
     manufacturer: z.string().optional(),
     category: z.string().optional(),
     description: z.string().optional(),
+    descriptionEn: z.string().optional(),
     activeIngredient: z.string().optional(),
     dosageForm: z.string().optional(),
     route: z.string().optional(),
@@ -32,6 +34,12 @@ export const productSchema = z.object({
     subUnitConversionFactor: z.number().int().min(1).nullable().optional(),
     lowStockThreshold: z.number().int().min(0).optional(),
     isActive: z.boolean().optional(),
+    // Stored for future use
+    sourceId: z.number().int().nullable().optional(),
+    brandId: z.number().int().nullable().optional(),
+    brandNameAr: z.string().optional(),
+    categoryId: z.number().int().nullable().optional(),
+    slug: z.string().optional(),
 });
 
 // --- Customer ---

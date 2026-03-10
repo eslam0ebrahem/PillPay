@@ -1,238 +1,274 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, createReadStream } from 'node:fs';
+import { createInterface } from 'node:readline';
 import path from 'node:path';
 import mongoose from 'mongoose';
 
+// ---------------------------------------------------------------------------
+// Env loader
+// ---------------------------------------------------------------------------
 function loadEnvFile(filePath) {
-    if (!existsSync(filePath)) {
-        return;
-    }
-
+    if (!existsSync(filePath)) return;
     const content = readFileSync(filePath, 'utf8');
-
     for (const line of content.split(/\r?\n/)) {
         const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) {
-            continue;
-        }
-
-        const separatorIndex = trimmed.indexOf('=');
-        if (separatorIndex === -1) {
-            continue;
-        }
-
-        const key = trimmed.slice(0, separatorIndex).trim();
-        let value = trimmed.slice(separatorIndex + 1);
-
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const sep = trimmed.indexOf('=');
+        if (sep === -1) continue;
+        const key = trimmed.slice(0, sep).trim();
+        let value = trimmed.slice(sep + 1);
         if (
             (value.startsWith('"') && value.endsWith('"')) ||
             (value.startsWith("'") && value.endsWith("'"))
         ) {
             value = value.slice(1, -1);
         }
-
-        if (!(key in process.env)) {
-            process.env[key] = value;
-        }
+        if (!(key in process.env)) process.env[key] = value;
     }
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 function cleanString(value) {
-    if (value === null || value === undefined) {
-        return undefined;
-    }
-
-    const normalized = String(value)
-        .replace(/\s+/g, ' ')
-        .replace(/\s*\n\s*/g, ' ')
-        .trim();
-
+    if (value === null || value === undefined) return undefined;
+    const normalized = String(value).replace(/\s+/g, ' ').replace(/\s*\n\s*/g, ' ').trim();
     return normalized || undefined;
 }
 
-function normalizeText(value) {
-    return cleanString(value)?.replace(/\s*--\s*/g, ' - ');
-}
-
 function normalizeBarcode(value) {
-    const barcode = cleanString(value);
-    return barcode || null;
+    return cleanString(value) || null;
 }
 
 function toPiasters(value) {
     const price = Number.parseFloat(String(value ?? '').trim());
-    if (!Number.isFinite(price) || price <= 0) {
-        return null;
-    }
-
+    if (!Number.isFinite(price) || price < 0) return null;
     return Math.round(price * 100);
 }
 
-function deriveBaseUnit(dosageForm) {
-    const key = cleanString(dosageForm)?.toLowerCase();
+function normalizeImageUrl(images) {
+    if (!Array.isArray(images) || images.length === 0) return undefined;
+    const main = images.find((i) => i.type === 'MAIN') || images[0];
+    const url = cleanString(main?.url);
+    if (!url) return undefined;
+    return /^https?:\/\//i.test(url) ? url : undefined;
+}
+
+/**
+ * Normalize unit name from the dataset.
+ * The dataset uses mixed Arabic/English names; standardize to Arabic.
+ */
+function normalizeUnitName(name) {
+    if (!name) return 'قطعة';
+    const ar = cleanString(name.ar);
+    const en = cleanString(name.en)?.toLowerCase();
+
+    // If Arabic name is already good, use it
+    if (ar && ar !== 'Each') return ar;
+
+    // Map English fallbacks to Arabic
     const map = {
-        tablet: 'قرص',
-        capsule: 'كبسولة',
-        cream: 'أنبوبة',
-        gel: 'أنبوبة',
-        ointment: 'أنبوبة',
-        syrup: 'زجاجة',
-        suspension: 'زجاجة',
-        'oral drops': 'قطارة',
-        'eye drops': 'قطرة',
-        'ear drops': 'قطرة',
-        'nasal drops': 'قطرة',
-        lotion: 'عبوة',
-        spray: 'عبوة',
-        shampoo: 'عبوة',
-        bottle: 'زجاجة',
-        suppository: 'لبوسة',
-        solution: 'زجاجة',
-        powder: 'عبوة',
-        sachet: 'كيس',
-        vial: 'فيال',
-        ampoule: 'أمبول',
         piece: 'قطعة',
-        pen: 'قلم',
-        syringe: 'سرنجة',
-        soap: 'قطعة',
-        serum: 'عبوة',
-        'mouth wash': 'زجاجة',
-        film: 'شريط',
-        oil: 'زجاجة',
-        'vaginal douche': 'عبوة',
+        each: 'قطعة',
+        strip: 'شريط',
+        tube: 'أنبوب',
+        sachet: 'كيس',
+        card: 'كارد',
+        ampoule: 'أمبول',
+        bottle: 'زجاجة',
     };
 
-    return map[key] || 'عبوة';
+    return map[en] || ar || 'قطعة';
 }
 
-function isPlaceholderName(nameAr, nameEn) {
-    const placeholderArabic = new Set(['ششش', 'تجربة']);
-    const placeholderEnglish = new Set(['aaa', 'test']);
+/**
+ * Extract active ingredient from bilingual description if present.
+ * Looks for patterns like "Active Ingredient: ..." or "المادة الفعالة: ..."
+ */
+function extractActiveIngredient(description) {
+    if (!description) return undefined;
 
-    return (
-        placeholderArabic.has((nameAr || '').toLowerCase()) ||
-        placeholderEnglish.has((nameEn || '').toLowerCase())
-    );
-}
+    const en = cleanString(description.en);
+    const ar = cleanString(description.ar);
 
-function normalizeCategory(sourceDescription) {
-    return cleanString(sourceDescription);
-}
-
-function normalizeImageUrl(sourceImage) {
-    const imageUrl = cleanString(sourceImage);
-    if (!imageUrl) {
-        return undefined;
+    // Try English pattern first
+    if (en) {
+        const match = en.match(/Active\s+Ingredient\s*:\s*(.+?)(?:\s+Treatment|\s+Used|\s*$)/i);
+        if (match) return cleanString(match[1]);
     }
 
-    if (/^https?:\/\//i.test(imageUrl)) {
-        return imageUrl;
+    // Try Arabic pattern
+    if (ar) {
+        const match = ar.match(/الماد[ةه] الفعال[ةه]\s*:\s*(.+?)(?:\s|$)/i);
+        if (match) return cleanString(match[1]);
     }
 
     return undefined;
 }
 
-function buildUpsertKey(product) {
-    if (product.barcode) {
-        return `barcode:${product.barcode}`;
+// ---------------------------------------------------------------------------
+// Map a single JSONL product to our schema
+// ---------------------------------------------------------------------------
+function mapProduct(data, lineNumber) {
+    const nameAr = cleanString(data.name?.ar);
+    const nameEn = cleanString(data.name?.en);
+    const sellingPrice = toPiasters(data.price);
+
+    if (!nameAr) {
+        return { product: null, error: `Line ${lineNumber}: missing Arabic name` };
+    }
+    if (sellingPrice === null) {
+        return { product: null, error: `Line ${lineNumber}: invalid price (${data.price})` };
     }
 
-    if (product.nameEn) {
-        return `nameEn:${product.nameEn.toLowerCase()}`;
-    }
+    // Units mapping
+    const units = data.units || [];
+    const defaultUnit = units.find((u) => u.isDefault) || units[0];
+    const secondaryUnit = units.find((u) => !u.isDefault);
 
-    return `nameAr:${product.nameAr}`;
+    const baseUnit = normalizeUnitName(defaultUnit?.name);
+    const subUnit = secondaryUnit ? normalizeUnitName(secondaryUnit.name) : null;
+    const subUnitConversionFactor =
+        secondaryUnit && secondaryUnit.quantity > 1 ? secondaryUnit.quantity : null;
+
+    const product = {
+        barcode: normalizeBarcode(data.barcode),
+        barcode2: normalizeBarcode(data.barcode2),
+        nameAr,
+        nameEn: nameEn || undefined,
+        imageUrl: normalizeImageUrl(data.images),
+        manufacturer: cleanString(data.brand?.name?.en),
+        description: cleanString(data.description?.ar),
+        descriptionEn: cleanString(data.description?.en),
+        activeIngredient: extractActiveIngredient(data.description),
+        sellingPrice,
+        baseUnit,
+        subUnit,
+        subUnitConversionFactor,
+        lowStockThreshold: 10,
+        isActive: true,
+        // Stored for future use
+        sourceId: data.id ?? null,
+        brandId: data.brand?.id ?? null,
+        brandNameAr: cleanString(data.brand?.name?.ar),
+        categoryId: data.categoryId ?? null,
+        slug: cleanString(data.slug?.en),
+    };
+
+    // Remove undefined values
+    const compact = Object.fromEntries(
+        Object.entries(product).filter(([, v]) => v !== undefined)
+    );
+
+    return { product: compact, error: null };
 }
 
+// ---------------------------------------------------------------------------
+// Read JSONL file line by line (memory efficient)
+// ---------------------------------------------------------------------------
+async function readJsonlFile(filePath) {
+    const products = [];
+    const errors = [];
+    let lineNumber = 0;
+
+    const rl = createInterface({
+        input: createReadStream(filePath, 'utf8'),
+        crlfDelay: Infinity,
+    });
+
+    for await (const line of rl) {
+        lineNumber += 1;
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        let parsed;
+        try {
+            parsed = JSON.parse(trimmed);
+        } catch {
+            errors.push(`Line ${lineNumber}: invalid JSON`);
+            continue;
+        }
+
+        const data = parsed.data || parsed;
+        const { product, error } = mapProduct(data, lineNumber);
+
+        if (error) {
+            errors.push(error);
+            continue;
+        }
+
+        products.push(product);
+    }
+
+    return { products, errors, totalLines: lineNumber };
+}
+
+// ---------------------------------------------------------------------------
+// Deduplication (keep most complete record per barcode)
+// ---------------------------------------------------------------------------
+function deduplicateProducts(products) {
+    const map = new Map();
+    let collapsed = 0;
+
+    for (const p of products) {
+        // Deduplicate by barcode (primary key for upsert)
+        const key = p.barcode || `name:${p.nameAr}`;
+        const existing = map.get(key);
+
+        if (!existing) {
+            map.set(key, p);
+            continue;
+        }
+
+        collapsed += 1;
+        // Keep the one with more filled fields
+        const scoreNew = Object.values(p).filter(Boolean).length;
+        const scoreOld = Object.values(existing).filter(Boolean).length;
+        if (scoreNew > scoreOld) {
+            map.set(key, p);
+        }
+    }
+
+    return { deduped: Array.from(map.values()), collapsed };
+}
+
+// ---------------------------------------------------------------------------
+// Build MongoDB upsert filter
+// ---------------------------------------------------------------------------
 function buildFilter(product) {
-    if (product.barcode) {
-        return { barcode: product.barcode };
-    }
-
-    if (product.nameEn) {
-        return { nameEn: product.nameEn };
-    }
-
+    if (product.barcode) return { barcode: product.barcode };
+    if (product.nameEn) return { nameEn: product.nameEn };
     return { nameAr: product.nameAr };
 }
 
-function completenessScore(product) {
-    const fields = [
-        product.barcode,
-        product.nameAr,
-        product.nameEn,
-        product.manufacturer,
-        product.category,
-        product.activeIngredient,
-        product.dosageForm,
-        product.route,
-        product.uses,
-        product.pharmacology,
-        product.imageUrl,
-    ];
-
-    return fields.filter(Boolean).length;
-}
-
-function compactProduct(product) {
-    return Object.fromEntries(
-        Object.entries(product).filter(([, value]) => value !== undefined && value !== null)
-    );
-}
-
-function mapDrugItem(item) {
-    const nameAr = cleanString(item.arabic) || cleanString(item.name);
-    const nameEn = cleanString(item.name);
-    const sellingPrice = toPiasters(item.price);
-
-    if (!nameAr || !nameEn || !sellingPrice) {
-        return null;
-    }
-
-    if (isPlaceholderName(nameAr, nameEn)) {
-        return null;
-    }
-
-        return compactProduct({
-        barcode: normalizeBarcode(item.barcode),
-        nameAr,
-        nameEn,
-        imageUrl: normalizeImageUrl(item.img),
-        manufacturer: cleanString(item.company),
-        category: normalizeCategory(item.description),
-        activeIngredient: cleanString(item.active),
-        dosageForm: cleanString(item.dosage_form),
-        route: cleanString(item.route),
-        uses: normalizeText(item.uses),
-        pharmacology: normalizeText(item.pharmacology),
-        sellingPrice,
-        baseUnit: deriveBaseUnit(item.dosage_form),
-        subUnit: null,
-        subUnitConversionFactor: null,
-        lowStockThreshold: 10,
-        isActive: true,
-        });
-}
-
+// ---------------------------------------------------------------------------
+// CLI
+// ---------------------------------------------------------------------------
 function parseArgs(argv) {
     const options = {
-        file: 'drugsDataset.json',
+        file: 'dataSet/product_details_20260310_021722.jsonl',
         dryRun: false,
+        batchSize: 500,
     };
 
-    for (let index = 0; index < argv.length; index += 1) {
-        const arg = argv[index];
-        if (arg === '--file' && argv[index + 1]) {
-            options.file = argv[index + 1];
-            index += 1;
+    for (let i = 0; i < argv.length; i += 1) {
+        const arg = argv[i];
+        if (arg === '--file' && argv[i + 1]) {
+            options.file = argv[i + 1];
+            i += 1;
         } else if (arg === '--dry-run') {
             options.dryRun = true;
+        } else if (arg === '--batch-size' && argv[i + 1]) {
+            options.batchSize = parseInt(argv[i + 1], 10);
+            i += 1;
         }
     }
 
     return options;
 }
 
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
 async function main() {
     const repoRoot = process.cwd();
     loadEnvFile(path.join(repoRoot, '.env.local'));
@@ -242,102 +278,89 @@ async function main() {
         throw new Error('MONGODB_URI is missing. Define it in .env.local before importing.');
     }
 
-    const { file, dryRun } = parseArgs(process.argv.slice(2));
+    const { file, dryRun, batchSize } = parseArgs(process.argv.slice(2));
     const datasetPath = path.resolve(repoRoot, file);
 
     if (!existsSync(datasetPath)) {
         throw new Error(`Dataset file not found: ${datasetPath}`);
     }
 
-    const rawData = JSON.parse(readFileSync(datasetPath, 'utf8'));
-    const dataset = Array.isArray(rawData) ? rawData : Object.values(rawData);
+    console.log(`Reading ${datasetPath}...`);
+    const { products: rawProducts, errors, totalLines } = await readJsonlFile(datasetPath);
+    const { deduped: products, collapsed } = deduplicateProducts(rawProducts);
 
-    const counters = {
-        total: dataset.length,
-        skippedInvalid: 0,
-        collapsedDuplicates: 0,
+    const summary = {
+        totalLines,
+        validProducts: rawProducts.length,
+        skippedInvalid: errors.length,
+        collapsedDuplicates: collapsed,
+        finalProducts: products.length,
+        dryRun,
     };
 
-    const dedupedProducts = new Map();
+    console.log('\n--- Import Summary ---');
+    console.log(JSON.stringify(summary, null, 2));
 
-    for (const item of dataset) {
-        const mapped = mapDrugItem(item);
-        if (!mapped) {
-            counters.skippedInvalid += 1;
-            continue;
+    if (errors.length > 0) {
+        console.log(`\n--- Errors (${errors.length}) ---`);
+        // Show first 20 errors max
+        for (const err of errors.slice(0, 20)) {
+            console.log(`  ${err}`);
         }
-
-        const key = buildUpsertKey(mapped);
-        const existing = dedupedProducts.get(key);
-
-        if (!existing) {
-            dedupedProducts.set(key, mapped);
-            continue;
-        }
-
-        counters.collapsedDuplicates += 1;
-        if (completenessScore(mapped) > completenessScore(existing)) {
-            dedupedProducts.set(key, mapped);
+        if (errors.length > 20) {
+            console.log(`  ... and ${errors.length - 20} more`);
         }
     }
 
-    const products = Array.from(dedupedProducts.values());
-
-    console.log(
-        JSON.stringify(
-            {
-                datasetRecords: counters.total,
-                normalizedProducts: products.length,
-                skippedInvalid: counters.skippedInvalid,
-                collapsedDuplicates: counters.collapsedDuplicates,
-                dryRun,
-            },
-            null,
-            2
-        )
-    );
-
     if (dryRun) {
+        console.log('\nDry run complete. No database changes made.');
+        // Print 3 sample products
+        console.log('\n--- Sample Products ---');
+        for (const p of products.slice(0, 3)) {
+            console.log(JSON.stringify(p, null, 2));
+        }
         return;
     }
 
-    await mongoose.connect(mongoUri, {
-        bufferCommands: false,
-    });
+    await mongoose.connect(mongoUri, { bufferCommands: false });
 
     try {
         const collection = mongoose.connection.collection('products');
         const now = new Date();
 
-        const operations = products.map((product) => ({
-            updateOne: {
-                filter: buildFilter(product),
-                update: {
-                    $set: {
-                        ...product,
-                        updatedAt: now,
-                    },
-                    $setOnInsert: {
-                        createdAt: now,
-                    },
-                },
-                upsert: true,
-            },
-        }));
+        let totalMatched = 0;
+        let totalModified = 0;
+        let totalUpserted = 0;
 
-        const result = await collection.bulkWrite(operations, { ordered: false });
+        // Process in batches for memory efficiency
+        for (let i = 0; i < products.length; i += batchSize) {
+            const batch = products.slice(i, i + batchSize);
 
-        console.log(
-            JSON.stringify(
-                {
-                    matched: result.matchedCount,
-                    modified: result.modifiedCount,
-                    upserted: result.upsertedCount,
+            const operations = batch.map((product) => ({
+                updateOne: {
+                    filter: buildFilter(product),
+                    update: {
+                        $set: { ...product, updatedAt: now },
+                        $setOnInsert: { createdAt: now },
+                    },
+                    upsert: true,
                 },
-                null,
-                2
-            )
-        );
+            }));
+
+            const result = await collection.bulkWrite(operations, { ordered: false });
+
+            totalMatched += result.matchedCount;
+            totalModified += result.modifiedCount;
+            totalUpserted += result.upsertedCount;
+
+            console.log(
+                `  Batch ${Math.floor(i / batchSize) + 1}: ` +
+                `matched=${result.matchedCount} modified=${result.modifiedCount} upserted=${result.upsertedCount}`
+            );
+        }
+
+        console.log('\n--- Database Results ---');
+        console.log(JSON.stringify({ totalMatched, totalModified, totalUpserted }, null, 2));
     } finally {
         await mongoose.disconnect();
     }

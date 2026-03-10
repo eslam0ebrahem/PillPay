@@ -24,6 +24,7 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
                 { nameAr: { $regex: search, $options: 'i' } },
                 { nameEn: { $regex: search, $options: 'i' } },
                 { barcode: search },
+                { barcode2: search },
             ];
         }
 
