@@ -168,7 +168,7 @@ export default function SettingsPage() {
             {contextHolder}
             <PageHeader title="الإعدادات والنسخ الاحتياطي" />
 
-            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                 <Card loading={settingsQuery.isLoading}>
                     <Form<SettingsFormValues>
                         form={form}
@@ -197,13 +197,26 @@ export default function SettingsPage() {
                             rules={[{ required: true, message: 'هذا الحقل مطلوب' }]}
                             extra="القيمة المعروضة بالنسبة المئوية العادية، وليست بوحدة basis points."
                         >
-                            <InputNumber
-                                min={0}
-                                max={100}
-                                step={0.5}
-                                addonAfter="%"
-                                style={{ width: '100%' }}
-                            />
+                            <Space.Compact style={{ width: '100%' }}>
+                                <InputNumber
+                                    min={0}
+                                    max={100}
+                                    step={0.5}
+                                    style={{ width: '100%' }}
+                                />
+                                <div style={{
+                                    padding: '0 11px',
+                                    backgroundColor: '#f5f5f5',
+                                    border: '1px solid #d9d9d9',
+                                    borderLeft: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    borderRadius: '0 6px 6px 0',
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                    %
+                                </div>
+                            </Space.Compact>
                         </Form.Item>
 
                         <Button
@@ -221,7 +234,7 @@ export default function SettingsPage() {
                         النسخ الاحتياطي
                     </Divider>
 
-                    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                    <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                         <div>
                             <Button
                                 icon={<DownloadOutlined />}

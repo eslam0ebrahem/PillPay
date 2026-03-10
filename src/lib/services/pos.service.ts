@@ -59,7 +59,6 @@ export async function searchProducts(
         filter = {
             isActive: true,
             $or: [
-                { $text: { $search: q } },
                 { nameAr: { $regex: q, $options: 'i' } },
                 { nameEn: { $regex: q, $options: 'i' } },
             ],

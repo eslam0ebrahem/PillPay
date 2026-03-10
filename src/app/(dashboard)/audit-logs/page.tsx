@@ -147,7 +147,7 @@ const columns: TableColumnsType<AuditLogRow> = [
         key: 'user',
         render: (user: AuditLogRow['user']) =>
             user ? (
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                     <Text strong>{user.name}</Text>
                     <Text type="secondary">{user.email}</Text>
                 </Space>
@@ -165,7 +165,7 @@ const columns: TableColumnsType<AuditLogRow> = [
         title: 'الكيان',
         key: 'entity',
         render: (_value, record) => (
-            <Space direction="vertical" size={0}>
+            <Space orientation="vertical" size={0}>
                 <Text strong>{record.entityType}</Text>
                 {record.invoiceNumber ? (
                     <Text type="secondary">الفاتورة: {record.invoiceNumber}</Text>
