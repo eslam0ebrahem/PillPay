@@ -194,12 +194,17 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 <Row gutter={16}>
                     <Col xs={24} md={8}>
                         <Form.Item
-                            name="sellingPrice"
                             label={ar.products.sellingPrice}
                             rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}
                         >
                             <Space.Compact style={{ width: '100%' }}>
-                                <InputNumber min={0} step={0.25} style={{ width: '100%' }} />
+                                <Form.Item name="sellingPrice" noStyle>
+                                    <InputNumber
+                                        min={0}
+                                        step={0.25}
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
                                 <div style={{
                                     padding: '0 11px',
                                     backgroundColor: '#f5f5f5',
@@ -208,7 +213,8 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                     display: 'flex',
                                     alignItems: 'center',
                                     borderRadius: '0 6px 6px 0',
-                                    whiteSpace: 'nowrap'
+                                    whiteSpace: 'nowrap',
+                                    color: 'rgba(0, 0, 0, 0.45)'
                                 }}>
                                     ج.م
                                 </div>
@@ -227,7 +233,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                 showSearch
                                 optionFilterProp="label"
                                 loading={isLoadingUnits}
-                                options={[...(unitsData?.data?.base_units || []), ...(unitsData?.data?.sub_units || [])].map((u: any) => ({
+                                options={(unitsData?.data?.base_units || []).map((u: any) => ({
                                     value: u.nameAr,
                                     label: u.nameAr,
                                 }))}

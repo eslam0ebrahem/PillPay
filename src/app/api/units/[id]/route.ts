@@ -3,10 +3,11 @@ import { withPermission } from '@/lib/auth/middleware';
 import { connectDB } from '@/lib/db/connection';
 import Unit from '@/lib/models/Unit';
 
-export const PUT = withPermission('users.manage', async (req: NextRequest, props: { params: Promise<{ id: string }> }) => {
+export const PUT = withPermission('users.manage', async (req: NextRequest, context: { params: Promise<Record<string, string>>, user: any }) => {
     try {
         await connectDB();
-        const { id } = await props.params;
+        const resolvedParams = await context.params;
+        const id = resolvedParams.id;
         const body = await req.json();
 
         // Check if updating the code to something that already exists
@@ -28,10 +29,11 @@ export const PUT = withPermission('users.manage', async (req: NextRequest, props
     }
 });
 
-export const DELETE = withPermission('users.manage', async (req: NextRequest, props: { params: Promise<{ id: string }> }) => {
+export const DELETE = withPermission('users.manage', async (req: NextRequest, context: { params: Promise<Record<string, string>>, user: any }) => {
     try {
         await connectDB();
-        const { id } = await props.params;
+        const resolvedParams = await context.params;
+        const id = resolvedParams.id;
 
         const unit = await Unit.findByIdAndDelete(id);
         if (!unit) {

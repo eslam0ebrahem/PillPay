@@ -38,6 +38,7 @@ const menuItems: MenuItem[] = [
     { key: '/reports', icon: <BarChartOutlined />, label: ar.nav.reports, permission: 'reports.view' },
     { key: '/audit-logs', icon: <AuditOutlined />, label: ar.nav.auditLogs, permission: 'audit-logs.view' },
     { key: '/users', icon: <UserOutlined />, label: ar.nav.users, permission: 'users.manage' },
+    { key: '/settings/units', icon: <SettingOutlined />, label: ar.nav.units, permission: 'users.manage' },
     { key: '/settings', icon: <SettingOutlined />, label: ar.nav.settings, permission: 'settings.view' },
 ];
 

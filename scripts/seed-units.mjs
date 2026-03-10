@@ -33,31 +33,31 @@ const Unit = mongoose.models.Unit || mongoose.model('Unit', unitSchema);
 
 const pharmacy_units = {
     base_units: [
-        { code: "box", nameEn: "Box", nameAr: "علبة", description: "Standard full packaging for most medications.", type: "base_unit" },
-        { code: "bottle", nameEn: "Bottle", nameAr: "زجاجة", description: "Used for syrups, suspensions, and liquid medicines.", type: "base_unit" },
-        { code: "pack", nameEn: "Pack", nameAr: "عبوة", description: "General packaging for supplies like cotton or medical alcohol.", type: "base_unit" },
-        { code: "jar", nameEn: "Jar", nameAr: "برطمان", description: "Used for bulk creams, powders, or supplements.", type: "base_unit" }
+        { code: "box", nameEn: "Box", nameAr: "علبة", type: "base_unit", description: "العبوة الكاملة أو القياسية لمعظم الأدوية." },
+        { code: "bottle", nameEn: "Bottle", nameAr: "زجاجة", type: "base_unit", description: "تستخدم للأدوية الشرب، المعلقات، والأدوية السائلة." },
+        { code: "pack", nameEn: "Pack", nameAr: "عبوة", type: "base_unit", description: "تغليف عام للمستلزمات الطبية مثل القطن أو الكحول." },
+        { code: "jar", nameEn: "Jar", nameAr: "برطمان", type: "base_unit", description: "يستخدم للكميات الكبيرة من الكريمات، البودرة، أو المكملات الغذائية." }
     ],
     sub_units: [
-        { code: "strip", nameEn: "Strip / Blister", nameAr: "شريط", description: "Subunit of a box, very common in Egyptian retail.", type: "sub_unit" },
-        { code: "tablet", nameEn: "Tablet", nameAr: "قرص", description: "Individual pill from a strip.", type: "sub_unit" },
-        { code: "capsule", nameEn: "Capsule", nameAr: "كبسولة", description: "Individual capsule from a strip.", type: "sub_unit" },
-        { code: "ampoule", nameEn: "Ampoule", nameAr: "أمبول", description: "Glass vial containing a single dose of liquid for injection.", type: "sub_unit" },
-        { code: "vial", nameEn: "Vial", nameAr: "فيال", description: "Small bottle containing medicine in powder or liquid form (e.g., antibiotics).", type: "sub_unit" },
-        { code: "sachet", nameEn: "Sachet", nameAr: "كيس", description: "Used for effervescent powders like 'Fawwar' or granules.", type: "sub_unit" },
-        { code: "suppository", nameEn: "Suppository", nameAr: "لبوس / قمع", description: "Common Egyptian term for rectal/vaginal suppositories.", type: "sub_unit" },
-        { code: "tube", nameEn: "Tube", nameAr: "أنبوبة", description: "Used for ointments, creams, and gels.", type: "sub_unit" },
-        { code: "drops", nameEn: "Drops", nameAr: "قطرة", description: "Eye, ear, or oral drops.", type: "sub_unit" },
-        { code: "spray", nameEn: "Spray / Inhaler", nameAr: "بخاخة", description: "Nasal sprays or asthma inhalers.", type: "sub_unit" },
-        { code: "pen", nameEn: "Pen", nameAr: "قلم", description: "Pre-filled insulin or weight-loss pens.", type: "sub_unit" },
-        { code: "syringe", nameEn: "Syringe", nameAr: "سرنجة", description: "Medical supply sold individually.", type: "sub_unit" },
-        { code: "card", nameEn: "Card", nameAr: "كارت", description: "Used for items packaged on a cardboard backing.", type: "sub_unit" },
-        { code: "piece", nameEn: "Piece / Each", nameAr: "قطعة", description: "Generic fallback unit for single items.", type: "sub_unit" }
+        { code: "strip", nameEn: "Strip / Blister", nameAr: "شريط", type: "sub_unit", description: "جزء من العلبة، شائع جداً في البيع بالتجزئة في الصيدليات المصرية." },
+        { code: "tablet", nameEn: "Tablet", nameAr: "قرص", type: "sub_unit", description: "حبة أو قرص مفرد من الشريط." },
+        { code: "capsule", nameEn: "Capsule", nameAr: "كبسولة", type: "sub_unit", description: "كبسولة مفردة من الشريط." },
+        { code: "ampoule", nameEn: "Ampoule", nameAr: "أمبول", type: "sub_unit", description: "زجاجة صغيرة تحتوي على جرعة واحدة من السائل للحقن." },
+        { code: "vial", nameEn: "Vial", nameAr: "فيال", type: "sub_unit", description: "زجاجة صغيرة تحتوي على الدواء في شكل بودرة أو سائل (مثل حقن المضادات الحيوية)." },
+        { code: "sachet", nameEn: "Sachet", nameAr: "كيس", type: "sub_unit", description: "تستخدم لأكياس الفوار أو الحبيبات." },
+        { code: "suppository", nameEn: "Suppository", nameAr: "لبوس / قمع", type: "sub_unit", description: "المصطلح الشائع للأقماع الشرجية أو المهبلية." },
+        { code: "tube", nameEn: "Tube", nameAr: "أنبوبة", type: "sub_unit", description: "تستخدم للمراهم، الكريمات، والجل." },
+        { code: "drops", nameEn: "Drops", nameAr: "قطرة", type: "sub_unit", description: "قطرات العين، الأذن، أو الفم." },
+        { code: "spray", nameEn: "Spray / Inhaler", nameAr: "بخاخة", type: "sub_unit", description: "بخاخات الأنف أو بخاخات الربو." },
+        { code: "pen", nameEn: "Pen", nameAr: "قلم", type: "sub_unit", description: "أقلام الإنسولين أو التخسيس المعبأة مسبقاً." },
+        { code: "syringe", nameEn: "Syringe", nameAr: "سرنجة", type: "sub_unit", description: "مستلزم طبي (سرنجة) يباع بالقطعة." },
+        { code: "card", nameEn: "Card", nameAr: "كارت", type: "sub_unit", description: "تستخدم للمنتجات المغلفة على كارت مقوى." },
+        { code: "piece", nameEn: "Piece / Each", nameAr: "قطعة", type: "sub_unit", description: "وحدة عامة للأشياء التي تباع بالقطعة المفردة (مثل كمامة واحدة، تيتينة)." }
     ],
     measurements: [
-        { code: "ml", nameEn: "Milliliter", nameAr: "ملي", description: "Volume measurement for liquids.", type: "measurement" },
-        { code: "mg", nameEn: "Milligram", nameAr: "مليجرام", description: "Weight measurement for active ingredients.", type: "measurement" },
-        { code: "gm", nameEn: "Gram", nameAr: "جرام", description: "Weight measurement for creams or powders.", type: "measurement" }
+        { code: "ml", nameEn: "Milliliter", nameAr: "ملي", type: "measurement", description: "وحدة قياس الحجم للسوائل." },
+        { code: "mg", nameEn: "Milligram", nameAr: "مليجرام", type: "measurement", description: "وحدة قياس الوزن للمواد الفعالة." },
+        { code: "gm", nameEn: "Gram", nameAr: "جرام", type: "measurement", description: "وحدة قياس الوزن للكريمات أو البودرة." }
     ]
 };
 
