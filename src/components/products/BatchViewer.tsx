@@ -66,6 +66,20 @@ export default function BatchViewer({ batches, loading, expiringSoonDays }: Batc
             key: 'purchasePrice',
             render: (val: number) => formatPiasters(val),
         },
+        {
+            title: ar.batchSource.source,
+            dataIndex: 'source',
+            key: 'source',
+            render: (source: string) => {
+                const colorMap: Record<string, string> = {
+                    supplier_invoice: 'blue',
+                    initial_stock: 'green',
+                    adjustment: 'orange',
+                };
+                const label = ar.batchSource[source as keyof typeof ar.batchSource] || source || ar.batchSource.supplier_invoice;
+                return <Tag color={colorMap[source] || 'default'}>{label}</Tag>;
+            },
+        },
     ];
 
     return (
