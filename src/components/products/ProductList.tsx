@@ -1,8 +1,9 @@
 'use client';
 
-import { Table, Input, Button, Space, Tag } from 'antd';
-import { SearchOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Input, Button, Space, Tag, Select } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
 
@@ -14,9 +15,28 @@ interface ProductListProps {
     pagination: any;
     onTableChange: (pagination: any, filters: any, sorter: any) => void;
     onSearch: (value: string) => void;
+    onBrandFilter?: (brandId: string) => void;
+    selectedBrand?: string;
 }
 
-export default function ProductList({ data, loading, pagination, onTableChange, onSearch }: ProductListProps) {
+export default function ProductList({
+    data,
+    loading,
+    pagination,
+    onTableChange,
+    onSearch,
+    onBrandFilter,
+    selectedBrand,
+}: ProductListProps) {
+    const { data: brandsData } = useQuery({
+        queryKey: ['brands-filter'],
+        queryFn: async () => {
+            const res = await fetch('/api/brands?all=true');
+            if (!res.ok) throw new Error('Failed to fetch brands');
+            return res.json() as Promise<{ data: any[] }>;
+        },
+    });
+
     const columns = [
         {
             title: ar.products.barcode,
@@ -30,10 +50,14 @@ export default function ProductList({ data, loading, pagination, onTableChange, 
             key: 'nameAr',
         },
         {
-            title: ar.products.category,
-            dataIndex: 'category',
-            key: 'category',
+            title: ar.products.brand,
+            key: 'brand',
             width: 150,
+            render: (_: any, record: any) => {
+                const brand = record.brand;
+                if (!brand) return record.manufacturer || '-';
+                return brand.nameEn || brand.nameAr || record.manufacturer || '-';
+            },
         },
         {
             title: ar.products.sellingPrice,
@@ -84,14 +108,27 @@ export default function ProductList({ data, loading, pagination, onTableChange, 
 
     return (
         <div>
-            <div style={{ marginBottom: 16 }}>
+            <Space style={{ marginBottom: 16 }} wrap>
                 <Search
                     placeholder={ar.products.searchPlaceholder}
                     allowClear
                     onSearch={onSearch}
                     style={{ width: 300 }}
                 />
-            </div>
+                <Select
+                    placeholder={ar.products.brand}
+                    allowClear
+                    showSearch
+                    optionFilterProp="label"
+                    style={{ width: 200 }}
+                    value={selectedBrand || undefined}
+                    onChange={(val) => onBrandFilter?.(val || '')}
+                    options={(brandsData?.data || []).map((b: any) => ({
+                        value: b._id,
+                        label: b.nameEn || b.nameAr,
+                    }))}
+                />
+            </Space>
             <Table
                 columns={columns}
                 dataSource={data}

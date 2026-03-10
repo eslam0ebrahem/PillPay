@@ -14,6 +14,7 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
         const limit = parseInt(searchParams.get('limit') || '20');
         const search = searchParams.get('search') || '';
         const category = searchParams.get('category') || '';
+        const brandFilter = searchParams.get('brand') || '';
         const isActive = searchParams.get('isActive');
 
         const filter: any = {};
@@ -32,6 +33,10 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
             filter.category = category;
         }
 
+        if (brandFilter) {
+            filter.brand = brandFilter;
+        }
+
         if (isActive !== null && isActive !== undefined && isActive !== '') {
             filter.isActive = isActive === 'true';
         } else {
@@ -43,6 +48,7 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
 
         const [products, total] = await Promise.all([
             Product.find(filter)
+                .populate('brand', 'nameAr nameEn image')
                 .sort({ nameAr: 1 })
                 .skip(skip)
                 .limit(limit)

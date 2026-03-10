@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from 'mongoose';
+import { Schema, model, models, Document, Types } from 'mongoose';
 
 export interface IProduct extends Document {
     barcode?: string | null;
@@ -21,6 +21,9 @@ export interface IProduct extends Document {
     subUnitConversionFactor?: number | null;
     lowStockThreshold: number;
     isActive: boolean;
+    // References
+    brand?: Types.ObjectId | null;
+    categoryRef?: Types.ObjectId | null;
     // Fields stored for future use
     sourceId?: number | null;
     brandId?: number | null;
@@ -91,6 +94,9 @@ const productSchema = new Schema<IProduct>(
             type: Boolean,
             default: true,
         },
+        // References
+        brand: { type: Schema.Types.ObjectId, ref: 'Brand', default: null },
+        categoryRef: { type: Schema.Types.ObjectId, ref: 'Category', default: null },
         // Stored for future use
         sourceId: { type: Number, default: null },
         brandId: { type: Number, default: null },
@@ -109,6 +115,10 @@ productSchema.index(
 
 // Secondary barcode index for POS lookup (not unique)
 productSchema.index({ barcode2: 1 }, { sparse: true });
+
+// Reference indexes
+productSchema.index({ brand: 1 });
+productSchema.index({ categoryRef: 1 });
 
 // Category and active indexes
 productSchema.index({ category: 1 });

@@ -34,6 +34,9 @@ export const productSchema = z.object({
     subUnitConversionFactor: z.number().int().min(1).nullable().optional(),
     lowStockThreshold: z.number().int().min(0).optional(),
     isActive: z.boolean().optional(),
+    // References
+    brand: z.string().nullable().optional(),
+    categoryRef: z.string().nullable().optional(),
     // Stored for future use
     sourceId: z.number().int().nullable().optional(),
     brandId: z.number().int().nullable().optional(),

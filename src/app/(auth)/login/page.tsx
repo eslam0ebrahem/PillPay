@@ -30,7 +30,7 @@ export default function LoginPage() {
 
                 {loginError && (
                     <Alert
-                        message={loginError.message}
+                        title={loginError.message}
                         type="error"
                         showIcon
                         style={{ marginBottom: 24 }}

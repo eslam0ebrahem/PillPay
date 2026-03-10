@@ -69,7 +69,7 @@ export default function PaymentDialog({ visible, onCancel, onSubmit, totalDebt, 
                     <Alert
                         type="info"
                         showIcon
-                        message="توزيع الدفعة"
+                        title="توزيع الدفعة"
                         description="سيتم خصم هذا المبلغ من أقدم الفواتير غير المسددة أولاً (طريقة ما يدخل أولاً يخرج أولاً FIFO)."
                         className="mb-4"
                     />

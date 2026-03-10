@@ -68,7 +68,7 @@ export default function StockHeaderClient({
 
             {outOfStockCount > 0 && (
                 <Alert
-                    message={`يوجد ${outOfStockCount} منتجات نفذت من المخزون`}
+                    title={`يوجد ${outOfStockCount} منتجات نفذت من المخزون`}
                     type="error"
                     showIcon
                     style={{ marginBottom: 16 }}
