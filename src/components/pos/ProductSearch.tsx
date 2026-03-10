@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio, Image, message } from 'antd';
+import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio, Image, App } from 'antd';
 import { ScanOutlined, SearchOutlined, PictureOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
@@ -49,6 +49,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
+    const { message } = App.useApp();
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 300);
     const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);

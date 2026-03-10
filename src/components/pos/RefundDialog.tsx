@@ -13,9 +13,9 @@ import {
     Select,
     Table,
     Typography,
-    message,
     Image,
     Space,
+    App,
 } from 'antd';
 import {
     DeleteOutlined,
@@ -88,6 +88,7 @@ function createStandaloneItem(): StandaloneRefundItem {
 }
 
 export default function RefundDialog({ open, onClose }: RefundDialogProps) {
+    const { message } = App.useApp();
     const [mode, setMode] = useState<'invoice' | 'standalone'>('invoice');
     const [invoiceReference, setInvoiceReference] = useState('');
     const [invoiceData, setInvoiceData] = useState<InvoiceLookupResult | null>(null);

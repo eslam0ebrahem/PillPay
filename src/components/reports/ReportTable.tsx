@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { Button, Card, Col, Row, Space, Table, Typography, message } from 'antd';
+import { Button, Card, Col, Row, Space, Table, Typography, App } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import MoneyDisplay from '@/components/common/MoneyDisplay';
 import type { ReportFilterValue } from './ReportFilters';
@@ -65,6 +65,7 @@ export default function ReportTable({
     summaryItems,
     comparisonItems,
 }: ReportTableProps) {
+    const { message } = App.useApp();
     const [exporting, setExporting] = useState(false);
 
     const effectiveColumns = columns.map((column) => ({

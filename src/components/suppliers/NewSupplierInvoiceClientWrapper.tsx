@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { message } from 'antd';
+import { App } from 'antd';
 import { useState } from 'react';
 import InvoiceForm from '@/components/suppliers/InvoiceForm';
 
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function NewSupplierInvoiceClientWrapper({ suppliers, products }: Props) {
+    const { message } = App.useApp();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Radio, InputNumber, Button, Space, Typography, Select, message } from 'antd';
+import { Card, Radio, InputNumber, Button, Space, Typography, Select, App } from 'antd';
 import ar from '@/i18n/ar';
 import MoneyDisplay from '../common/MoneyDisplay';
 import type { PaymentMode } from '@/lib/types';
@@ -20,6 +20,7 @@ interface CheckoutProps {
 }
 
 export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutProps) {
+    const { message } = App.useApp();
     const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
     const [paidAmount, setPaidAmount] = useState<number>(0);
     const [customerId, setCustomerId] = useState<string | null>(null);

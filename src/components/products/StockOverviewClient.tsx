@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Table, Button, Modal, Form, InputNumber, Select, Input, message, Tag, Image } from 'antd';
+import { Table, Button, Modal, Form, InputNumber, Select, Input, Tag, Image, App } from 'antd';
 import { EditOutlined, PictureOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import ar from '@/i18n/ar';
@@ -12,6 +12,7 @@ interface StockOverviewClientProps {
 }
 
 export default function StockOverviewClient({ batches }: StockOverviewClientProps) {
+    const { message } = App.useApp();
     const router = useRouter();
     const [isAdjusting, setIsAdjusting] = useState(false);
     const [selectedBatch, setSelectedBatch] = useState<any>(null);

@@ -11,7 +11,7 @@ import {
     Space,
     Typography,
     Upload,
-    message,
+    App,
 } from 'antd';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import PageHeader from '@/components/common/PageHeader';
@@ -33,7 +33,7 @@ interface SettingsFormValues {
 }
 
 export default function SettingsPage() {
-    const [messageApi, contextHolder] = message.useMessage();
+    const { message } = App.useApp();
     const [form] = Form.useForm<SettingsFormValues>();
     const [importFile, setImportFile] = useState<File | null>(null);
 
@@ -86,11 +86,11 @@ export default function SettingsPage() {
             return data;
         },
         onSuccess: () => {
-            messageApi.success('تم حفظ الإعدادات بنجاح');
+            message.success('تم حفظ الإعدادات بنجاح');
             settingsQuery.refetch();
         },
         onError: (error) => {
-            messageApi.error(error instanceof Error ? error.message : 'تعذر حفظ الإعدادات');
+            message.error(error instanceof Error ? error.message : 'تعذر حفظ الإعدادات');
         },
     });
 
@@ -119,10 +119,10 @@ export default function SettingsPage() {
             URL.revokeObjectURL(url);
         },
         onSuccess: () => {
-            messageApi.success('تم تصدير النسخة الاحتياطية');
+            message.success('تم تصدير النسخة الاحتياطية');
         },
         onError: (error) => {
-            messageApi.error(
+            message.error(
                 error instanceof Error ? error.message : 'تعذر تصدير النسخة الاحتياطية'
             );
         },
@@ -150,14 +150,14 @@ export default function SettingsPage() {
             return data;
         },
         onSuccess: (data) => {
-            messageApi.success(
+            message.success(
                 `تم استيراد النسخة الاحتياطية (${data.data.importedCollections} مجموعة)`
             );
             setImportFile(null);
             settingsQuery.refetch();
         },
         onError: (error) => {
-            messageApi.error(
+            message.error(
                 error instanceof Error ? error.message : 'تعذر استيراد النسخة الاحتياطية'
             );
         },
@@ -165,7 +165,6 @@ export default function SettingsPage() {
 
     return (
         <div>
-            {contextHolder}
             <PageHeader title="الإعدادات والنسخ الاحتياطي" />
 
             <Space orientation="vertical" size={16} style={{ width: '100%' }}>
