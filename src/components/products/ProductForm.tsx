@@ -45,6 +45,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
     const { message } = App.useApp();
     const [form] = Form.useForm<ProductFormValues>();
     const [isSearching, setIsSearching] = useState(false);
+    const [searchSource, setSearchSource] = useState<'barcode' | 'name' | null>(null);
     const [nameSearchOptions, setNameSearchOptions] = useState<any[]>([]);
     const searchTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -85,9 +86,9 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
         await onSubmit(payload);
     };
 
-    const handleBarcodeSearch = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleBarcodeSearch = async (e: React.KeyboardEvent<HTMLInputElement> | { target: { value: string } }) => {
         const barcode = (e.target as HTMLInputElement).value;
-        if (!barcode || mode === 'edit') return;
+        if (!barcode || (mode === 'edit' && searchSource === 'barcode')) return;
 
         setIsSearching(true);
         try {
@@ -97,6 +98,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 const product = json.data.find((p: any) => p.barcode === barcode || p.barcode2 === barcode);
                 if (product) {
                     message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
+                    setSearchSource('barcode');
                     const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
                     form.setFieldsValue({
                         ...product,
@@ -108,6 +110,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                     }
                 } else {
                     message.info('منتج جديد. يمكنك إكمال باقي البيانات.');
+                    setSearchSource(null);
                 }
             }
         } catch (error) {
@@ -156,6 +159,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
         const product = option?.product;
         if (product) {
             message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
+            setSearchSource('name');
             const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
             form.setFieldsValue({
                 ...product,
@@ -195,7 +199,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                 prefix={<BarcodeOutlined style={{ color: '#bfbfbf' }} />}
                                 onPressEnter={handleBarcodeSearch}
                                 placeholder="امسح الباركود هنا..."
-                                disabled={isSearching || mode === 'edit'}
+                                disabled={isSearching || (mode === 'edit' && searchSource === 'barcode')}
                                 style={{ textAlign: 'center', fontSize: '18px' }}
                             />
                         </Form.Item>
@@ -211,7 +215,7 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                 onSelect={handleProductSelect}
                                 options={nameSearchOptions}
                                 loading={isSearching}
-                                disabled={mode === 'edit'}
+                                disabled={mode === 'edit' && searchSource === 'name'}
                                 style={{ width: '100%' }}
                                 allowClear
                                 styles={{ popup: { root: { minWidth: 300 } } }}
@@ -220,17 +224,15 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                         </Form.Item>
                     </Col>
                 </Row>
-                {mode === 'create' && (
-                    <div style={{ textAlign: 'center', marginTop: 12 }}>
-                        <BarcodeScanner
-                            onScan={(text) => {
-                                form.setFieldsValue({ barcode: text });
-                                handleBarcodeSearch({ target: { value: text } } as any);
-                            }}
-                            buttonProps={{ size: 'large', type: 'dashed' }}
-                        />
-                    </div>
-                )}
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                    <BarcodeScanner
+                        onScan={(text) => {
+                            form.setFieldsValue({ barcode: text });
+                            handleBarcodeSearch({ target: { value: text } } as any);
+                        }}
+                        buttonProps={{ size: 'large', type: 'dashed' }}
+                    />
+                </div>
             </Card>
 
             <Card title="البيانات الأساسية" style={{ marginBottom: 16 }}>

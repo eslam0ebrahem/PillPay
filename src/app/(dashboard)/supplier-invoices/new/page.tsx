@@ -10,7 +10,7 @@ export default async function NewSupplierInvoicePage() {
     await connectDB();
 
     const suppliers = await Supplier.find({ isActive: true }).select('name').sort({ name: 1 }).lean<any[]>();
-    const products = await Product.find({ isActive: true }).select('nameAr nameEn').sort({ nameAr: 1 }).lean<any[]>();
+    const products = await Product.find({ isActive: true }).select('nameAr nameEn barcode barcode2').sort({ nameAr: 1 }).lean<any[]>();
 
     const safeSuppliers = suppliers.map(s => ({ ...s, _id: s._id.toString() }));
     const safeProducts = products.map(p => ({ ...p, _id: p._id.toString() }));

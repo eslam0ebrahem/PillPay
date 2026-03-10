@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Form, Input, InputNumber, Button, Select, Radio, Alert } from 'antd';
 import { useQuery } from '@tanstack/react-query';
+import BarcodeScanner from '../common/BarcodeScanner';
+import { Flex } from 'antd';
 
 interface TransferFormProps {
     products: any[];
@@ -62,22 +64,39 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
                 label="المنتج"
                 rules={[{ required: true, message: 'يرجى اختيار المنتج' }]}
             >
-                <Select
-                    showSearch
-                    placeholder="اختر منتج"
-                    onChange={(val) => {
-                        setSelectedProduct(val);
-                        form.setFieldValue('batchId', undefined);
-                        form.setFieldValue('quantity', undefined);
-                    }}
-                    options={products.map(p => ({
-                        value: p._id as string,
-                        label: `${p.nameAr} | ${p.barcode}`,
-                    }))}
-                    filterOption={(input, option) =>
-                        (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                    }
-                />
+                <Flex gap="small">
+                    <Select
+                        showSearch
+                        placeholder="اختر منتج"
+                        onChange={(val) => {
+                            setSelectedProduct(val);
+                            form.setFieldValue('batchId', undefined);
+                            form.setFieldValue('quantity', undefined);
+                        }}
+                        options={products.map(p => ({
+                            value: p._id as string,
+                            label: `${p.nameAr} | ${p.barcode}`,
+                            barcode: p.barcode,
+                            barcode2: p.barcode2,
+                        }))}
+                        filterOption={(input, option) =>
+                            (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                        }
+                        style={{ flex: 1 }}
+                    />
+                    <BarcodeScanner
+                        onScan={(text) => {
+                            const product = products.find(p => p.barcode === text || p.barcode2 === text);
+                            if (product) {
+                                form.setFieldValue('productId', product._id);
+                                setSelectedProduct(product._id);
+                                form.setFieldValue('batchId', undefined);
+                                form.setFieldValue('quantity', undefined);
+                            }
+                        }}
+                        buttonProps={{ type: 'default' }}
+                    />
+                </Flex>
             </Form.Item>
 
             <Form.Item

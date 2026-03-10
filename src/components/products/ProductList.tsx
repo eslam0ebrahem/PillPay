@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
+import BarcodeScanner from '../common/BarcodeScanner';
 
 const { Search } = Input;
 
@@ -140,6 +141,10 @@ export default function ProductList({
                     allowClear
                     onSearch={onSearch}
                     style={{ width: 300 }}
+                />
+                <BarcodeScanner
+                    onScan={(text) => onSearch(text)}
+                    buttonProps={{ type: 'default' }}
                 />
                 <Select
                     placeholder={ar.products.brand}
