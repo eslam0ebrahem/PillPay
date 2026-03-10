@@ -7,15 +7,16 @@ import {
     Empty,
     Input,
     InputNumber,
-    Modal,
     Popconfirm,
     Segmented,
     Select,
-    Table,
     Typography,
     Image,
     Space,
     App,
+    Card,
+    Row,
+    Col,
 } from 'antd';
 import {
     DeleteOutlined,
@@ -24,11 +25,17 @@ import {
     StopOutlined,
     UndoOutlined,
     PictureOutlined,
+    BarcodeOutlined,
+    QrcodeOutlined,
+    ShoppingCartOutlined,
 } from '@ant-design/icons';
 import type { ProductSearchResult } from '@/lib/types';
 import { formatEGP } from '@/utils/money';
+import MobileFormWrapper from '../common/MobileFormWrapper';
+import ResponsiveDataView from '../common/ResponsiveDataView';
+import ar from '@/i18n/ar';
 
-const { Text } = Typography;
+const { Title, Text } = Typography;
 
 interface RefundDialogProps {
     open: boolean;
@@ -391,29 +398,96 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
         },
     ];
 
+    const renderInvoiceCard = (item: InvoiceLookupItem) => (
+        <Card size="small" style={{ marginBottom: 12, borderRadius: 12 }}>
+            <Row align="middle" style={{ marginBottom: 12 }}>
+                <Col flex="48px">
+                    {item.imageUrl ? (
+                        <Image
+                            src={item.imageUrl}
+                            alt={item.productNameAr}
+                            width={48}
+                            height={48}
+                            style={{ objectFit: 'cover', borderRadius: 8 }}
+                            fallback="https://via.placeholder.com/48?text=No+Image"
+                        />
+                    ) : (
+                        <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                            <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
+                        </div>
+                    )}
+                </Col>
+                <Col flex="auto" style={{ paddingLeft: 12, paddingRight: 12 }}>
+                    <Text strong style={{ fontSize: 16 }}>{item.productNameAr}</Text>
+                    {item.productNameEn && <><br /><Text type="secondary" style={{ fontSize: 12 }}>{item.productNameEn}</Text></>}
+                </Col>
+            </Row>
+
+            <Row gutter={[8, 8]} style={{ marginBottom: 8 }}>
+                <Col span={12}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>المباع:</Text><br />
+                    <Text strong>{item.quantity} ({item.unitSold === 'sub' ? 'فرعي' : 'أساسي'})</Text>
+                </Col>
+                <Col span={12}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>المتاح للإرجاع:</Text><br />
+                    <Text strong type={item.refundableQuantity > 0 ? 'success' : 'secondary'}>{item.refundableQuantity}</Text>
+                </Col>
+            </Row>
+
+            <div style={{ background: '#f5f5f5', padding: 8, borderRadius: 8 }}>
+                <Row align="middle" justify="space-between">
+                    <Col>
+                        <Text strong>كمية الإرجاع</Text>
+                    </Col>
+                    <Col>
+                        <InputNumber
+                            min={0}
+                            max={item.refundableQuantity}
+                            value={selectedQuantities[item.saleItemId] ?? 0}
+                            disabled={item.refundableQuantity === 0 || invoiceData?.status === 'cancelled'}
+                            onChange={(value) =>
+                                setSelectedQuantities((current) => ({
+                                    ...current,
+                                    [item.saleItemId]: Number(value ?? 0),
+                                }))
+                            }
+                        />
+                    </Col>
+                </Row>
+            </div>
+        </Card>
+    );
+
     return (
-        <Modal
+        <MobileFormWrapper
             title="إرجاع وإلغاء المبيعات"
             open={open}
-            onCancel={handleClose}
+            onClose={handleClose}
             width={960}
-            destroyOnHidden
-            footer={[
-                <Button key="close" onClick={handleClose}>
-                    إغلاق
-                </Button>,
-                <Button
-                    key="submit"
-                    type="primary"
-                    icon={<UndoOutlined />}
-                    loading={submittingRefund}
-                    onClick={() => void submitRefund()}
-                >
-                    حفظ المرتجع
-                </Button>,
-            ]}
+            footer={
+                <Row gutter={16}>
+                    <Col span={12}>
+                        <Button key="close" block size="large" onClick={handleClose}>
+                            إغلاق
+                        </Button>
+                    </Col>
+                    <Col span={12}>
+                        <Button
+                            key="submit"
+                            type="primary"
+                            icon={<UndoOutlined />}
+                            loading={submittingRefund}
+                            onClick={() => void submitRefund()}
+                            block
+                            size="large"
+                        >
+                            حفظ المرتجع
+                        </Button>
+                    </Col>
+                </Row>
+            }
         >
-            <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+            <Space orientation="vertical" size="large" style={{ width: '100%', paddingBottom: 24 }}>
                 <Segmented
                     block
                     value={mode}
@@ -428,6 +502,7 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                     <>
                         <Space.Compact style={{ width: '100%' }}>
                             <Input
+                                size="large"
                                 placeholder="رقم الفاتورة أو المعرف"
                                 prefix={<SearchOutlined />}
                                 value={invoiceReference}
@@ -435,6 +510,7 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                                 onPressEnter={() => void handleInvoiceLookup()}
                             />
                             <Button
+                                size="large"
                                 type="primary"
                                 loading={searchingInvoice}
                                 onClick={() => void handleInvoiceLookup()}
@@ -445,34 +521,46 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
 
                         {invoiceData ? (
                             <>
-                                <Space orientation="vertical" size={2}>
-                                    <Text strong>
-                                        الفاتورة: {invoiceData.invoiceNumber}
-                                    </Text>
-                                    <Text type="secondary">
-                                        الإجمالي: {formatEGP(invoiceData.total)} | المدفوع:{' '}
-                                        {formatEGP(invoiceData.paidAmount)} | المتبقي:{' '}
-                                        {formatEGP(invoiceData.remainingBalance)}
-                                    </Text>
-                                    <Text type="secondary">
-                                        العميل: {invoiceData.customerName || 'غير محدد'}
-                                    </Text>
-                                    <Text type={invoiceData.status === 'cancelled' ? 'danger' : 'secondary'}>
-                                        الحالة: {invoiceData.status === 'cancelled' ? 'ملغاة' : 'مكتملة'}
-                                    </Text>
-                                </Space>
+                                <Card size="small" style={{ background: '#fafafa', borderRadius: 8 }}>
+                                    <Space orientation="vertical" size={4} style={{ width: '100%' }}>
+                                        <Text strong style={{ fontSize: 16 }}>
+                                            الفاتورة: {invoiceData.invoiceNumber}
+                                        </Text>
+                                        <Text>
+                                            العميل: <Text strong>{invoiceData.customerName || 'غير محدد'}</Text>
+                                        </Text>
+                                        <Text type={invoiceData.status === 'cancelled' ? 'danger' : 'secondary'}>
+                                            الحالة: {invoiceData.status === 'cancelled' ? 'ملغاة' : 'مكتملة'}
+                                        </Text>
+                                        <Divider style={{ margin: '8px 0' }} />
+                                        <Row justify="space-between">
+                                            <Col>
+                                                <Text type="secondary">الإجمالي</Text><br />
+                                                <Text strong>{formatEGP(invoiceData.total)}</Text>
+                                            </Col>
+                                            <Col>
+                                                <Text type="secondary">المدفوع</Text><br />
+                                                <Text strong>{formatEGP(invoiceData.paidAmount)}</Text>
+                                            </Col>
+                                            <Col>
+                                                <Text type="secondary">المتبقي</Text><br />
+                                                <Text strong type={invoiceData.remainingBalance > 0 ? "danger" : "success"}>
+                                                    {formatEGP(invoiceData.remainingBalance)}
+                                                </Text>
+                                            </Col>
+                                        </Row>
+                                    </Space>
+                                </Card>
 
-                                <Table
+                                <ResponsiveDataView
+                                    data={invoiceData.items}
                                     rowKey="saleItemId"
+                                    tableColumns={invoiceColumns}
+                                    renderCard={renderInvoiceCard}
                                     pagination={false}
-                                    columns={invoiceColumns}
-                                    dataSource={invoiceData.items}
-                                    locale={{
-                                        emptyText: (
-                                            <Empty description="لا توجد أصناف متاحة للإرجاع" />
-                                        ),
+                                    tableProps={{
+                                        locale: { emptyText: ar.actions.noData }
                                     }}
-                                    scroll={{ x: 'max-content' }}
                                 />
 
                                 <Space
@@ -480,6 +568,11 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         width: '100%',
+                                        flexWrap: 'wrap',
+                                        gap: 16,
+                                        alignItems: 'center',
+                                        paddingTop: 16,
+                                        borderTop: '1px solid #f0f0f0'
                                     }}
                                 >
                                     <Popconfirm
@@ -499,153 +592,165 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                                         </Button>
                                     </Popconfirm>
 
-                                    <Text strong>إجمالي المرتجع: {formatEGP(linkedRefundTotal)}</Text>
+                                    <Row align="middle" gutter={16}>
+                                        <Col><Text style={{ fontSize: 16 }}>إجمالي المرتجع:</Text></Col>
+                                        <Col><Text strong style={{ fontSize: 20, color: '#1677ff' }}>{formatEGP(linkedRefundTotal)}</Text></Col>
+                                    </Row>
                                 </Space>
                             </>
                         ) : (
-                            <Empty description="ابحث عن فاتورة لبدء الإرجاع أو الإلغاء" />
+                            <Empty description="ابحث عن فاتورة لبدء الإرجاع أو الإلغاء" style={{ marginTop: 40 }} />
                         )}
                     </>
                 ) : (
                     <>
-                        <Select
-                            allowClear
-                            showSearch
-                            placeholder="عميل المرتجع (اختياري)"
-                            value={selectedCustomerId}
-                            onChange={(value) => setSelectedCustomerId(value)}
-                            options={customerOptions.map((customer) => ({
-                                value: customer._id,
-                                label: customer.name,
-                            }))}
-                            filterOption={(input, option) =>
-                                String(option?.label ?? '')
-                                    .toLowerCase()
-                                    .includes(input.toLowerCase())
-                            }
-                        />
+                        <Card size="small" style={{ borderRadius: 8 }}>
+                            <Select
+                                size="large"
+                                allowClear
+                                showSearch
+                                placeholder="عميل المرتجع (اختياري)"
+                                value={selectedCustomerId}
+                                onChange={(value) => setSelectedCustomerId(value)}
+                                options={customerOptions.map((customer) => ({
+                                    value: customer._id,
+                                    label: customer.name,
+                                }))}
+                                style={{ width: '100%', marginBottom: 16 }}
+                                filterOption={(input, option) =>
+                                    String(option?.label ?? '')
+                                        .toLowerCase()
+                                        .includes(input.toLowerCase())
+                                }
+                            />
 
-                        <Space orientation="vertical" style={{ width: '100%' }} size="middle">
-                            {standaloneItems.map((item, index) => (
-                                <Space
-                                    key={item.id}
-                                    wrap
-                                    align="start"
-                                    style={{ width: '100%' }}
-                                >
-                                    <Select
-                                        showSearch
-                                        style={{ minWidth: 260 }}
-                                        placeholder={`الصنف ${index + 1}`}
-                                        value={item.productId}
-                                        loading={searchingProducts}
-                                        filterOption={false}
-                                        onSearch={(value) => void handleProductSearch(value)}
-                                        onChange={(value) => {
-                                            const selectedProduct = productOptions.find(
-                                                (product) => product._id === value
-                                            );
+                            <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                                {standaloneItems.map((item, index) => (
+                                    <Card key={item.id} size="small" style={{ background: '#fcfcfc', borderRadius: 8 }}>
+                                        <Space orientation="vertical" style={{ width: '100%' }} size="small">
+                                            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                                <Text strong>صنف {index + 1}</Text>
+                                                <Button
+                                                    danger
+                                                    type="text"
+                                                    icon={<DeleteOutlined />}
+                                                    disabled={standaloneItems.length === 1}
+                                                    onClick={() =>
+                                                        setStandaloneItems((items) =>
+                                                            items.filter((current) => current.id !== item.id)
+                                                        )
+                                                    }
+                                                />
+                                            </Space>
+                                            <Select
+                                                size="large"
+                                                showSearch
+                                                style={{ width: '100%' }}
+                                                placeholder="اختر الصنف"
+                                                value={item.productId}
+                                                loading={searchingProducts}
+                                                filterOption={false}
+                                                onSearch={(value) => void handleProductSearch(value)}
+                                                onChange={(value) => {
+                                                    const selectedProduct = productOptions.find(
+                                                        (product) => product._id === value
+                                                    );
 
-                                            updateStandaloneItem(item.id, {
-                                                productId: value,
-                                                productName: selectedProduct?.nameAr ?? '',
-                                                productNameEn: selectedProduct?.nameEn ?? '',
-                                                imageUrl: selectedProduct?.imageUrl,
-                                                unitPrice:
-                                                    (selectedProduct?.sellingPrice ?? 0) / 100,
-                                            });
-                                        }}
-                                        options={productOptions.map((product) => ({
-                                            value: product._id,
-                                            label: (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                    {product.imageUrl ? (
-                                                        <Image
-                                                            src={product.imageUrl}
-                                                            alt={product.nameAr}
-                                                            width={24}
-                                                            height={24}
-                                                            style={{ objectFit: 'cover', borderRadius: 2 }}
-                                                            preview={false}
-                                                            fallback="https://via.placeholder.com/24?text=NA"
-                                                        />
-                                                    ) : (
-                                                        <PictureOutlined style={{ color: '#d9d9d9' }} />
-                                                    )}
-                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <Text>{product.nameAr}</Text>
-                                                        {product.nameEn && <Text type="secondary" style={{ fontSize: 11 }}>{product.nameEn}</Text>}
-                                                    </div>
-                                                </div>
-                                            ),
-                                            sellingPrice: product.sellingPrice,
-                                        }))}
-                                    />
+                                                    updateStandaloneItem(item.id, {
+                                                        productId: value,
+                                                        productName: selectedProduct?.nameAr ?? '',
+                                                        productNameEn: selectedProduct?.nameEn ?? '',
+                                                        imageUrl: selectedProduct?.imageUrl,
+                                                        unitPrice:
+                                                            (selectedProduct?.sellingPrice ?? 0) / 100,
+                                                    });
+                                                }}
+                                                options={productOptions.map((product) => ({
+                                                    value: product._id,
+                                                    label: (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                            {product.imageUrl ? (
+                                                                <Image
+                                                                    src={product.imageUrl}
+                                                                    alt={product.nameAr}
+                                                                    width={24}
+                                                                    height={24}
+                                                                    style={{ objectFit: 'cover', borderRadius: 2 }}
+                                                                    preview={false}
+                                                                    fallback="https://via.placeholder.com/24?text=NA"
+                                                                />
+                                                            ) : (
+                                                                <PictureOutlined style={{ color: '#d9d9d9' }} />
+                                                            )}
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <Text>{product.nameAr}</Text>
+                                                                {product.nameEn && <Text type="secondary" style={{ fontSize: 11 }}>{product.nameEn}</Text>}
+                                                            </div>
+                                                        </div>
+                                                    ),
+                                                    sellingPrice: product.sellingPrice,
+                                                }))}
+                                            />
 
-                                    <InputNumber
-                                        min={1}
-                                        value={item.quantity}
-                                        onChange={(value) =>
-                                            updateStandaloneItem(item.id, {
-                                                quantity: Number(value ?? 1),
-                                            })
-                                        }
-                                        placeholder="الكمية"
-                                    />
+                                            <Row gutter={8}>
+                                                <Col span={12}>
+                                                    <InputNumber
+                                                        size="large"
+                                                        min={1}
+                                                        value={item.quantity}
+                                                        onChange={(value) =>
+                                                            updateStandaloneItem(item.id, {
+                                                                quantity: Number(value ?? 1),
+                                                            })
+                                                        }
+                                                        placeholder="الكمية"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </Col>
+                                                <Col span={12}>
+                                                    <InputNumber
+                                                        size="large"
+                                                        min={0}
+                                                        value={item.unitPrice}
+                                                        addonAfter="ج.م"
+                                                        onChange={(value) =>
+                                                            updateStandaloneItem(item.id, {
+                                                                unitPrice: Number(value ?? 0),
+                                                            })
+                                                        }
+                                                        placeholder="سعر الوحدة"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </Col>
+                                            </Row>
+                                        </Space>
+                                    </Card>
+                                ))}
+                            </Space>
 
-                                    <Space.Compact>
-                                        <InputNumber
-                                            min={0}
-                                            value={item.unitPrice}
-                                            onChange={(value) =>
-                                                updateStandaloneItem(item.id, {
-                                                    unitPrice: Number(value ?? 0),
-                                                })
-                                            }
-                                            placeholder="سعر الوحدة"
-                                        />
-                                        <div style={{
-                                            padding: '0 11px',
-                                            backgroundColor: '#f5f5f5',
-                                            border: '1px solid #d9d9d9',
-                                            borderLeft: 0,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            borderRadius: '0 6px 6px 0',
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            ج.م
-                                        </div>
-                                    </Space.Compact>
+                            <Button
+                                type="dashed"
+                                block
+                                size="large"
+                                style={{ marginTop: 16 }}
+                                icon={<PlusOutlined />}
+                                onClick={() =>
+                                    setStandaloneItems((items) => [...items, createStandaloneItem()])
+                                }
+                            >
+                                إضافة صنف آخر
+                            </Button>
+                        </Card>
 
-                                    <Button
-                                        danger
-                                        icon={<DeleteOutlined />}
-                                        disabled={standaloneItems.length === 1}
-                                        onClick={() =>
-                                            setStandaloneItems((items) =>
-                                                items.filter((current) => current.id !== item.id)
-                                            )
-                                        }
-                                    />
-                                </Space>
-                            ))}
-                        </Space>
-
-                        <Button
-                            icon={<PlusOutlined />}
-                            onClick={() =>
-                                setStandaloneItems((items) => [...items, createStandaloneItem()])
-                            }
-                        >
-                            إضافة صنف يدوي
-                        </Button>
-
-                        <Divider style={{ margin: '8px 0' }} />
-                        <Text strong>إجمالي المرتجع: {formatEGP(standaloneRefundTotal)}</Text>
+                        <div style={{ paddingTop: 16, borderTop: '1px solid #f0f0f0', marginTop: 16 }}>
+                            <Row justify="space-between" align="middle">
+                                <Col><Text style={{ fontSize: 16 }}>إجمالي المرتجع:</Text></Col>
+                                <Col><Text strong style={{ fontSize: 24, color: '#1677ff' }}>{formatEGP(standaloneRefundTotal)}</Text></Col>
+                            </Row>
+                        </div>
                     </>
                 )}
             </Space>
-        </Modal>
+        </MobileFormWrapper>
     );
 }

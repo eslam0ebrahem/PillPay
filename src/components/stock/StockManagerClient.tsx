@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import StockOverviewClient from '@/components/products/StockOverviewClient';
 import TransferForm from './TransferForm';
 import InitialStockForm from './InitialStockForm';
+import MobileFormWrapper from '../common/MobileFormWrapper';
 import ar from '@/i18n/ar';
 import dayjs from 'dayjs';
 
@@ -166,11 +167,10 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
                 ]}
             />
 
-            <Modal
+            <MobileFormWrapper
                 title="تحويل رصيد"
                 open={isTransferModalOpen}
-                onCancel={() => !transferMutation.isPending && setIsTransferModalOpen(false)}
-                footer={null}
+                onClose={() => !transferMutation.isPending && setIsTransferModalOpen(false)}
                 destroyOnHidden
             >
                 {isTransferModalOpen && (
@@ -180,13 +180,12 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
                         isLoading={transferMutation.isPending}
                     />
                 )}
-            </Modal>
+            </MobileFormWrapper>
 
-            <Modal
+            <MobileFormWrapper
                 title={ar.initialStock.title}
                 open={isInitialStockModalOpen}
-                onCancel={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
-                footer={null}
+                onClose={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
                 destroyOnHidden
             >
                 {isInitialStockModalOpen && (
@@ -196,7 +195,7 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
                         isLoading={initialStockMutation.isPending}
                     />
                 )}
-            </Modal>
+            </MobileFormWrapper>
         </div>
     );
 }

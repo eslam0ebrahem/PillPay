@@ -8,6 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import ProductForm, { ProductFormValues } from '@/components/products/ProductForm';
 import BatchViewer from '@/components/products/BatchViewer';
 import InitialStockForm from '@/components/stock/InitialStockForm';
+import MobileFormWrapper from '../common/MobileFormWrapper';
 import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
 
@@ -163,11 +164,10 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
 
             <Tabs defaultActiveKey="1" items={items} />
 
-            <Modal
+            <MobileFormWrapper
                 title={ar.initialStock.title}
                 open={isInitialStockModalOpen}
-                onCancel={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
-                footer={null}
+                onClose={() => !initialStockMutation.isPending && setIsInitialStockModalOpen(false)}
                 destroyOnHidden
             >
                 {isInitialStockModalOpen && (
@@ -178,7 +178,7 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                         isLoading={initialStockMutation.isPending}
                     />
                 )}
-            </Modal>
+            </MobileFormWrapper>
         </div>
     );
 }

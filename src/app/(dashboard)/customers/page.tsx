@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Table, Button, Input, Space, Switch, Modal, App } from 'antd';
+import { Typography, Card, Button, Input, Space, Switch, App, Row, Col } from 'antd';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import MoneyDisplay from '@/components/common/MoneyDisplay';
 import CustomerForm from '@/components/customers/CustomerForm';
+import ResponsiveDataView from '@/components/common/ResponsiveDataView';
+import MobileFormWrapper from '@/components/common/MobileFormWrapper';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export default function CustomersPage() {
     const { message } = App.useApp();
@@ -93,10 +96,43 @@ export default function CustomersPage() {
         },
     ];
 
+    const renderCard = (record: any) => (
+        <Card size="small" style={{ marginBottom: 12, borderRadius: 12 }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
+                <Col>
+                    <Link href={`/customers/${record._id}`}>
+                        <Text strong style={{ fontSize: 16, color: '#1677ff' }}>{record.name}</Text>
+                    </Link>
+                </Col>
+                <Col>
+                    {record.phone && <Text type="secondary">{record.phone}</Text>}
+                </Col>
+            </Row>
+
+            <div style={{ background: '#f5f5f5', padding: '8px 12px', borderRadius: 8, marginTop: 8 }}>
+                <Row justify="space-between" align="middle">
+                    <Col>
+                        <Text type="secondary" style={{ fontSize: 12 }}>إجمالي المديونية:</Text><br />
+                        <Text strong type={record.totalOwed > 0 ? 'danger' : undefined} style={{ fontSize: 16 }}>
+                            <MoneyDisplay amount={record.totalOwed} />
+                        </Text>
+                    </Col>
+                    <Col>
+                        <Link href={`/customers/${record._id}`}>
+                            <Button type="primary" size="small" icon={<EyeOutlined />}>
+                                التفاصيل
+                            </Button>
+                        </Link>
+                    </Col>
+                </Row>
+            </div>
+        </Card>
+    );
+
     return (
-        <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <Title level={2} className="!mb-0">العملاء والمديونيات</Title>
+        <div style={{ maxWidth: 1152, margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <Title level={2} style={{ margin: 0 }}>العملاء والمديونيات</Title>
                 <Button
                     type="primary"
                     icon={<PlusOutlined />}
@@ -106,19 +142,19 @@ export default function CustomersPage() {
                 </Button>
             </div>
 
-            <Card className="shadow-sm mb-6">
-                <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+            <Card style={{ marginBottom: 24, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
                     <Input
                         placeholder="ابحث بالاسم أو رقم الهاتف..."
-                        prefix={<SearchOutlined className="text-gray-400" />}
+                        prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="max-w-md"
+                        style={{ maxWidth: 400, flex: 1 }}
                         size="large"
                         allowClear
                     />
                     <Space>
-                        <span className="text-gray-600">عرض أصحاب الديون فقط</span>
+                        <Text type="secondary">عرض أصحاب الديون فقط</Text>
                         <Switch
                             checked={hasDebtOnly}
                             onChange={setHasDebtOnly}
@@ -127,26 +163,29 @@ export default function CustomersPage() {
                 </div>
             </Card>
 
-            <Table
-                columns={columns}
-                dataSource={customers}
+            <ResponsiveDataView
+                data={customers}
+                tableColumns={columns}
                 rowKey="_id"
                 loading={loading}
+                renderCard={renderCard}
                 pagination={{ defaultPageSize: 20 }}
-                className="shadow-sm"
+                tableProps={{
+                    className: "shadow-sm",
+                    style: { backgroundColor: 'white' }
+                }}
             />
 
-            <Modal
+            <MobileFormWrapper
                 title="إضافة عميل جديد"
                 open={isAddModalVisible}
-                onCancel={() => setIsAddModalVisible(false)}
-                footer={null}
+                onClose={() => setIsAddModalVisible(false)}
                 destroyOnHidden
             >
                 {isAddModalVisible && (
                     <CustomerForm onSubmit={handleAddCustomer} isLoading={adding} />
                 )}
-            </Modal>
+            </MobileFormWrapper>
         </div>
     );
 }

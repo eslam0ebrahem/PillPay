@@ -40,7 +40,7 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكم
                             qrbox: (viewfinderWidth, viewfinderHeight) => {
                                 // Dynamic qrbox size based on viewfinder
                                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                                const size = Math.floor(minEdge * 0.7);
+                                const size = Math.max(50, Math.floor(minEdge * 0.7));
                                 return { width: size, height: size };
                             },
                         },

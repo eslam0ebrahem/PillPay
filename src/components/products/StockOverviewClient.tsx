@@ -6,6 +6,7 @@ import { EditOutlined, PictureOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import ar from '@/i18n/ar';
 import dayjs from 'dayjs';
+import MobileFormWrapper from '../common/MobileFormWrapper';
 
 interface StockOverviewClientProps {
     batches: any[];
@@ -153,11 +154,11 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
                 scroll={{ x: 'max-content' }}
             />
 
-            <Modal
+            <MobileFormWrapper
                 title={`تعديل الرصيد - ${selectedBatch?.productId?.nameAr}`}
                 open={isAdjusting}
-                onCancel={() => setIsAdjusting(false)}
-                footer={null}
+                onClose={() => setIsAdjusting(false)}
+                destroyOnHidden
             >
                 <Form form={form} layout="vertical" onFinish={handleAdjust} onValuesChange={handleFormChange}>
                     <Form.Item name="location" label="الموقع" rules={[{ required: true }]}>
@@ -176,7 +177,7 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
                         حفظ التعديل
                     </Button>
                 </Form>
-            </Modal>
+            </MobileFormWrapper>
         </div>
     );
 }

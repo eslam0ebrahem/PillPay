@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Input, Table, Button, Typography, Space, Tag, Modal, InputNumber, Radio, Image, App } from 'antd';
+import { Input, Button, Typography, Space, Tag, InputNumber, Radio, Image, App, Card, Row, Col } from 'antd';
 import { ScanOutlined, SearchOutlined, PictureOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import MoneyDisplay from '../common/MoneyDisplay';
-
-const BarcodeScanner = dynamic(() => import('../common/BarcodeScanner'), { ssr: false });
+import ResponsiveDataView from '../common/ResponsiveDataView';
+import MobileFormWrapper from '../common/MobileFormWrapper';
 import ar from '@/i18n/ar';
 import type { UnitSold } from '@/lib/types';
 
+const BarcodeScanner = dynamic(() => import('../common/BarcodeScanner'), { ssr: false });
 const { Text } = Typography;
 
 export interface ProductSearchResult {
@@ -37,7 +38,7 @@ function useDebounce<T>(value: T, delay: number): T {
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     if (timerRef.current && debouncedValue === value) {
-        // Do nothing if same
+        // Do nothing
     } else {
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
@@ -81,16 +82,14 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
             quantity: 1, // Default to 1 for direct add
             unitSold: 'base', // Default to base unit for direct add
         });
-        setQuery(''); // clear search after add
+        setQuery('');
         if (inputRef.current) {
             inputRef.current.focus();
         }
     };
 
     const handleCameraScan = async (barcode: string) => {
-        setQuery(barcode); // Set query to show scanned barcode in input
-        // We'll perform a manual fetch rather than just setting the term,
-        // to immediately process the scanned item like `onPressEnter`
+        setQuery(barcode);
         try {
             const res = await fetch('/api/pos/search', {
                 method: 'POST',
@@ -102,13 +101,11 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
 
             if (data && data.length === 1) {
                 handleAddToCart(data[0]);
-                setQuery(''); // Clear input after successful add
+                setQuery('');
                 if (inputRef.current) {
                     inputRef.current.focus();
                 }
             } else if (data && data.length > 1) {
-                // If multiple products match, display them in the search results
-                // The debounced query will handle this automatically if we just setQuery
                 message.info('تم العثور على منتجات متعددة مطابقة للباركود');
             } else {
                 message.error('لم يتم العثور على المنتج');
@@ -120,7 +117,6 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
     };
 
     const handleSearch = () => {
-        // Manually trigger search if query is not empty
         if (query.length > 1) {
             refetch();
         }
@@ -140,16 +136,124 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                 unitSold: unitType,
             });
             setSelectedProduct(null);
-            setQuery(''); // clear search after add
+            setQuery('');
             if (inputRef.current) {
                 inputRef.current.focus();
             }
         }
     };
 
+    const renderCard = (item: ProductSearchResult) => (
+        <Card size="small" style={{ width: '100%', marginBottom: 8, borderRadius: 12 }}>
+            <Row align="middle">
+                <Col flex="60px">
+                    {item.imageUrl ? (
+                        <Image
+                            src={item.imageUrl}
+                            alt={item.nameAr}
+                            width={56}
+                            height={56}
+                            style={{ objectFit: 'cover', borderRadius: 8 }}
+                            fallback="https://via.placeholder.com/56?text=No+Image"
+                        />
+                    ) : (
+                        <div style={{ width: 56, height: 56, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                            <PictureOutlined style={{ fontSize: 24, color: '#d9d9d9' }} />
+                        </div>
+                    )}
+                </Col>
+                <Col flex="auto" style={{ paddingLeft: 12, paddingRight: 12 }}>
+                    <Text strong style={{ fontSize: 16 }}>{item.nameAr}</Text>
+                    {item.nameEn && <><br /><Text type="secondary" style={{ fontSize: 12 }}>{item.nameEn}</Text></>}
+                    <div style={{ marginTop: 4 }}>
+                        <Space wrap>
+                            <MoneyDisplay amount={item.sellingPrice} />
+                            {item.floorStock > 0 ? (
+                                <Tag color="green" style={{ margin: 0 }}>
+                                    {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
+                                </Tag>
+                            ) : (
+                                <Tag color="red" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
+                            )}
+                        </Space>
+                    </div>
+                </Col>
+                <Col>
+                    <Button
+                        type="primary"
+                        size="large"
+                        shape="circle"
+                        disabled={item.floorStock <= 0}
+                        onClick={() => openQtyModal(item)}
+                        style={{ width: 44, height: 44 }}
+                    >
+                        +
+                    </Button>
+                </Col>
+            </Row>
+        </Card>
+    );
+
+    const columns = [
+        {
+            title: 'Product',
+            key: 'product',
+            render: (_: any, item: ProductSearchResult) => (
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div>
+                        {item.imageUrl ? (
+                            <Image
+                                src={item.imageUrl}
+                                alt={item.nameAr}
+                                width={48}
+                                height={48}
+                                style={{ objectFit: 'cover', borderRadius: 4 }}
+                                fallback="https://via.placeholder.com/48?text=No+Image"
+                            />
+                        ) : (
+                            <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                                <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
+                            </div>
+                        )}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                        <Text strong>{item.nameAr}</Text>
+                        {item.nameEn && <Text type="secondary" style={{ fontSize: 13 }}>{item.nameEn}</Text>}
+                        <Space wrap>
+                            <MoneyDisplay amount={item.sellingPrice} />
+                            {item.floorStock > 0 ? (
+                                <Tag color="green">
+                                    {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
+                                </Tag>
+                            ) : (
+                                <Tag color="red">{ar.pos.outOfStock}</Tag>
+                            )}
+                            {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}>{item.barcode}</Text>}
+                        </Space>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            title: 'Action',
+            key: 'action',
+            width: 100,
+            align: 'right' as const,
+            render: (_: any, item: ProductSearchResult) => (
+                <Button
+                    type="primary"
+                    disabled={item.floorStock <= 0}
+                    onClick={() => openQtyModal(item)}
+                >
+                    {ar.actions.add}
+                </Button>
+            ),
+        },
+    ];
+
     return (
         <div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <Input
                         size="large"
@@ -161,94 +265,44 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                         onPressEnter={handleSearch}
                         autoFocus
                         ref={inputRef}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, minHeight: 52, borderRadius: 12, fontSize: 16 }}
                     />
                     <BarcodeScanner
                         onScan={handleCameraScan}
                         buttonText=""
-                        buttonProps={{ size: 'large', type: 'primary' }}
+                        buttonProps={{ size: 'large', type: 'primary', style: { width: 52, height: 52, borderRadius: 12 } }}
                     />
                 </div>
             </div>
 
-            <Table
+            <ResponsiveDataView
+                data={results || []}
                 loading={isFetching}
-                dataSource={results || []}
                 rowKey="_id"
-                showHeader={false}
-                size="small"
+                tableColumns={columns}
+                renderCard={renderCard}
                 pagination={false}
-                locale={{ emptyText: ar.actions.noData }}
-                columns={[
-                    {
-                        title: 'Product',
-                        key: 'product',
-                        render: (_, item: ProductSearchResult) => (
-                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                                <div>
-                                    {item.imageUrl ? (
-                                        <Image
-                                            src={item.imageUrl}
-                                            alt={item.nameAr}
-                                            width={48}
-                                            height={48}
-                                            style={{ objectFit: 'cover', borderRadius: 4 }}
-                                            fallback="https://via.placeholder.com/48?text=No+Image"
-                                        />
-                                    ) : (
-                                        <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
-                                            <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
-                                        </div>
-                                    )}
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                                    <Text strong>{item.nameAr}</Text>
-                                    {item.nameEn && <Text type="secondary" style={{ fontSize: 13 }}>{item.nameEn}</Text>}
-                                    <Space wrap>
-                                        <MoneyDisplay amount={item.sellingPrice} />
-                                        {item.floorStock > 0 ? (
-                                            <Tag color="green">
-                                                {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
-                                            </Tag>
-                                        ) : (
-                                            <Tag color="red">{ar.pos.outOfStock}</Tag>
-                                        )}
-                                        {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}>{item.barcode}</Text>}
-                                    </Space>
-                                </div>
-                            </div>
-                        ),
-                    },
-                    {
-                        title: 'Action',
-                        key: 'action',
-                        width: 100,
-                        align: 'right',
-                        render: (_, item: ProductSearchResult) => (
-                            <Button
-                                type="primary"
-                                disabled={item.floorStock <= 0}
-                                onClick={() => openQtyModal(item)}
-                            >
-                                {ar.actions.add}
-                            </Button>
-                        ),
-                    },
-                ]}
+                tableProps={{
+                    showHeader: false,
+                    size: "small",
+                    locale: { emptyText: ar.actions.noData }
+                }}
             />
 
-            <Modal
+            <MobileFormWrapper
                 title={ar.pos.addToCart}
                 open={!!selectedProduct}
-                onOk={confirmAddToCart}
-                onCancel={() => setSelectedProduct(null)}
-                okText={ar.actions.add}
-                cancelText={ar.actions.cancel}
+                onClose={() => setSelectedProduct(null)}
+                footer={
+                    <Button block type="primary" size="large" onClick={confirmAddToCart}>
+                        {ar.actions.add}
+                    </Button>
+                }
             >
                 {selectedProduct && (
                     <Space orientation="vertical" style={{ width: '100%' }} size="large">
                         <div>
-                            <Text strong style={{ display: 'block' }}>{selectedProduct.nameAr}</Text>
+                            <Text strong style={{ display: 'block', fontSize: 18 }}>{selectedProduct.nameAr}</Text>
                             {selectedProduct.nameEn && <Text type="secondary">{selectedProduct.nameEn}</Text>}
                         </div>
 
@@ -256,6 +310,7 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                             <Text>{ar.pos.quantity}: </Text>
                             <InputNumber
                                 min={1}
+                                size="large"
                                 value={qty}
                                 onChange={(val) => setQty(val || 1)}
                                 style={{ width: '100%', marginTop: 8 }}
@@ -269,16 +324,18 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                                 <Radio.Group
                                     value={unitType}
                                     onChange={(e) => setUnitType(e.target.value)}
-                                    style={{ marginTop: 8, display: 'block' }}
+                                    style={{ marginTop: 8, display: 'flex' }}
+                                    optionType="button"
+                                    buttonStyle="solid"
                                 >
-                                    <Radio.Button value="base">{selectedProduct.baseUnit}</Radio.Button>
-                                    <Radio.Button value="sub">{selectedProduct.subUnit}</Radio.Button>
+                                    <Radio.Button value="base" style={{ flex: 1, textAlign: 'center' }}>{selectedProduct.baseUnit}</Radio.Button>
+                                    <Radio.Button value="sub" style={{ flex: 1, textAlign: 'center' }}>{selectedProduct.subUnit}</Radio.Button>
                                 </Radio.Group>
                             </div>
                         )}
                     </Space>
                 )}
-            </Modal>
+            </MobileFormWrapper>
         </div>
     );
 }

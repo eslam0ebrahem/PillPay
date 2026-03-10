@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal, Form, InputNumber, Button, Alert, Typography } from 'antd';
+import { Form, InputNumber, Button, Alert, Typography } from 'antd';
 import MoneyDisplay from '@/components/common/MoneyDisplay';
+import MobileFormWrapper from '../common/MobileFormWrapper';
 
 const { Text } = Typography;
 
@@ -31,15 +32,22 @@ export default function PaymentDialog({ visible, onCancel, onSubmit, totalDebt, 
     };
 
     return (
-        <Modal
+        <MobileFormWrapper
             title={`تحصيل دفعة من: ${customerName}`}
             open={visible}
-            onCancel={handleCancel}
-            footer={null}
+            onClose={handleCancel}
+            footer={
+                <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                    <Button block size="large" onClick={handleCancel}>إلغاء</Button>
+                    <Button block size="large" type="primary" onClick={() => form.submit()} loading={loading}>
+                        تأكيد التحصيل
+                    </Button>
+                </div>
+            }
         >
-            <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                <Text type="secondary" className="block mb-1">إجمالي المديونية الحالية:</Text>
-                <Text strong className="text-xl text-red-600">
+            <div style={{ marginBottom: 24, padding: 16, backgroundColor: '#f9fafb', borderRadius: 8 }}>
+                <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>إجمالي المديونية الحالية:</Text>
+                <Text strong style={{ fontSize: 24, color: '#dc2626' }}>
                     <MoneyDisplay amount={totalDebt} />
                 </Text>
             </div>
@@ -59,7 +67,7 @@ export default function PaymentDialog({ visible, onCancel, onSubmit, totalDebt, 
                     ]}
                 >
                     <InputNumber
-                        className="w-full"
+                        style={{ width: '100%' }}
                         size="large"
                         placeholder="أدخل المبلغ"
                     />
@@ -69,19 +77,12 @@ export default function PaymentDialog({ visible, onCancel, onSubmit, totalDebt, 
                     <Alert
                         type="info"
                         showIcon
-                        title="توزيع الدفعة"
+                        message="توزيع الدفعة"
                         description="سيتم خصم هذا المبلغ من أقدم الفواتير غير المسددة أولاً (طريقة ما يدخل أولاً يخرج أولاً FIFO)."
-                        className="mb-4"
+                        style={{ marginBottom: 16 }}
                     />
                 )}
-
-                <Form.Item className="mb-0 flex justify-end gap-2">
-                    <Button onClick={handleCancel}>إلغاء</Button>
-                    <Button type="primary" htmlType="submit" loading={loading}>
-                        تأكيد التحصيل
-                    </Button>
-                </Form.Item>
             </Form>
-        </Modal>
+        </MobileFormWrapper>
     );
 }
