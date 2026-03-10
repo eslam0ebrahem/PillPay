@@ -55,9 +55,12 @@ export function useBarcodeScan({ elementId, onScanSuccess, onScanFailure, isActi
                     await scannerRef.current.start(
                         { facingMode: 'environment' },
                         {
-                            fps: 10,
-                            qrbox: { width: 250, height: 150 },
-                            aspectRatio: 1.0,
+                            fps: 20,
+                            qrbox: (viewfinderWidth, viewfinderHeight) => {
+                                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                                const size = Math.floor(minEdge * 0.75);
+                                return { width: size, height: size };
+                            },
                         },
                         (text) => onScanSuccessRef.current?.(text),
                         (err) => onScanFailureRef.current?.(err)

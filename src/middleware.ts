@@ -27,6 +27,18 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
+    // Check auth token
+    const token = request.cookies.get('auth-token')?.value;
+    const decoded = token ? decodeJWTPayload(token) : null;
+
+    // Already on login page while authenticated — redirect to "inside"
+    if (pathname === '/login' && decoded) {
+        if (decoded.role === 'owner') {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+        return NextResponse.redirect(new URL('/pos', request.url));
+    }
+
     // Allow public paths
     if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
         return NextResponse.next();
@@ -37,14 +49,9 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Check auth token
-    const token = request.cookies.get('auth-token')?.value;
-
     if (!token) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
-
-    const decoded = decodeJWTPayload(token);
 
     if (!decoded) {
         // Invalid or expired token — redirect to login
@@ -55,14 +62,6 @@ export function middleware(request: NextRequest) {
 
     // Root path redirect based on role
     if (pathname === '/') {
-        if (decoded.role === 'owner') {
-            return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
-        return NextResponse.redirect(new URL('/pos', request.url));
-    }
-
-    // Already on login page while authenticated — redirect
-    if (pathname === '/login') {
         if (decoded.role === 'owner') {
             return NextResponse.redirect(new URL('/dashboard', request.url));
         }
