@@ -7,6 +7,7 @@ import { toEGP, toPiasters } from '@/lib/utils/money';
 
 export interface ProductFormValues {
     barcode?: string;
+    barcode2?: string;
     nameAr: string;
     nameEn?: string;
     imageUrl?: string;
@@ -81,6 +82,11 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting }: P
                     </Col>
                     <Col xs={24} md={12}>
                         <Form.Item name="barcode" label={ar.products.barcode}>
+                            <Input />
+                        </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                        <Form.Item name="barcode2" label={ar.products.barcode2}>
                             <Input />
                         </Form.Item>
                     </Col>

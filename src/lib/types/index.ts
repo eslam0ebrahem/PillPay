@@ -110,6 +110,7 @@ export type UnitSold = 'base' | 'sub';
 export interface ProductSearchResult {
     _id: string;
     barcode: string | null;
+    barcode2?: string | null;
     nameAr: string;
     nameEn?: string;
     sellingPrice: number;

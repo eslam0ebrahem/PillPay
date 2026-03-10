@@ -68,6 +68,7 @@ const ar = {
         addProduct: 'إضافة منتج',
         editProduct: 'تعديل المنتج',
         barcode: 'الباركود',
+        barcode2: 'الباركود الثانوي',
         nameAr: 'الاسم بالعربية',
         nameEn: 'الاسم بالإنجليزية',
         manufacturer: 'الشركة المصنعة',

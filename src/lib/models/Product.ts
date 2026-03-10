@@ -2,12 +2,14 @@ import { Schema, model, models, Document } from 'mongoose';
 
 export interface IProduct extends Document {
     barcode?: string | null;
+    barcode2?: string | null;
     nameAr: string;
     nameEn?: string;
     imageUrl?: string;
     manufacturer?: string;
     category?: string;
     description?: string;
+    descriptionEn?: string;
     activeIngredient?: string;
     dosageForm?: string;
     route?: string;
@@ -19,6 +21,12 @@ export interface IProduct extends Document {
     subUnitConversionFactor?: number | null;
     lowStockThreshold: number;
     isActive: boolean;
+    // Fields stored for future use
+    sourceId?: number | null;
+    brandId?: number | null;
+    brandNameAr?: string;
+    categoryId?: number | null;
+    slug?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -29,6 +37,10 @@ const productSchema = new Schema<IProduct>(
             type: String,
             unique: true,
             sparse: true,
+            default: null,
+        },
+        barcode2: {
+            type: String,
             default: null,
         },
         nameAr: {
@@ -44,6 +56,7 @@ const productSchema = new Schema<IProduct>(
         manufacturer: { type: String, trim: true },
         category: { type: String, trim: true },
         description: String,
+        descriptionEn: String,
         activeIngredient: { type: String, trim: true },
         dosageForm: { type: String, trim: true },
         route: { type: String, trim: true },
@@ -78,6 +91,12 @@ const productSchema = new Schema<IProduct>(
             type: Boolean,
             default: true,
         },
+        // Stored for future use
+        sourceId: { type: Number, default: null },
+        brandId: { type: Number, default: null },
+        brandNameAr: { type: String, trim: true },
+        categoryId: { type: Number, default: null },
+        slug: { type: String, trim: true },
     },
     { timestamps: true }
 );
@@ -87,6 +106,9 @@ productSchema.index(
     { nameAr: 'text', nameEn: 'text' },
     { default_language: 'arabic' }
 );
+
+// Secondary barcode index for POS lookup (not unique)
+productSchema.index({ barcode2: 1 }, { sparse: true });
 
 // Category and active indexes
 productSchema.index({ category: 1 });

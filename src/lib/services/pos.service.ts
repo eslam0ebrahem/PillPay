@@ -30,6 +30,7 @@ export interface CheckoutInput {
 interface ProductSearchResult {
     _id: string;
     barcode: string | null;
+    barcode2?: string | null;
     nameAr: string;
     nameEn?: string;
     sellingPrice: number;
@@ -52,7 +53,14 @@ export async function searchProducts(
     let filter: any = { isActive: true };
 
     if (type === 'barcode') {
-        filter.barcode = query.trim();
+        const trimmed = query.trim();
+        filter = {
+            isActive: true,
+            $or: [
+                { barcode: trimmed },
+                { barcode2: trimmed },
+            ],
+        };
     } else if (type === 'text' && query.trim()) {
         const q = query.trim();
         // Try text index first, fallback to regex for partial matches
@@ -78,6 +86,7 @@ export async function searchProducts(
         results.push({
             _id: p._id.toString(),
             barcode: p.barcode || null,
+            barcode2: p.barcode2 || null,
             nameAr: p.nameAr,
             nameEn: p.nameEn,
             sellingPrice: p.sellingPrice,
