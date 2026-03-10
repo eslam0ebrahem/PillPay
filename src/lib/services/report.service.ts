@@ -454,9 +454,27 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
                 },
             },
         ]),
-        Product.find({ isActive: true })
-            .select('_id nameAr')
-            .lean<Array<{ _id: { toString(): string }; nameAr: string }>>(),
+        // Only consider products that are active AND have been stocked (have batches).
+        // This excludes catalog-only items that were never purchased by the pharmacy.
+        Batch.aggregate([
+            { $group: { _id: '$productId' } },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'product',
+                },
+            },
+            { $unwind: '$product' },
+            { $match: { 'product.isActive': true } },
+            {
+                $project: {
+                    _id: '$product._id',
+                    nameAr: '$product.nameAr',
+                },
+            },
+        ]),
     ]);
 
     const soldQuantityMap = new Map(

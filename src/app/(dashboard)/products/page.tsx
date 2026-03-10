@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import ProductsPageClient from '@/components/products/ProductsPageClient';
 import { connectDB } from '@/lib/db/connection';
 import Product from '@/lib/models/Product';
+import Brand from '@/lib/models/Brand';
 import Batch from '@/lib/models/Batch';
 
 interface ProductsPageProps {
@@ -13,10 +14,30 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     await connectDB();
     const params = await searchParams;
     const view = params.view === 'catalog' ? 'catalog' : 'active';
+    const brandParam = typeof params.brand === 'string' ? params.brand : '';
+    const searchParam = typeof params.search === 'string' ? params.search : '';
 
-    // Fetch products based on view
-    const filter = view === 'catalog' ? { isActive: false } : { isActive: true };
-    const products = await Product.find(filter).sort({ nameAr: 1 }).lean<any[]>();
+    // Build filter
+    const filter: any = view === 'catalog' ? { isActive: false } : { isActive: true };
+
+    if (brandParam) {
+        filter.brand = brandParam;
+    }
+
+    if (searchParam) {
+        filter.$or = [
+            { nameAr: { $regex: searchParam, $options: 'i' } },
+            { nameEn: { $regex: searchParam, $options: 'i' } },
+            { barcode: searchParam },
+            { barcode2: searchParam },
+        ];
+    }
+
+    const products = await Product.find(filter)
+        .populate('brand', 'nameAr nameEn image')
+        .sort({ nameAr: 1 })
+        .limit(100)
+        .lean<any[]>();
 
     // Calculate aggregated stock for display
     const productIds = products.map((p) => p._id);
@@ -35,8 +56,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     const data = products.map((p) => ({
         ...p,
         _id: p._id.toString(),
+        brand: p.brand ? { ...p.brand, _id: (p.brand as any)._id?.toString() } : null,
         totalQty: stockMap.get(p._id.toString()) || 0,
     }));
 
-    return <ProductsPageClient data={data} view={view} />;
+    return <ProductsPageClient data={data} view={view} selectedBrand={brandParam} search={searchParam} />;
 }

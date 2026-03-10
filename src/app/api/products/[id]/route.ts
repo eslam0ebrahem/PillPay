@@ -12,7 +12,9 @@ export const GET = withPermission('products.view', async (req: NextRequest, cont
         const params = await context.params;
         const id = params.id;
 
-        const product = await Product.findById(id).lean<any>();
+        const product = await Product.findById(id)
+            .populate('brand', 'nameAr nameEn image')
+            .lean<any>();
         if (!product) {
             return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'المنتج غير موجود' } }, { status: 404 });
         }

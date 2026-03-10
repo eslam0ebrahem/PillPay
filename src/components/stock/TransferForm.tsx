@@ -121,7 +121,7 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
 
             {selectedBatch && maxQty === 0 && (
                 <Alert
-                    message="عفواً، لا يوجد رصيد كافي لهذه الدفعة في الموقع المصدر للقيام بهذا التحويل."
+                    title="عفواً، لا يوجد رصيد كافي لهذه الدفعة في الموقع المصدر للقيام بهذا التحويل."
                     type="error"
                     showIcon
                     style={{ marginBottom: 16 }}

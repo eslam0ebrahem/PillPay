@@ -3,7 +3,7 @@
 import { Typography, Card, Button, Segmented } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProductList from '@/components/products/ProductList';
 import ar from '@/i18n/ar';
 
@@ -12,10 +12,28 @@ const { Title } = Typography;
 interface ProductsPageClientProps {
     data: any[];
     view: 'active' | 'catalog';
+    selectedBrand?: string;
+    search?: string;
 }
 
-export default function ProductsPageClient({ data, view }: ProductsPageClientProps) {
+export default function ProductsPageClient({ data, view, selectedBrand, search }: ProductsPageClientProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    function buildUrl(overrides: Record<string, string | undefined>) {
+        const params = new URLSearchParams();
+        const current = {
+            view: view === 'catalog' ? 'catalog' : undefined,
+            brand: selectedBrand || undefined,
+            search: search || undefined,
+            ...overrides,
+        };
+        for (const [key, val] of Object.entries(current)) {
+            if (val) params.set(key, val);
+        }
+        const qs = params.toString();
+        return `/products${qs ? `?${qs}` : ''}`;
+    }
 
     return (
         <div>
@@ -31,7 +49,7 @@ export default function ProductsPageClient({ data, view }: ProductsPageClientPro
                             { label: ar.products.catalog, value: 'catalog' },
                         ]}
                         onChange={(val) => {
-                            router.push(val === 'catalog' ? '/products?view=catalog' : '/products');
+                            router.push(buildUrl({ view: val === 'catalog' ? 'catalog' : undefined }));
                         }}
                     />
                     <Link href="/products/new">
@@ -47,8 +65,14 @@ export default function ProductsPageClient({ data, view }: ProductsPageClientPro
                     data={data}
                     loading={false}
                     pagination={{ pageSize: 20 }}
-                    onTableChange={() => { }}
-                    onSearch={() => { }}
+                    onTableChange={() => {}}
+                    onSearch={(val) => {
+                        router.push(buildUrl({ search: val || undefined }));
+                    }}
+                    onBrandFilter={(brandId) => {
+                        router.push(buildUrl({ brand: brandId || undefined }));
+                    }}
+                    selectedBrand={selectedBrand}
                 />
             </Card>
         </div>

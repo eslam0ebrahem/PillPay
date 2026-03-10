@@ -71,6 +71,7 @@ const ar = {
         barcode2: 'الباركود الثانوي',
         nameAr: 'الاسم بالعربية',
         nameEn: 'الاسم بالإنجليزية',
+        brand: 'العلامة التجارية',
         manufacturer: 'الشركة المصنعة',
         category: 'التصنيف',
         description: 'الوصف',

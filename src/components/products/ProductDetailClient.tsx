@@ -79,7 +79,7 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                             <Row gutter={[16, 16]}>
                                 <Col span={12}><strong>{ar.products.barcode}:</strong> {product.barcode || '-'}</Col>
                                 <Col span={12}><strong>{ar.products.barcode2}:</strong> {product.barcode2 || '-'}</Col>
-                                <Col span={12}><strong>{ar.products.category}:</strong> {product.category || '-'}</Col>
+                                <Col span={12}><strong>{ar.products.brand}:</strong> {product.brand?.nameEn || product.brand?.nameAr || product.manufacturer || '-'}</Col>
                                 <Col span={12}><strong>{ar.products.sellingPrice}:</strong> {formatPiasters(product.sellingPrice)}</Col>
                                 <Col span={12}><strong>{ar.products.baseUnit}:</strong> {product.baseUnit}</Col>
                                 <Col span={12}><strong>{ar.products.manufacturer}:</strong> {product.manufacturer || '-'}</Col>
