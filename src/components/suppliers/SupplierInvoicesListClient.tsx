@@ -1,6 +1,6 @@
 'use client';
 
-import { Typography, Card, Button, Tag, Row, Col } from 'antd';
+import { Typography, Button, Tag, Space } from 'antd';
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import ar from '@/i18n/ar';
@@ -8,6 +8,7 @@ import { formatPiasters } from '@/utils/money';
 import dayjs from 'dayjs';
 import ResponsiveDataView from '../common/ResponsiveDataView';
 import PageHeader from '../common/PageHeader';
+import { DataCard } from '../common/DataCard';
 
 const { Title, Text } = Typography;
 
@@ -79,42 +80,31 @@ export default function SupplierInvoicesListClient({ invoices }: SupplierInvoice
     ];
 
     const renderCard = (record: any) => (
-        <Card size="small" style={{ marginBottom: 12, borderRadius: 12 }}>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
-                <Col>
-                    <Link href={`/supplier-invoices/${record._id}`}>
-                        <Text strong style={{ fontSize: 16, color: '#1677ff' }}>مورد: {record.supplierId?.name || '-'}</Text>
-                    </Link>
-                    <br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>رقم: {record.invoiceNumber}</Text>
-                </Col>
-                <Col style={{ textAlign: 'right' }}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(record.date).format('YYYY-MM-DD')}</Text><br />
-                    <Tag color={record.status === 'voided' ? 'red' : 'blue'} style={{ marginTop: 4 }}>
+        <DataCard
+            title={
+                <Link href={`/supplier-invoices/${record._id}`}>
+                    <span style={{ color: '#1677ff', fontSize: 16, fontWeight: 500 }}>مورد: {record.supplierId?.name || '-'}</span>
+                </Link>
+            }
+            subtitle={`رقم: ${record.invoiceNumber}`}
+            badge={
+                <div style={{ textAlign: 'left' }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{dayjs(record.date).format('YYYY-MM-DD')}</Text>
+                    <Tag color={record.status === 'voided' ? 'red' : 'blue'} style={{ margin: 0 }}>
                         {record.status === 'voided' ? 'ملغاة' : 'نشطة'}
                     </Tag>
-                </Col>
-            </Row>
-
-            <div style={{ background: '#f5f5f5', padding: '8px 12px', borderRadius: 8 }}>
-                <Row gutter={[8, 8]}>
-                    <Col span={8}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>الإجمالي</Text><br />
-                        <Text strong>{formatPiasters(record.total)}</Text>
-                    </Col>
-                    <Col span={8}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>المدفوع</Text><br />
-                        <Text strong style={{ color: 'green' }}>{formatPiasters(record.paidAmount)}</Text>
-                    </Col>
-                    <Col span={8}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>المتبقي</Text><br />
-                        <Text strong type={record.remainingBalance > 0 ? 'danger' : 'success'}>
-                            {formatPiasters(record.remainingBalance)}
-                        </Text>
-                    </Col>
-                </Row>
-            </div>
-        </Card>
+                </div>
+            }
+            properties={[
+                { label: 'الإجمالي', value: formatPiasters(record.total) },
+                { label: 'المدفوع', value: <span style={{ color: 'green' }}>{formatPiasters(record.paidAmount)}</span> },
+                { 
+                    label: 'المتبقي', 
+                    value: <span style={{ color: record.remainingBalance > 0 ? 'red' : 'green' }}>{formatPiasters(record.remainingBalance)}</span>,
+                    fullWidth: true
+                }
+            ]}
+        />
     );
 
     return (

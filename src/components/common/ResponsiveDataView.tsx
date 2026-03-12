@@ -27,8 +27,13 @@ export function ResponsiveDataView<T>({
 }: ResponsiveDataViewProps<T>) {
     const screens = useBreakpoint();
     const [mounted, setMounted] = React.useState(false);
-    const [currentPage, setCurrentPage] = React.useState(1);
+    const [internalCurrent, setInternalCurrent] = React.useState(1);
+    
+    // Pagination derived state
+    const isControlled = pagination && typeof (pagination as any).current !== 'undefined';
+    const actualCurrent = isControlled ? (pagination as any).current : internalCurrent;
     const pageSize = (pagination as any)?.pageSize || (pagination as any)?.defaultPageSize || 10;
+    const actualTotal = (pagination as any)?.total || data.length;
 
     React.useEffect(() => {
         setMounted(true);
@@ -51,9 +56,22 @@ export function ResponsiveDataView<T>({
         );
     }
 
-    // Mobile View - Refactored to avoid deprecated List component
-    const startIndex = (currentPage - 1) * pageSize;
-    const paginatedData = pagination ? data.slice(startIndex, startIndex + pageSize) : data;
+    const handlePageChange = (page: number, size: number) => {
+        if (!isControlled) {
+            setInternalCurrent(page);
+        }
+        if ((pagination as any)?.onChange) {
+            (pagination as any).onChange(page, size);
+        } else if (tableProps?.onChange) {
+            tableProps.onChange({ ...(pagination as object), current: page, pageSize: size }, {}, {}, { action: 'paginate', currentDataSource: [] });
+        }
+    };
+
+    // Mobile View - Sync with Table client/server side logic
+    const shouldSlice = data.length > pageSize && !isControlled;
+    const paginatedData = shouldSlice && pagination 
+        ? data.slice((actualCurrent - 1) * pageSize, actualCurrent * pageSize) 
+        : data;
 
     return (
         <Spin spinning={loading}>
@@ -68,13 +86,13 @@ export function ResponsiveDataView<T>({
                                 {renderCard(item)}
                             </div>
                         ))}
-                        {pagination && data.length > pageSize && (
+                        {pagination && actualTotal > pageSize && (
                             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
                                 <Pagination
-                                    current={currentPage}
+                                    current={actualCurrent}
                                     pageSize={pageSize}
-                                    total={data.length}
-                                    onChange={(page) => setCurrentPage(page)}
+                                    total={actualTotal}
+                                    onChange={handlePageChange}
                                     size="small"
                                 />
                             </div>

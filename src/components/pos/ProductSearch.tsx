@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Input, Button, Typography, Space, Tag, InputNumber, Radio, Image, App, Card, Row, Col } from 'antd';
+import { Input, Button, Typography, Space, Tag, InputNumber, Radio, Image, App } from 'antd';
 import { ScanOutlined, SearchOutlined, PictureOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,7 @@ import ResponsiveDataView from '../common/ResponsiveDataView';
 import MobileFormWrapper from '../common/MobileFormWrapper';
 import ar from '@/i18n/ar';
 import type { UnitSold } from '@/lib/types';
+import { DataCard } from '../common/DataCard';
 
 const BarcodeScanner = dynamic(() => import('../common/BarcodeScanner'), { ssr: false });
 const { Text } = Typography;
@@ -143,10 +144,10 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
         }
     };
 
-    const renderCard = (item: ProductSearchResult) => (
-        <Card size="small" style={{ width: '100%', marginBottom: 8, borderRadius: 12 }}>
-            <Row align="middle">
-                <Col flex="60px">
+    const renderCard = (item: ProductSearchResult) => {
+        const titleContent = (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div>
                     {item.imageUrl ? (
                         <Image
                             src={item.imageUrl}
@@ -161,24 +162,18 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                             <PictureOutlined style={{ fontSize: 24, color: '#d9d9d9' }} />
                         </div>
                     )}
-                </Col>
-                <Col flex="auto" style={{ paddingLeft: 12, paddingRight: 12 }}>
-                    <Text strong style={{ fontSize: 16 }}>{item.nameAr}</Text>
-                    {item.nameEn && <><br /><Text type="secondary" style={{ fontSize: 12 }}>{item.nameEn}</Text></>}
-                    <div style={{ marginTop: 4 }}>
-                        <Space wrap>
-                            <MoneyDisplay amount={item.sellingPrice} />
-                            {item.floorStock > 0 ? (
-                                <Tag color="green" style={{ margin: 0 }}>
-                                    {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
-                                </Tag>
-                            ) : (
-                                <Tag color="red" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
-                            )}
-                        </Space>
-                    </div>
-                </Col>
-                <Col>
+                </div>
+                <div>
+                    <div style={{ fontSize: 16, fontWeight: 500 }}>{item.nameAr}</div>
+                    {item.nameEn && <Text type="secondary" style={{ fontSize: 12 }}>{item.nameEn}</Text>}
+                </div>
+            </div>
+        );
+
+        return (
+            <DataCard
+                title={titleContent}
+                badge={
                     <Button
                         type="primary"
                         size="large"
@@ -189,10 +184,26 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                     >
                         +
                     </Button>
-                </Col>
-            </Row>
-        </Card>
-    );
+                }
+                properties={[
+                    {
+                        label: 'السعر',
+                        value: <MoneyDisplay amount={item.sellingPrice} />
+                    },
+                    {
+                        label: 'المخزون',
+                        value: item.floorStock > 0 ? (
+                            <Tag color="green" style={{ margin: 0 }}>
+                                {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
+                            </Tag>
+                        ) : (
+                            <Tag color="red" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
+                        )
+                    }
+                ]}
+            />
+        );
+    };
 
     const columns = [
         {

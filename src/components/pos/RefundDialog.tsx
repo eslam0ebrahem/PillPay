@@ -34,6 +34,7 @@ import { formatEGP } from '@/utils/money';
 import MobileFormWrapper from '../common/MobileFormWrapper';
 import ResponsiveDataView from '../common/ResponsiveDataView';
 import ar from '@/i18n/ar';
+import { DataCard } from '../common/DataCard';
 
 const { Title, Text } = Typography;
 
@@ -398,10 +399,10 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
         },
     ];
 
-    const renderInvoiceCard = (item: InvoiceLookupItem) => (
-        <Card size="small" style={{ marginBottom: 12, borderRadius: 12 }}>
-            <Row align="middle" style={{ marginBottom: 12 }}>
-                <Col flex="48px">
+    const renderInvoiceCard = (item: InvoiceLookupItem) => {
+        const titleContent = (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div>
                     {item.imageUrl ? (
                         <Image
                             src={item.imageUrl}
@@ -416,47 +417,50 @@ export default function RefundDialog({ open, onClose }: RefundDialogProps) {
                             <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
                         </div>
                     )}
-                </Col>
-                <Col flex="auto" style={{ paddingLeft: 12, paddingRight: 12 }}>
-                    <Text strong style={{ fontSize: 16 }}>{item.productNameAr}</Text>
-                    {item.productNameEn && <><br /><Text type="secondary" style={{ fontSize: 12 }}>{item.productNameEn}</Text></>}
-                </Col>
-            </Row>
-
-            <Row gutter={[8, 8]} style={{ marginBottom: 8 }}>
-                <Col span={12}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>المباع:</Text><br />
-                    <Text strong>{item.quantity} ({item.unitSold === 'sub' ? 'فرعي' : 'أساسي'})</Text>
-                </Col>
-                <Col span={12}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>المتاح للإرجاع:</Text><br />
-                    <Text strong type={item.refundableQuantity > 0 ? 'success' : 'secondary'}>{item.refundableQuantity}</Text>
-                </Col>
-            </Row>
-
-            <div style={{ background: '#f5f5f5', padding: 8, borderRadius: 8 }}>
-                <Row align="middle" justify="space-between">
-                    <Col>
-                        <Text strong>كمية الإرجاع</Text>
-                    </Col>
-                    <Col>
-                        <InputNumber
-                            min={0}
-                            max={item.refundableQuantity}
-                            value={selectedQuantities[item.saleItemId] ?? 0}
-                            disabled={item.refundableQuantity === 0 || invoiceData?.status === 'cancelled'}
-                            onChange={(value) =>
-                                setSelectedQuantities((current) => ({
-                                    ...current,
-                                    [item.saleItemId]: Number(value ?? 0),
-                                }))
-                            }
-                        />
-                    </Col>
-                </Row>
+                </div>
+                <div>
+                    <div style={{ fontSize: 16, fontWeight: 500 }}>{item.productNameAr}</div>
+                    {item.productNameEn && <Text type="secondary" style={{ fontSize: 12 }}>{item.productNameEn}</Text>}
+                </div>
             </div>
-        </Card>
-    );
+        );
+
+        return (
+            <DataCard
+                title={titleContent}
+                properties={[
+                    {
+                        label: 'المباع',
+                        value: `${item.quantity} (${item.unitSold === 'sub' ? 'فرعي' : 'أساسي'})`
+                    },
+                    {
+                        label: 'المتاح للإرجاع',
+                        value: <span style={{ color: item.refundableQuantity > 0 ? '#52c41a' : '#bfbfbf', fontWeight: 'bold' }}>{item.refundableQuantity}</span>
+                    },
+                    {
+                        label: 'كمية الإرجاع',
+                        fullWidth: true,
+                        value: (
+                            <InputNumber
+                                min={0}
+                                max={item.refundableQuantity}
+                                size="large"
+                                value={selectedQuantities[item.saleItemId] ?? 0}
+                                disabled={item.refundableQuantity === 0 || invoiceData?.status === 'cancelled'}
+                                onChange={(value) =>
+                                    setSelectedQuantities((current) => ({
+                                        ...current,
+                                        [item.saleItemId]: Number(value ?? 0),
+                                    }))
+                                }
+                                style={{ width: '100%', marginTop: 4 }}
+                            />
+                        )
+                    }
+                ]}
+            />
+        );
+    };
 
     return (
         <MobileFormWrapper
