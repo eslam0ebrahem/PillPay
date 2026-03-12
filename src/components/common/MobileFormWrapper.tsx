@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal, Drawer, Grid } from 'antd';
 
 const { useBreakpoint } = Grid;
@@ -12,7 +12,52 @@ interface MobileFormWrapperProps {
     children: React.ReactNode;
     footer?: React.ReactNode;
     destroyOnHidden?: boolean;
+    forceRender?: boolean;
+    maskClosable?: boolean;
     width?: number | string;
+    afterOpenChange?: (isOpen: boolean) => void;
+}
+
+// Defined outside the component so the object reference is stable across renders
+const DRAWER_STYLES: React.ComponentProps<typeof Drawer>['styles'] = {
+    section: {
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
+    header: {
+        borderBottom: '1px solid #f0f0f0',
+        padding: '20px 20px 16px', // Extra top padding to accommodate the drag handle above the title
+        textAlign: 'center',
+    },
+    body: {
+        padding: '20px',
+        overflowY: 'auto',
+    },
+    footer: {
+        // Safe-area inset ensures the footer isn't blocked by the iPhone home indicator
+        padding: 'calc(12px + env(safe-area-inset-bottom, 0px)) 20px 12px',
+        borderTop: '1px solid #f0f0f0',
+        background: '#fff',
+    },
+};
+
+// Drag handle rendered as part of the drawer title so it sits above the title text,
+// not floating over the body content
+function DrawerTitle({ title }: { title: string }) {
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div
+                aria-hidden="true"
+                style={{
+                    width: 36,
+                    height: 5,
+                    backgroundColor: '#e0e0e0',
+                    borderRadius: 3,
+                }}
+            />
+            <span>{title}</span>
+        </div>
+    );
 }
 
 export default function MobileFormWrapper({
@@ -22,7 +67,10 @@ export default function MobileFormWrapper({
     children,
     footer,
     destroyOnHidden = false,
-    width = 600
+    forceRender = false,
+    maskClosable = true,
+    width = 600,
+    afterOpenChange,
 }: MobileFormWrapperProps) {
     const screens = useBreakpoint();
     const [mounted, setMounted] = useState(false);
@@ -31,12 +79,16 @@ export default function MobileFormWrapper({
         setMounted(true);
     }, []);
 
-    // Return null during SSR to prevent hydration mismatch
-    if (!mounted) {
-        return null;
-    }
+    const isMobile = useMemo(
+        () => mounted && (screens.xs || (screens.sm && !screens.md)),
+        [mounted, screens.xs, screens.sm, screens.md]
+    );
 
-    const isMobile = screens.xs || (screens.sm && !screens.md);
+    // Normalize footer once — avoids repeating the ternary in both branches
+    const normalizedFooter = footer === undefined ? null : footer;
+
+    // Prevent hydration mismatch — return null during SSR
+    if (!mounted) return null;
 
     // --- Desktop Layout (Centered Modal) ---
     if (!isMobile) {
@@ -45,11 +97,13 @@ export default function MobileFormWrapper({
                 title={title}
                 open={open}
                 onCancel={onClose}
-                footer={footer === undefined ? null : footer}
+                footer={normalizedFooter}
                 destroyOnHidden={destroyOnHidden}
+                forceRender={forceRender}
+                maskClosable={maskClosable}
+                afterOpenChange={afterOpenChange}
                 width={width}
-                centered // Centered modals feel much more premium on desktop monitors
-                forceRender
+                centered
             >
                 {children}
             </Modal>
@@ -59,50 +113,20 @@ export default function MobileFormWrapper({
     // --- Mobile Layout (Native-Style Bottom Sheet) ---
     return (
         <Drawer
-            title={title}
+            title={<DrawerTitle title={title} />}
             placement="bottom"
             open={open}
+            zIndex={1001}
             onClose={onClose}
             destroyOnHidden={destroyOnHidden}
-            footer={footer === undefined ? null : footer}
-            size="auto" // Wraps tight to small forms...
-            style={{ maxHeight: '92dvh' }} // ...but never exceeds 92% of the screen height for large forms
-            styles={{
-                section: {
-                    borderTopLeftRadius: 20, // Native rounded top corners
-                    borderTopRightRadius: 20,
-                },
-                header: {
-                    borderBottom: '1px solid #f0f0f0',
-                    padding: '16px 20px',
-                    textAlign: 'center', // Centers the title for a native feel
-                },
-                body: {
-                    padding: '20px',
-                    overflowY: 'auto',
-                },
-                footer: {
-                    // Safe area inset ensures the footer isn't blocked by the iPhone home indicator
-                    padding: '12px 20px calc(12px + env(safe-area-inset-bottom, 0px))',
-                    borderTop: '1px solid #f0f0f0',
-                    background: '#fff',
-                }
-            }}
-            forceRender
+            forceRender={forceRender}
+            mask={maskClosable}
+            afterOpenChange={afterOpenChange}
+            footer={normalizedFooter}
+            size="auto"
+            style={{ maxHeight: '92dvh' }}
+            styles={DRAWER_STYLES}
         >
-            {/* Visual Drag Handle (Affordance) */}
-            <div style={{
-                position: 'absolute',
-                top: 8,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 36,
-                height: 5,
-                backgroundColor: '#e6e6e6',
-                borderRadius: 3,
-                zIndex: 10
-            }} />
-            
             {children}
         </Drawer>
     );
