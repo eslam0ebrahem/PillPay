@@ -61,10 +61,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
     const stockMap = new Map(stockAgg.map((s) => [s._id.toString(), s.totalQty]));
 
-    const data = products.map((p) => ({
+    // Use deep serialization for Client Components to handle ObjectIds and Dates
+    const serializedProducts = JSON.parse(JSON.stringify(products));
+    const data = serializedProducts.map((p: any) => ({
         ...p,
-        _id: p._id.toString(),
-        brand: p.brand ? { ...p.brand, _id: (p.brand as any)._id?.toString() } : null,
         totalQty: stockMap.get(p._id.toString()) || 0,
     }));
 

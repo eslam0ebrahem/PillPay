@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, InputNumber, Button, Space, Typography, Select, App, Grid } from 'antd';
+import { useState, useEffect } from 'react';
+import { Card, InputNumber, Button, Typography, Select, App, Grid, Flex, Radio, Divider } from 'antd';
+import { DollarOutlined, UserOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
 import MoneyDisplay from '../common/MoneyDisplay';
 import type { PaymentMode } from '@/lib/types';
 import { useQuery } from '@tanstack/react-query';
 import StickySubmitBar from '../common/StickySubmitBar';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 const { useBreakpoint } = Grid;
 
 interface CheckoutProps {
@@ -24,9 +25,17 @@ interface CheckoutProps {
 export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutProps) {
     const { message } = App.useApp();
     const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
+    
     const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
     const [paidAmount, setPaidAmount] = useState<number>(0);
     const [customerId, setCustomerId] = useState<string | null>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isMobile = screens.xs || (screens.sm && !screens.md);
 
     const { data: customers, isLoading } = useQuery({
         queryKey: ['posCustomers'],
@@ -55,45 +64,60 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
         setCustomerId(null);
     };
 
+    const handlePaymentModeChange = (mode: PaymentMode) => {
+        setPaymentMode(mode);
+        if (mode === 'partial') {
+            setPaidAmount(total);
+        } else {
+            setPaidAmount(0);
+        }
+    };
+
+    if (!mounted) return null; // Prevent hydration mismatch
+
     const checkoutContent = (
-        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+        <Flex vertical gap={24} style={{ width: '100%' }}>
+            
+            {/* Added Prominent Total Display for Mobile Context */}
+            {isMobile && (
+                <Card size="small" style={{ background: '#e6f4ff', borderColor: '#91caff', textAlign: 'center' }}>
+                    <Text type="secondary" style={{ fontSize: 14 }}>المبلغ الإجمالي المطلوب</Text>
+                    <Title level={2} style={{ margin: '4px 0 0 0', color: '#1677ff' }}>
+                        <MoneyDisplay amount={total} />
+                    </Title>
+                </Card>
+            )}
+
             <div>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.pos.paymentMode}</Text>
-                <div style={{ display: 'flex', flexDirection: screens.md !== false ? 'row' : 'column', gap: 8 }}>
-                    <Button
-                        size="large"
-                        type={paymentMode === 'cash' ? 'primary' : 'default'}
-                        onClick={() => { setPaymentMode('cash'); setPaidAmount(0); }}
-                        style={{ flex: 1 }}
-                    >
+                <Text strong style={{ display: 'block', marginBottom: 12, fontSize: 16 }}>{ar.pos.paymentMode}</Text>
+                <Radio.Group
+                    value={paymentMode}
+                    onChange={(e) => handlePaymentModeChange(e.target.value)}
+                    style={{ display: 'flex', width: '100%' }}
+                    size="large"
+                    buttonStyle="solid"
+                >
+                    <Radio.Button value="cash" style={{ flex: 1, textAlign: 'center' }}>
                         {ar.pos.cash}
-                    </Button>
-                    <Button
-                        size="large"
-                        type={paymentMode === 'credit' ? 'primary' : 'default'}
-                        onClick={() => { setPaymentMode('credit'); setPaidAmount(0); }}
-                        style={{ flex: 1 }}
-                    >
+                    </Radio.Button>
+                    <Radio.Button value="credit" style={{ flex: 1, textAlign: 'center' }}>
                         {ar.pos.credit}
-                    </Button>
-                    <Button
-                        size="large"
-                        type={paymentMode === 'partial' ? 'primary' : 'default'}
-                        onClick={() => { setPaymentMode('partial'); setPaidAmount(total); }}
-                        style={{ flex: 1 }}
-                    >
+                    </Radio.Button>
+                    <Radio.Button value="partial" style={{ flex: 1, textAlign: 'center' }}>
                         {ar.pos.partial}
-                    </Button>
-                </div>
+                    </Radio.Button>
+                </Radio.Group>
             </div>
 
             {(paymentMode === 'credit' || paymentMode === 'partial') && (
-                <div>
-                    <Text style={{ display: 'block', marginBottom: 8 }}>{ar.nav.customers}</Text>
+                <div style={{ background: '#fafafa', padding: 16, borderRadius: 8, border: '1px solid #f0f0f0' }}>
+                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                        <UserOutlined /> {ar.nav.customers} <Text type="danger">*</Text>
+                    </Text>
                     <Select
                         showSearch
                         size="large"
-                        placeholder="اختر عميل"
+                        placeholder="اختر العميل المعني بالآجل..."
                         value={customerId}
                         onChange={setCustomerId}
                         style={{ width: '100%' }}
@@ -108,39 +132,52 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
 
             {paymentMode === 'partial' && (
                 <div>
-                    <Text style={{ display: 'block', marginBottom: 8 }}>{ar.pos.paidAmount}</Text>
+                    <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.pos.paidAmount} (نقداً)</Text>
                     <InputNumber
                         size="large"
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', fontSize: 18 }}
                         value={paidAmount / 100}
                         onChange={(val) => setPaidAmount((val || 0) * 100)}
                         min={0}
                         max={total / 100}
                         inputMode="decimal"
+                        addonAfter="ج.م"
                     />
+                    <Flex justify="space-between" style={{ marginTop: 8, padding: '0 4px' }}>
+                        <Text type="secondary">المتبقي آجل:</Text>
+                        <Text strong type="danger"><MoneyDisplay amount={total - paidAmount} /></Text>
+                    </Flex>
                 </div>
             )}
 
             {paymentMode === 'cash' && (
                 <div>
-                    <Text style={{ display: 'block', marginBottom: 8 }}>المبلغ المدفوع (لحساب الباقي)</Text>
+                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                        المبلغ المدفوع من العميل (لحساب الباقي)
+                    </Text>
                     <InputNumber
                         size="large"
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', fontSize: 18 }}
                         value={paidAmount / 100}
                         onChange={(val) => setPaidAmount((val || 0) * 100)}
                         min={0}
                         inputMode="decimal"
+                        addonAfter="ج.م"
+                        placeholder="أدخل المبلغ لحساب الباقي..."
                     />
                     {paidAmount > total && (
-                        <div style={{ marginTop: 8 }}>
-                            <Text type="secondary">الباقي للعميل: </Text>
-                            <Text strong className="money-positive"><MoneyDisplay amount={paidAmount - total} /></Text>
-                        </div>
+                        <Card size="small" style={{ marginTop: 12, background: '#f6ffed', borderColor: '#b7eb8f' }}>
+                            <Flex justify="space-between" align="center">
+                                <Text style={{ fontSize: 16 }}>الباقي للعميل:</Text>
+                                <Text strong style={{ fontSize: 20, color: '#389e0d' }}>
+                                    <MoneyDisplay amount={paidAmount - total} />
+                                </Text>
+                            </Flex>
+                        </Card>
                     )}
                 </div>
             )}
-        </Space>
+        </Flex>
     );
 
     const completeBtn = (
@@ -151,15 +188,21 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
             onClick={handleComplete}
             loading={isSubmitting}
             disabled={total === 0}
-            style={{ height: screens.md !== false ? undefined : 56 }}
+            style={{ 
+                height: isMobile ? 56 : 48, 
+                fontSize: 18, 
+                fontWeight: 'bold', 
+                borderRadius: 8 
+            }}
+            icon={<DollarOutlined />}
         >
             {ar.pos.completeSale}
         </Button>
     );
 
-    if (screens.md === false) {
+    if (isMobile) {
         return (
-            <div style={{ padding: 16, paddingBottom: 100 }}>
+            <div style={{ padding: 16, paddingBottom: 120 }}>
                 {checkoutContent}
                 <StickySubmitBar>
                     {completeBtn}
@@ -169,9 +212,18 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
     }
 
     return (
-        <Card title={ar.pos.checkout} variant="borderless">
+        <Card title={ar.pos.checkout} variant="borderless" styles={{ header: { fontSize: 18 } }}>
+            {/* Desktop prominent total display */}
+            <Flex justify="space-between" align="center" style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
+                <Text type="secondary" style={{ fontSize: 16 }}>الإجمالي المطلوب:</Text>
+                <Title level={3} style={{ margin: 0, color: '#1677ff' }}>
+                    <MoneyDisplay amount={total} />
+                </Title>
+            </Flex>
+
             {checkoutContent}
-            <div style={{ marginTop: 24 }}>
+            
+            <div style={{ marginTop: 32 }}>
                 {completeBtn}
             </div>
         </Card>

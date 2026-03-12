@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Button, Col, Row, App, Grid, Segmented, Badge } from 'antd';
+import { useState, useEffect } from 'react';
+import { Button, Col, Row, App, Grid, Segmented, Badge, Flex, Typography } from 'antd';
+import { RollbackOutlined, ShoppingCartOutlined, SearchOutlined, CreditCardOutlined } from '@ant-design/icons';
 import ProductSearch from './ProductSearch';
 import Cart from './Cart';
 import Checkout from './Checkout';
@@ -17,15 +18,23 @@ import { calcSubtotal } from '@/lib/utils/money';
 import ar from '@/i18n/ar';
 
 const { useBreakpoint } = Grid;
+const { Text } = Typography;
 
 export default function POSScreen() {
     const { message } = App.useApp();
     const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
+    
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [invoiceDiscount, setInvoiceDiscount] = useState<DiscountObj | undefined>();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'search' | 'cart' | 'checkout'>('search');
+
+    // Prevent hydration mismatch when using responsive breakpoints
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const calculateItemPriceAndSubtotal = (
         product: ProductSearchResult,
@@ -69,6 +78,11 @@ export default function POSScreen() {
                     `${ar.pos.insufficientStock}. المتاح حالياً: ${product.floorStock} ${product.baseUnit}`
                 );
                 return previousItems;
+            }
+
+            // Optional UX enhancement for mobile: Notify user item was added if they are on the search tab
+            if (!screens.md) {
+                message.success(`تم إضافة ${product.nameAr} للسلة`);
             }
 
             if (!existingItem) {
@@ -231,14 +245,18 @@ export default function POSScreen() {
                 : invoiceSubtotal;
 
     const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+    const isMobile = screens.xs || (screens.sm && !screens.md);
+
+    // Prevent React hydration errors by not rendering layout-dependent code until mounted
+    if (!mounted) return null;
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: screens.md !== false ? 16 : 0, minHeight: 'calc(100vh - 120px)' }}>
-            {screens.md !== false ? (
-                // DESKTOP LAYOUT
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0 : 16, height: isMobile ? 'calc(100dvh - 64px)' : 'calc(100vh - 120px)' }}>
+            {!isMobile ? (
+                // --- DESKTOP LAYOUT ---
                 <>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: 16 }}>
-                        <Button danger onClick={() => setIsRefundDialogOpen(true)}>
+                        <Button danger icon={<RollbackOutlined />} onClick={() => setIsRefundDialogOpen(true)}>
                             إرجاع أو إلغاء فاتورة
                         </Button>
                     </div>
@@ -255,7 +273,7 @@ export default function POSScreen() {
                                         onRemoveItem={handleRemoveItem}
                                         invoiceDiscount={invoiceDiscount}
                                         onUpdateInvoiceDiscount={setInvoiceDiscount}
-                                        onGoToCheckout={() => { }} // not needed on desktop
+                                        onGoToCheckout={() => {}} 
                                     />
                                 </div>
                             </div>
@@ -271,23 +289,53 @@ export default function POSScreen() {
                     </Row>
                 </>
             ) : (
-                // MOBILE LAYOUT
+                // --- MOBILE LAYOUT ---
                 <>
-                    <div style={{ padding: 12, borderBottom: '1px solid #d9d9d9', background: 'white' }}>
+                    <div style={{ 
+                        position: 'sticky', 
+                        top: 0, 
+                        zIndex: 10, 
+                        background: '#fff', 
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #f0f0f0',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                    }}>
+                        {/* Mobile Header: Important so users can still access Refunds on mobile! */}
+                        <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
+                            <Text strong style={{ fontSize: 16 }}>نقطة البيع</Text>
+                            <Button danger type="dashed" size="small" icon={<RollbackOutlined />} onClick={() => setIsRefundDialogOpen(true)}>
+                                إرجاع فاتورة
+                            </Button>
+                        </Flex>
+
                         <Segmented
                             block
                             size="large"
                             options={[
-                                { label: 'البحث', value: 'search' },
-                                { label: <Badge count={cartCount} offset={[10, 0]}><span>السلة</span></Badge>, value: 'cart' },
-                                { label: 'الدفع', value: 'checkout' },
+                                { 
+                                    label: <div style={{ padding: '4px 0' }}><SearchOutlined /> البحث</div>, 
+                                    value: 'search' 
+                                },
+                                { 
+                                    label: (
+                                        <Badge count={cartCount} offset={[10, 0]} size="small">
+                                            <div style={{ padding: '4px 0' }}><ShoppingCartOutlined /> السلة</div>
+                                        </Badge>
+                                    ), 
+                                    value: 'cart' 
+                                },
+                                { 
+                                    label: <div style={{ padding: '4px 0' }}><CreditCardOutlined /> الدفع</div>, 
+                                    value: 'checkout',
+                                    disabled: cartItems.length === 0 // Optional: Disable checkout if cart is empty
+                                },
                             ]}
                             value={activeTab}
                             onChange={(val) => setActiveTab(val as any)}
                         />
                     </div>
 
-                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', background: '#f5f5f5' }}>
                         {activeTab === 'search' && (
                             <div style={{ padding: 12 }}>
                                 <ProductSearch onAddToCart={handleAddToCart} />

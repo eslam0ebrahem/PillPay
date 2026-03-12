@@ -61,7 +61,6 @@ const refundSchema = new Schema<IRefund>(
     { timestamps: true }
 );
 
-refundSchema.index({ refundNumber: 1 }, { unique: true });
 refundSchema.index({ originalInvoiceId: 1 });
 refundSchema.index({ customerId: 1 });
 refundSchema.index({ createdAt: -1 });

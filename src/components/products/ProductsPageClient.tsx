@@ -1,9 +1,10 @@
 'use client';
 
-import { Typography, Card, Button, Segmented, Grid } from 'antd';
+import { Typography, Card, Button, Segmented, Grid, Flex } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import ProductList from '@/components/products/ProductList';
 import PageHeader from '@/components/common/PageHeader';
 import ar from '@/i18n/ar';
@@ -24,6 +25,15 @@ interface ProductsPageClientProps {
 export default function ProductsPageClient({ data, view, selectedBrand, search, total, currentPage, pageSize }: ProductsPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
+
+    // Prevent hydration mismatch when using responsive breakpoints
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isMobile = screens.xs || (screens.sm && !screens.md);
 
     function buildUrl(overrides: Record<string, string | undefined>) {
         const params = new URLSearchParams();
@@ -46,27 +56,55 @@ export default function ProductsPageClient({ data, view, selectedBrand, search, 
             <PageHeader
                 title={ar.products.title}
                 extra={
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <Segmented
-                            value={view}
-                            options={[
-                                { label: ar.products.activeProducts, value: 'active' },
-                                { label: ar.products.catalog, value: 'catalog' },
-                            ]}
-                            onChange={(val) => {
-                                router.push(buildUrl({ view: val === 'catalog' ? 'catalog' : undefined }));
-                            }}
-                        />
-                        <Link href="/products/new">
-                            <Button type="primary" icon={<PlusOutlined />}>
-                                {ar.products.addProduct}
-                            </Button>
-                        </Link>
-                    </div>
+                    // Wait until mounted to prevent UI jumps. 
+                    // Flex direction switches to vertical on mobile.
+                    mounted && (
+                        <Flex 
+                            vertical={isMobile} 
+                            gap={12} 
+                            align={isMobile ? 'stretch' : 'center'} 
+                            style={{ width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 12 : 0 }}
+                        >
+                            <Segmented
+                                block={isMobile}
+                                size={isMobile ? "large" : "middle"}
+                                value={view}
+                                options={[
+                                    { label: ar.products.activeProducts, value: 'active' },
+                                    { label: ar.products.catalog, value: 'catalog' },
+                                ]}
+                                onChange={(val) => {
+                                    router.push(buildUrl({ view: val === 'catalog' ? 'catalog' : undefined }));
+                                }}
+                            />
+                            <Link href="/products/new" style={{ width: isMobile ? '100%' : 'auto' }}>
+                                <Button 
+                                    type="primary" 
+                                    icon={<PlusOutlined />} 
+                                    block={isMobile}
+                                    size={isMobile ? "large" : "middle"}
+                                >
+                                    {ar.products.addProduct}
+                                </Button>
+                            </Link>
+                        </Flex>
+                    )
                 }
             />
 
-            <Card>
+            <Card
+                variant={isMobile ? 'borderless' : 'outlined'}
+                styles={{ 
+                    body: { 
+                        // Reduce padding drastically on mobile to give more room to the list/cards
+                        padding: isMobile ? '12px 0px' : 24 
+                    } 
+                }}
+                style={{
+                    backgroundColor: isMobile ? 'transparent' : '#fff',
+                    boxShadow: isMobile ? 'none' : undefined
+                }}
+            >
                 <ProductList
                     data={data}
                     loading={false}
@@ -74,16 +112,19 @@ export default function ProductsPageClient({ data, view, selectedBrand, search, 
                         current: currentPage,
                         pageSize: pageSize,
                         total: total,
-                        showSizeChanger: false
+                        showSizeChanger: false,
+                        // Center pagination and make it smaller on mobile
+                        size: isMobile ? "small" : "default",
+                        style: { justifyContent: 'center', paddingTop: 16 }
                     }}
                     onTableChange={(pagination) => {
                         router.push(buildUrl({ page: pagination.current?.toString() }));
                     }}
                     onSearch={(val) => {
-                        router.push(buildUrl({ search: val || undefined }));
+                        router.push(buildUrl({ search: val || undefined, page: '1' })); // Reset to page 1 on new search
                     }}
                     onBrandFilter={(brandId) => {
-                        router.push(buildUrl({ brand: brandId || undefined }));
+                        router.push(buildUrl({ brand: brandId || undefined, page: '1' })); // Reset to page 1 on new filter
                     }}
                     selectedBrand={selectedBrand}
                 />

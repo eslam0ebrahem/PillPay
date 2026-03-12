@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Input, Button, Typography, Space, Tag, InputNumber, Radio, Image, App } from 'antd';
-import { ScanOutlined, SearchOutlined, PictureOutlined } from '@ant-design/icons';
+import { useState, useRef, useEffect } from 'react';
+import { Input, Button, Typography, Space, Tag, InputNumber, Radio, Image, App, Grid, Flex, Divider } from 'antd';
+import { ScanOutlined, SearchOutlined, PictureOutlined, PlusOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import MoneyDisplay from '../common/MoneyDisplay';
@@ -14,6 +14,7 @@ import { DataCard } from '../common/DataCard';
 
 const BarcodeScanner = dynamic(() => import('../common/BarcodeScanner'), { ssr: false });
 const { Text } = Typography;
+const { useBreakpoint } = Grid;
 
 export interface ProductSearchResult {
     _id: string;
@@ -38,20 +39,24 @@ function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    if (timerRef.current && debouncedValue === value) {
-        // Do nothing
-    } else {
+    useEffect(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
             setDebouncedValue(value);
         }, delay);
-    }
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [value, delay]);
 
     return debouncedValue;
 }
 
 export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
     const { message } = App.useApp();
+    const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
+
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 300);
     const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
@@ -60,6 +65,12 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
     // Quantity states
     const [qty, setQty] = useState<number>(1);
     const [unitType, setUnitType] = useState<UnitSold>('base');
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isMobile = screens.xs || (screens.sm && !screens.md);
 
     const { data: results, isFetching, refetch } = useQuery({
         queryKey: ['productSearch', debouncedQuery],
@@ -80,11 +91,12 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
     const handleAddToCart = (product: ProductSearchResult) => {
         onAddToCart({
             product: product,
-            quantity: 1, // Default to 1 for direct add
-            unitSold: 'base', // Default to base unit for direct add
+            quantity: 1,
+            unitSold: 'base',
         });
         setQuery('');
-        if (inputRef.current) {
+        // Only auto-refocus on desktop. On mobile, this pops up the keyboard annoyingly.
+        if (!isMobile && inputRef.current) {
             inputRef.current.focus();
         }
     };
@@ -102,10 +114,6 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
 
             if (data && data.length === 1) {
                 handleAddToCart(data[0]);
-                setQuery('');
-                if (inputRef.current) {
-                    inputRef.current.focus();
-                }
             } else if (data && data.length > 1) {
                 message.info('تم العثور على منتجات متعددة مطابقة للباركود');
             } else {
@@ -138,53 +146,48 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
             });
             setSelectedProduct(null);
             setQuery('');
-            if (inputRef.current) {
+            if (!isMobile && inputRef.current) {
                 inputRef.current.focus();
             }
         }
     };
 
+    // --- Mobile Card Layout ---
     const renderCard = (item: ProductSearchResult) => {
         const titleContent = (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <div>
+            <Flex gap={12} align="center">
+                <div style={{ flexShrink: 0 }}>
                     {item.imageUrl ? (
                         <Image
                             src={item.imageUrl}
                             alt={item.nameAr}
-                            width={56}
-                            height={56}
+                            width={64}
+                            height={64}
                             style={{ objectFit: 'cover', borderRadius: 8 }}
-                            fallback="https://via.placeholder.com/56?text=No+Image"
+                            fallback="https://via.placeholder.com/64?text=No+Image"
                         />
                     ) : (
-                        <div style={{ width: 56, height: 56, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                        <div style={{ width: 64, height: 64, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
                             <PictureOutlined style={{ fontSize: 24, color: '#d9d9d9' }} />
                         </div>
                     )}
                 </div>
-                <div>
-                    <div style={{ fontSize: 16, fontWeight: 500 }}>{item.nameAr}</div>
-                    {item.nameEn && <Text type="secondary" style={{ fontSize: 12 }}>{item.nameEn}</Text>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.nameAr}
+                    </div>
+                    {item.nameEn && (
+                        <div style={{ color: '#8c8c8c', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.nameEn}
+                        </div>
+                    )}
                 </div>
-            </div>
+            </Flex>
         );
 
         return (
             <DataCard
                 title={titleContent}
-                badge={
-                    <Button
-                        type="primary"
-                        size="large"
-                        shape="circle"
-                        disabled={item.floorStock <= 0}
-                        onClick={() => openQtyModal(item)}
-                        style={{ width: 44, height: 44 }}
-                    >
-                        +
-                    </Button>
-                }
                 properties={[
                     {
                         label: 'السعر',
@@ -193,25 +196,39 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                     {
                         label: 'المخزون',
                         value: item.floorStock > 0 ? (
-                            <Tag color="green" style={{ margin: 0 }}>
-                                {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
+                            <Tag color="green" style={{ margin: 0, padding: '2px 8px' }}>
+                                {item.floorStock} {item.baseUnit}
                             </Tag>
                         ) : (
-                            <Tag color="red" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
+                            <Tag color="error" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
                         )
                     }
                 ]}
+                actions={
+                    <Button
+                        type="primary"
+                        size="large"
+                        icon={<PlusOutlined />}
+                        disabled={item.floorStock <= 0}
+                        onClick={() => openQtyModal(item)}
+                        block
+                        style={{ borderRadius: 8 }}
+                    >
+                        {ar.actions.add} للسلة
+                    </Button>
+                }
             />
         );
     };
 
+    // --- Desktop Table Layout ---
     const columns = [
         {
             title: 'Product',
             key: 'product',
             render: (_: any, item: ProductSearchResult) => (
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <div>
+                    <div style={{ flexShrink: 0 }}>
                         {item.imageUrl ? (
                             <Image
                                 src={item.imageUrl}
@@ -228,18 +245,18 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                         )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                        <Text strong>{item.nameAr}</Text>
+                        <Text strong style={{ fontSize: 15 }}>{item.nameAr}</Text>
                         {item.nameEn && <Text type="secondary" style={{ fontSize: 13 }}>{item.nameEn}</Text>}
-                        <Space wrap>
+                        <Space wrap size="middle">
                             <MoneyDisplay amount={item.sellingPrice} />
                             {item.floorStock > 0 ? (
-                                <Tag color="green">
+                                <Tag color="green" style={{ margin: 0 }}>
                                     {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
                                 </Tag>
                             ) : (
-                                <Tag color="red">{ar.pos.outOfStock}</Tag>
+                                <Tag color="error" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
                             )}
-                            {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}>{item.barcode}</Text>}
+                            {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}><ScanOutlined /> {item.barcode}</Text>}
                         </Space>
                     </div>
                 </div>
@@ -248,11 +265,12 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
         {
             title: 'Action',
             key: 'action',
-            width: 100,
+            width: 120,
             align: 'right' as const,
             render: (_: any, item: ProductSearchResult) => (
                 <Button
                     type="primary"
+                    icon={<PlusOutlined />}
                     disabled={item.floorStock <= 0}
                     onClick={() => openQtyModal(item)}
                 >
@@ -262,30 +280,36 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
         },
     ];
 
+    if (!mounted) return null;
+
     return (
         <div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
-                <div style={{ display: 'flex', gap: 8 }}>
-                    <Input
-                        size="large"
-                        placeholder={ar.pos.searchPlaceholder}
-                        prefix={<SearchOutlined />}
-                        suffix={<ScanOutlined style={{ color: '#1890ff' }} />}
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onPressEnter={handleSearch}
-                        autoFocus
-                        ref={inputRef}
-                        style={{ flex: 1, minHeight: 52, borderRadius: 12, fontSize: 16 }}
-                    />
-                    <BarcodeScanner
-                        onScan={handleCameraScan}
-                        buttonText=""
-                        buttonProps={{ size: 'large', type: 'primary', style: { width: 52, height: 52, borderRadius: 12 } }}
-                    />
-                </div>
-            </div>
+            {/* Search Bar Area */}
+            <Flex gap={8} style={{ marginBottom: 16 }}>
+                <Input
+                    size="large"
+                    placeholder={ar.pos.searchPlaceholder}
+                    prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onPressEnter={handleSearch}
+                    autoFocus={!isMobile} // Don't pop keyboard on mobile automatically
+                    ref={inputRef}
+                    allowClear
+                    style={{ flex: 1, minHeight: 56, borderRadius: 12, fontSize: 16 }}
+                />
+                <BarcodeScanner
+                    onScan={handleCameraScan}
+                    buttonText=""
+                    buttonProps={{
+                        size: 'large',
+                        type: 'primary',
+                        style: { width: 56, height: 56, borderRadius: 12 }
+                    }}
+                />
+            </Flex>
 
+            {/* Results Area */}
             <ResponsiveDataView
                 data={results || []}
                 loading={isFetching}
@@ -300,51 +324,69 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                 }}
             />
 
+            {/* Add to Cart Modal/Drawer */}
             <MobileFormWrapper
                 title={ar.pos.addToCart}
                 open={!!selectedProduct}
                 onClose={() => setSelectedProduct(null)}
-                footer={
-                    <Button block type="primary" size="large" onClick={confirmAddToCart}>
-                        {ar.actions.add}
-                    </Button>
-                }
             >
                 {selectedProduct && (
-                    <Space orientation="vertical" style={{ width: '100%' }} size="large">
-                        <div>
-                            <Text strong style={{ display: 'block', fontSize: 18 }}>{selectedProduct.nameAr}</Text>
+                    <div style={{ padding: isMobile ? '12px 0' : 0 }}>
+                        <Flex vertical align="center" gap={4} style={{ textAlign: 'center', marginBottom: 24 }}>
+                            <Text strong style={{ fontSize: 20 }}>{selectedProduct.nameAr}</Text>
                             {selectedProduct.nameEn && <Text type="secondary">{selectedProduct.nameEn}</Text>}
-                        </div>
-
-                        <div>
-                            <Text>{ar.pos.quantity}: </Text>
-                            <InputNumber
-                                min={1}
-                                size="large"
-                                value={qty}
-                                onChange={(val) => setQty(val || 1)}
-                                style={{ width: '100%', marginTop: 8 }}
-                                autoFocus
-                            />
-                        </div>
-
-                        {selectedProduct.subUnit && selectedProduct.subUnitConversionFactor && (
-                            <div>
-                                <Text>{ar.products.baseUnit}: </Text>
-                                <Radio.Group
-                                    value={unitType}
-                                    onChange={(e) => setUnitType(e.target.value)}
-                                    style={{ marginTop: 8, display: 'flex' }}
-                                    optionType="button"
-                                    buttonStyle="solid"
-                                >
-                                    <Radio.Button value="base" style={{ flex: 1, textAlign: 'center' }}>{selectedProduct.baseUnit}</Radio.Button>
-                                    <Radio.Button value="sub" style={{ flex: 1, textAlign: 'center' }}>{selectedProduct.subUnit}</Radio.Button>
-                                </Radio.Group>
+                            <div style={{ marginTop: 8 }}>
+                                <MoneyDisplay amount={selectedProduct.sellingPrice} />
                             </div>
-                        )}
-                    </Space>
+                        </Flex>
+
+                        <Divider style={{ margin: '16px 0' }} />
+
+                        <Flex vertical gap={16}>
+                            <div>
+                                <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.pos.quantity}: </Text>
+                                <InputNumber
+                                    min={1}
+                                    max={selectedProduct.floorStock} // Prevent adding more than available stock
+                                    size="large"
+                                    value={qty}
+                                    onChange={(val) => setQty(val || 1)}
+                                    style={{ width: '100%', fontSize: 18, textAlign: 'center' }}
+                                />
+                            </div>
+
+                            {selectedProduct.subUnit && selectedProduct.subUnitConversionFactor && (
+                                <div>
+                                    <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.products.baseUnit}: </Text>
+                                    <Radio.Group
+                                        value={unitType}
+                                        onChange={(e) => setUnitType(e.target.value)}
+                                        style={{ width: '100%', display: 'flex' }}
+                                        optionType="button"
+                                        buttonStyle="solid"
+                                        size="large"
+                                    >
+                                        <Radio.Button value="base" style={{ flex: 1, textAlign: 'center' }}>
+                                            {selectedProduct.baseUnit}
+                                        </Radio.Button>
+                                        <Radio.Button value="sub" style={{ flex: 1, textAlign: 'center' }}>
+                                            {selectedProduct.subUnit}
+                                        </Radio.Button>
+                                    </Radio.Group>
+                                </div>
+                            )}
+
+                            <Button
+                                type="primary"
+                                size="large"
+                                onClick={confirmAddToCart}
+                                block
+                                style={{ marginTop: 16, height: 50, fontSize: 16, borderRadius: 8 }}
+                            >
+                                {ar.actions.add} للسلة
+                            </Button>
+                        </Flex>
+                    </div>
                 )}
             </MobileFormWrapper>
         </div>

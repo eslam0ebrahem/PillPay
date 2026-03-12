@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { App } from 'antd';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import ProductForm, { ProductFormValues } from '@/components/products/ProductForm';
 
 export default function NewProductClientWrapper() {
@@ -29,11 +29,13 @@ export default function NewProductClientWrapper() {
                 throw new Error(data.error?.message || 'فشلت العملية');
             }
 
-            const product = await res.json();
-            const productId = editingProductId || product._id;
+            const responseData = await res.json();
+            
+            // Safely grab the ID whether your API wraps it in a `data` object or returns it directly
+            const productId = editingProductId || responseData?.data?._id || responseData?._id;
 
-            // Handle initial stocks if provided
-            if (addInitialStock && initialStocks && initialStocks.length > 0) {
+            // Handle initial stocks ONLY if we are creating a brand new product
+            if (addInitialStock && initialStocks && initialStocks.length > 0 && !editingProductId) {
                 const stockRes = await fetch('/api/stock/initial-entry', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -49,6 +51,9 @@ export default function NewProductClientWrapper() {
                 } else {
                     message.success('تم إنشاء المنتج وتسجيل المخزون الأولي بنجاح');
                 }
+            } else if (editingProductId && addInitialStock) {
+                // Prevent duplicate inventory issues if they tried to add initial stock to an existing product
+                message.success('تم تحديث المنتج بنجاح. (ملاحظة: لا يمكن إضافة رصيد افتتاحي لمنتج موجود مسبقاً من هذه الشاشة)');
             } else {
                 message.success(editingProductId ? 'تم تحديث المنتج بنجاح' : 'تمت إضافة المنتج بنجاح');
             }
@@ -62,12 +67,24 @@ export default function NewProductClientWrapper() {
         }
     };
 
+    // UseCallback to prevent unnecessary re-renders of the child form
+    const handleProductFound = useCallback((product: any | null) => {
+        if (product) {
+            setEditingProductId(product._id);
+        } else {
+            // Crucial fix: Allow the user to reset the form back to "Create" mode
+            setEditingProductId(null); 
+        }
+    }, []);
+
     return (
-        <ProductForm
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            onProductFound={(product) => product && setEditingProductId(product._id)}
-            mode={editingProductId ? 'edit' : 'create'}
-        />
+        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+            <ProductForm
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                onProductFound={handleProductFound}
+                mode={editingProductId ? 'edit' : 'create'}
+            />
+        </div>
     );
 }

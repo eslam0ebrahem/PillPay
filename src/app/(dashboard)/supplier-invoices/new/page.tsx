@@ -12,8 +12,9 @@ export default async function NewSupplierInvoicePage() {
     const suppliers = await Supplier.find({ isActive: true }).select('name').sort({ name: 1 }).lean<any[]>();
     const products = await Product.find({ isActive: true }).select('nameAr nameEn barcode barcode2').sort({ nameAr: 1 }).lean<any[]>();
 
-    const safeSuppliers = suppliers.map(s => ({ ...s, _id: s._id.toString() }));
-    const safeProducts = products.map(p => ({ ...p, _id: p._id.toString() }));
+    // Use deep serialization for Client Components to handle ObjectIds and Dates
+    const safeSuppliers = JSON.parse(JSON.stringify(suppliers));
+    const safeProducts = JSON.parse(JSON.stringify(products));
 
     return (
         <div>

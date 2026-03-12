@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Form, Input, InputNumber, Button, Select, DatePicker, Radio, Flex, Space, Card, Row, Col, Typography } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, InputNumber, Button, Select, DatePicker, Radio, Flex, Card, Row, Col, Typography, Grid } from 'antd';
+import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import BarcodeScanner from '../common/BarcodeScanner';
+import StickySubmitBar from '../common/StickySubmitBar';
 import { toPiasters, toEGP } from '@/lib/utils/money';
 import ar from '@/i18n/ar';
 
 const { Text } = Typography;
+const { useBreakpoint } = Grid;
 
 interface InitialStockFormProps {
     products: any[];
@@ -17,8 +19,17 @@ interface InitialStockFormProps {
 }
 
 export default function InitialStockForm({ products, preselectedProductId, onSubmit, isLoading }: InitialStockFormProps) {
+    const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
+    
     const [form] = Form.useForm();
     const [selectedProduct, setSelectedProduct] = useState<string | null>(preselectedProductId || null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isMobile = screens.xs || (screens.sm && !screens.md);
 
     const handleFinish = async (values: any) => {
         const payload = {
@@ -33,7 +44,6 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
     };
 
     const handleValuesChange = (changedValues: any, allValues: any) => {
-        // Handle product selection change
         if (changedValues.productId !== undefined) {
             setSelectedProduct(changedValues.productId);
             return;
@@ -46,11 +56,9 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
 
         const sellingPrice = toEGP(product.sellingPrice);
 
-        // Batch price/discount sync
         if (allValues.batches) {
             const changedBatches = changedValues.batches;
             if (changedBatches) {
-                // In Ant Design Form.List, changedValues.batches is an array with undefined for unchanged items
                 const index = changedBatches.findIndex((b: any) => b !== undefined);
                 if (index !== -1) {
                     const changedItem = changedBatches[index];
@@ -83,6 +91,8 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
         }
     };
 
+    if (!mounted) return null;
+
     return (
         <Form
             form={form}
@@ -93,12 +103,11 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                 batches: [{ location: 'floor', quantity: 1 }],
                 productId: preselectedProductId,
             }}
+            // Add massive padding to the bottom on mobile so the form isn't hidden behind the StickySubmitBar
+            style={{ paddingBottom: isMobile ? 100 : 0 }}
         >
-            <Form.Item
-                label={ar.initialStock.product}
-                required
-            >
-                <Flex gap="small">
+            <Form.Item label={ar.initialStock.product} required>
+                <Flex gap={12} align="stretch">
                     <Form.Item
                         name="productId"
                         noStyle
@@ -106,11 +115,12 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                     >
                         <Select
                             showSearch
-                            placeholder="اختر منتج"
+                            size={isMobile ? "large" : "middle"}
+                            placeholder="ابحث عن منتج بالاسم..."
                             disabled={!!preselectedProductId}
                             options={products.map(p => ({
                                 value: p._id as string,
-                                label: `${p.nameAr} | ${p.barcode || ''}`,
+                                label: `${p.nameAr} ${p.barcode ? `| ${p.barcode}` : ''}`,
                                 barcode: p.barcode,
                                 barcode2: p.barcode2,
                             }))}
@@ -120,6 +130,7 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                             style={{ flex: 1 }}
                         />
                     </Form.Item>
+                    
                     {!preselectedProductId && (
                         <BarcodeScanner
                             onScan={(text) => {
@@ -129,7 +140,13 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                                     setSelectedProduct(product._id);
                                 }
                             }}
-                            buttonProps={{ type: 'default' }}
+                            buttonText="" // Hide text on mobile to save space
+                            buttonProps={{ 
+                                type: 'primary', 
+                                ghost: true, 
+                                size: isMobile ? 'large' : 'middle',
+                                style: { width: isMobile ? 56 : 40, padding: 0 } 
+                            }}
                         />
                     )}
                 </Flex>
@@ -141,48 +158,67 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                         {fields.map(({ key, name, ...restField }) => (
                             <Card
                                 key={key}
-                                size="small"
-                                style={{ marginBottom: 16, backgroundColor: '#fafafa' }}
+                                size={isMobile ? "small" : "default"}
+                                style={{ 
+                                    marginBottom: 16, 
+                                    backgroundColor: '#fafafa', 
+                                    borderRadius: 8,
+                                    border: '1px solid #e6e6e6'
+                                }}
                                 title={<Text strong>التشغيلة #{name + 1}</Text>}
-                                extra={fields.length > 1 && <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(name)} />}
+                                extra={
+                                    fields.length > 1 && (
+                                        <Button 
+                                            type="text" 
+                                            danger 
+                                            icon={<DeleteOutlined />} 
+                                            onClick={() => remove(name)} 
+                                            size="middle"
+                                        />
+                                    )
+                                }
                             >
-                                <Row gutter={16}>
+                                <Row gutter={[16, isMobile ? 8 : 16]}>
                                     <Col xs={24} md={12}>
                                         <Form.Item
                                             {...restField}
                                             name={[name, 'batchNumber']}
                                             label={ar.initialStock.batchNumber}
-                                            rules={[{ required: true, message: 'رقم التشغيلة مطلوب' }]}
+                                            rules={[{ required: true, message: 'مطلوب' }]}
                                         >
-                                            <Input placeholder="مثال: SHELF-001" />
+                                            <Input size={isMobile ? "large" : "middle"} placeholder="مثال: SHELF-001" />
                                         </Form.Item>
                                     </Col>
+                                    
                                     <Col xs={24} md={12}>
                                         <Form.Item
                                             {...restField}
                                             name={[name, 'expirationDate']}
                                             label={ar.initialStock.expirationDate}
-                                            rules={[{ required: true, message: 'تاريخ الانتهاء مطلوب' }]}
+                                            rules={[{ required: true, message: 'مطلوب' }]}
                                         >
                                             <DatePicker
                                                 picker="month"
                                                 format="YYYY-MM"
+                                                size={isMobile ? "large" : "middle"}
                                                 style={{ width: '100%' }}
                                                 placeholder="اختر شهر الانتهاء"
                                             />
                                         </Form.Item>
                                     </Col>
-                                    <Col xs={24} md={8}>
+                                    
+                                    <Col xs={12} md={8}>
                                         <Form.Item
                                             {...restField}
                                             name={[name, 'quantity']}
                                             label={ar.initialStock.quantity}
-                                            rules={[{ required: true, message: 'الكمية مطلوبة' }]}
+                                            rules={[{ required: true, message: 'مطلوب' }]}
                                         >
-                                            <InputNumber min={1} style={{ width: '100%' }} placeholder="عدد الوحدات" />
+                                            <InputNumber min={1} size={isMobile ? "large" : "middle"} style={{ width: '100%' }} placeholder="العدد" />
                                         </Form.Item>
                                     </Col>
-                                    <Col xs={24} md={8}>
+
+                                    <Col xs={12} md={8}>
                                         <Form.Item
                                             {...restField}
                                             name={[name, 'discount']}
@@ -192,33 +228,41 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                                                 min={0}
                                                 max={100}
                                                 step={0.1}
+                                                size={isMobile ? "large" : "middle"}
                                                 style={{ width: '100%' }}
-                                                suffix="%"
+                                                placeholder="%"
                                             />
                                         </Form.Item>
                                     </Col>
+
                                     <Col xs={24} md={8}>
                                         <Form.Item
                                             {...restField}
                                             name={[name, 'purchasePrice']}
                                             label={ar.initialStock.purchasePrice}
-                                            rules={[{ required: true, message: 'سعر الشراء مطلوب' }]}
+                                            rules={[{ required: true, message: 'مطلوب' }]}
                                         >
                                             <InputNumber
                                                 min={0}
                                                 step={0.25}
+                                                size={isMobile ? "large" : "middle"}
                                                 style={{ width: '100%' }}
-                                                suffix="ج.م"
+                                                addonAfter="ج.م"
                                             />
                                         </Form.Item>
                                     </Col>
+
                                     <Col xs={24} md={12}>
                                         <Form.Item
                                             {...restField}
                                             name={[name, 'location']}
                                             label={ar.initialStock.location}
                                         >
-                                            <Radio.Group buttonStyle="solid" style={{ width: '100%', display: 'flex' }}>
+                                            <Radio.Group 
+                                                buttonStyle="solid" 
+                                                size={isMobile ? "large" : "middle"}
+                                                style={{ width: '100%', display: 'flex' }}
+                                            >
                                                 <Radio.Button value="floor" style={{ flex: 1, textAlign: 'center' }}>
                                                     {ar.initialStock.floor}
                                                 </Radio.Button>
@@ -228,24 +272,32 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                                             </Radio.Group>
                                         </Form.Item>
                                     </Col>
+
                                     <Col xs={24}>
                                         <Form.Item
                                             {...restField}
                                             name={[name, 'notes']}
                                             label={ar.initialStock.notes}
+                                            style={{ marginBottom: 0 }}
                                         >
-                                            <Input.TextArea rows={1} placeholder={ar.initialStock.notesPlaceholder} />
+                                            <Input.TextArea 
+                                                rows={isMobile ? 2 : 1} 
+                                                size={isMobile ? "large" : "middle"}
+                                                placeholder={ar.initialStock.notesPlaceholder} 
+                                            />
                                         </Form.Item>
                                     </Col>
                                 </Row>
                             </Card>
                         ))}
+
                         <Button
                             type="dashed"
+                            size={isMobile ? "large" : "middle"}
                             onClick={() => add({ location: 'floor', quantity: 1, batchNumber: '' })}
                             block
                             icon={<PlusOutlined />}
-                            style={{ marginBottom: 24 }}
+                            style={{ marginBottom: 24, height: isMobile ? 50 : undefined, borderRadius: 8 }}
                         >
                             إضافة تشغيلة أخرى للمنتج
                         </Button>
@@ -253,16 +305,37 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                 )}
             </Form.List>
 
-            <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-                <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={isLoading}
-                    disabled={!selectedProduct}
-                >
-                    {ar.initialStock.submit}
-                </Button>
-            </Form.Item>
+            {/* Sticky Submit Bar integration for Mobile, inline button for Desktop */}
+            {isMobile ? (
+                <StickySubmitBar>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        icon={<SaveOutlined />}
+                        loading={isLoading}
+                        disabled={!selectedProduct}
+                        block
+                        style={{ height: 50, fontSize: 16, borderRadius: 8 }}
+                    >
+                        {ar.initialStock.submit}
+                    </Button>
+                </StickySubmitBar>
+            ) : (
+                <Form.Item style={{ marginBottom: 0, textAlign: 'left' }}>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        icon={<SaveOutlined />}
+                        loading={isLoading}
+                        disabled={!selectedProduct}
+                        style={{ minWidth: 150 }}
+                    >
+                        {ar.initialStock.submit}
+                    </Button>
+                </Form.Item>
+            )}
         </Form>
     );
 }
