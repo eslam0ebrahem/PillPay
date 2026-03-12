@@ -100,7 +100,7 @@ export default function MobileFormWrapper({
                 footer={normalizedFooter}
                 destroyOnHidden={destroyOnHidden}
                 forceRender={forceRender}
-                maskClosable={maskClosable}
+                mask={maskClosable}
                 afterOpenChange={afterOpenChange}
                 width={width}
                 centered
