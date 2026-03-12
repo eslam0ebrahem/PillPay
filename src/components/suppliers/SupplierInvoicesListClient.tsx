@@ -1,7 +1,8 @@
 'use client';
 
-import { Typography, Button, Tag, Space } from 'antd';
-import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
+import React from 'react';
+import { Typography, Button, Tag, Space, Flex, Card } from 'antd';
+import { PlusOutlined, EyeOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
@@ -10,7 +11,7 @@ import ResponsiveDataView from '../common/ResponsiveDataView';
 import PageHeader from '../common/PageHeader';
 import { DataCard } from '../common/DataCard';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface SupplierInvoicesListClientProps {
     invoices: any[];
@@ -22,6 +23,11 @@ export default function SupplierInvoicesListClient({ invoices }: SupplierInvoice
             title: 'رقم الفاتورة',
             dataIndex: 'invoiceNumber',
             key: 'invoiceNumber',
+            render: (text: string, record: any) => (
+                <Link href={`/supplier-invoices/${record._id}`}>
+                    <Text strong style={{ color: '#1677ff' }}>{text}</Text>
+                </Link>
+            )
         },
         {
             title: 'المورد',
@@ -32,39 +38,25 @@ export default function SupplierInvoicesListClient({ invoices }: SupplierInvoice
             title: 'التاريخ',
             dataIndex: 'date',
             key: 'date',
-            render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+            render: (date: string) => (
+                <Space><CalendarOutlined style={{ color: '#bfbfbf' }} /> {dayjs(date).format('YYYY-MM-DD')}</Space>
+            ),
         },
         {
-            title: 'الإجمالي',
+            title: 'إجمالي الفاتورة',
             dataIndex: 'total',
             key: 'total',
-            render: (value: number) => formatPiasters(value),
-        },
-        {
-            title: 'المدفوع',
-            dataIndex: 'paidAmount',
-            key: 'paidAmount',
-            render: (value: number) => (
-                <span style={{ color: 'green' }}>{formatPiasters(value)}</span>
-            ),
+            align: 'right' as const,
+            render: (value: number) => <Text strong>{formatPiasters(value)}</Text>,
         },
         {
             title: 'المتبقي',
             dataIndex: 'remainingBalance',
             key: 'remainingBalance',
+            align: 'right' as const,
             render: (value: number) => (
-                <span style={{ color: value > 0 ? 'red' : 'green' }}>
+                <Tag color={value > 0 ? 'error' : 'success'} variant="filled" style={{ borderRadius: 4 }}>
                     {formatPiasters(value)}
-                </span>
-            ),
-        },
-        {
-            title: 'الحالة',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: string) => (
-                <Tag color={status === 'voided' ? 'red' : 'blue'}>
-                    {status === 'voided' ? 'ملغاة' : 'نشطة'}
                 </Tag>
             ),
         },
@@ -73,63 +65,95 @@ export default function SupplierInvoicesListClient({ invoices }: SupplierInvoice
             key: 'actions',
             render: (_: unknown, record: any) => (
                 <Link href={`/supplier-invoices/${record._id}`}>
-                    <Button type="text" icon={<EyeOutlined />} size="small" />
+                    <Button type="primary" ghost size="small" icon={<EyeOutlined />}>
+                        عرض
+                    </Button>
                 </Link>
             ),
         },
     ];
 
-    const renderCard = (record: any) => (
-        <DataCard
-            title={
-                <Link href={`/supplier-invoices/${record._id}`}>
-                    <span style={{ color: '#1677ff', fontSize: 16, fontWeight: 500 }}>مورد: {record.supplierId?.name || '-'}</span>
-                </Link>
-            }
-            subtitle={`رقم: ${record.invoiceNumber}`}
-            badge={
-                <div style={{ textAlign: 'left' }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{dayjs(record.date).format('YYYY-MM-DD')}</Text>
-                    <Tag color={record.status === 'voided' ? 'red' : 'blue'} style={{ margin: 0 }}>
-                        {record.status === 'voided' ? 'ملغاة' : 'نشطة'}
-                    </Tag>
-                </div>
-            }
-            properties={[
-                { label: 'الإجمالي', value: formatPiasters(record.total) },
-                { label: 'المدفوع', value: <span style={{ color: 'green' }}>{formatPiasters(record.paidAmount)}</span> },
-                { 
-                    label: 'المتبقي', 
-                    value: <span style={{ color: record.remainingBalance > 0 ? 'red' : 'green' }}>{formatPiasters(record.remainingBalance)}</span>,
-                    fullWidth: true
+    const renderCard = (record: any) => {
+        const isDebt = record.remainingBalance > 0;
+        
+        return (
+            <DataCard
+                title={
+                    <Link href={`/supplier-invoices/${record._id}`}>
+                        <Text strong style={{ fontSize: 15 }}>{record.supplierId?.name || 'مورد غير معروف'}</Text>
+                    </Link>
                 }
-            ]}
-        />
-    );
+                subtitle={
+                    <Space size="small">
+                        <Tag variant="filled">#{record.invoiceNumber}</Tag>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            {dayjs(record.date).format('YYYY-MM-DD')}
+                        </Text>
+                    </Space>
+                }
+                badge={
+                    <div style={{ 
+                        textAlign: 'left', 
+                        padding: '8px 12px', 
+                        background: isDebt ? '#fff1f0' : '#f6ffed', 
+                        borderRadius: 8,
+                        border: `1px solid ${isDebt ? '#ffa39e' : '#b7eb8f'}`
+                    }}>
+                        <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>المتبقي (مديونية)</Text>
+                        <Text strong style={{ fontSize: 15, color: isDebt ? '#cf1322' : '#389e0d' }}>
+                            {formatPiasters(record.remainingBalance)}
+                        </Text>
+                    </div>
+                }
+                properties={[
+                    { label: 'إجمالي الفاتورة', value: <Text strong>{formatPiasters(record.total)}</Text> },
+                    { label: 'المدفوع حالياً', value: <Text style={{ color: '#52c41a' }}>{formatPiasters(record.paidAmount)}</Text> },
+                    { 
+                        label: 'حالة الفاتورة', 
+                        value: (
+                            <Tag color={record.status === 'voided' ? 'red' : (isDebt ? 'warning' : 'success')} style={{ margin: 0 }}>
+                                {record.status === 'voided' ? 'ملغاة' : (isDebt ? 'تحت التحصيل' : 'خالصة')}
+                            </Tag>
+                        )
+                    }
+                ]}
+                actions={
+                    <Link href={`/supplier-invoices/${record._id}`} style={{ width: '100%' }}>
+                        <Button type="primary" block size="large" icon={<FileTextOutlined />}>
+                            تفاصيل المشتريات
+                        </Button>
+                    </Link>
+                }
+            />
+        );
+    };
 
     return (
-        <div>
+        <Flex vertical gap={24}>
             <PageHeader
                 title={ar.nav.supplierInvoices}
+                subtitle="سجل فواتير المشتريات الواردة من الموردين وحالة الدفع"
                 extra={
                     <Link href="/supplier-invoices/new">
-                        <Button type="primary" icon={<PlusOutlined />}>
+                        <Button type="primary" icon={<PlusOutlined />} size="large" block>
                             تسجيل فاتورة جديدة
                         </Button>
                     </Link>
                 }
             />
 
-            <ResponsiveDataView
-                data={invoices}
-                tableColumns={columns}
-                rowKey="_id"
-                renderCard={renderCard}
-                pagination={{ pageSize: 20 }}
-                tableProps={{
-                    scroll: { x: 'max-content' }
-                }}
-            />
-        </div>
+            <Card variant="borderless" styles={{ body: { padding: 0 } }} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <ResponsiveDataView
+                    data={invoices}
+                    tableColumns={columns}
+                    rowKey="_id"
+                    renderCard={renderCard}
+                    pagination={{ pageSize: 20 }}
+                    tableProps={{
+                        scroll: { x: 'max-content' }
+                    }}
+                />
+            </Card>
+        </Flex>
     );
 }

@@ -45,7 +45,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title={<Text type="secondary">منتجات نفذت</Text>}
                             value={outOfStockCount}
-                            valueStyle={{ color: '#cf1322', fontWeight: 'bold' }}
+                            styles={{ content: { color: '#cf1322', fontWeight: 'bold' } }}
                             prefix={<StopOutlined />}
                         />
                     </Card>
@@ -57,7 +57,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title={<Text type="secondary">منتهية الصلاحية</Text>}
                             value={expiredCount}
-                            valueStyle={{ color: '#cf1322', fontWeight: 'bold' }}
+                            styles={{ content: { color: '#cf1322', fontWeight: 'bold' } }}
                             prefix={<ExclamationCircleOutlined />}
                         />
                     </Card>
@@ -69,7 +69,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title={<Text type="secondary">نواقص (قريباً)</Text>}
                             value={lowStockCount}
-                            valueStyle={{ color: '#d48806' }}
+                            styles={{ content: { color: '#d48806' } }}
                             prefix={<WarningOutlined />}
                         />
                     </Card>
@@ -81,7 +81,7 @@ export default function StockHeaderClient({
                         <Statistic
                             title={<Text type="secondary">تقارب الانتهاء</Text>}
                             value={expiringSoonCount}
-                            valueStyle={{ color: '#d48806' }}
+                            styles={{ content: { color: '#d48806' } }}
                             prefix={<CalendarOutlined />}
                         />
                     </Card>
@@ -90,7 +90,7 @@ export default function StockHeaderClient({
 
             {hasSevereIssues && (
                 <Alert
-                    message={
+                    title={
                         <Flex justify="space-between" align="center">
                             <Text strong type="danger">
                                 تنبيه: يوجد بنود تتطلب اتخاذ إجراء فوري (نفاذ مخزون أو انتهاء صلاحية)

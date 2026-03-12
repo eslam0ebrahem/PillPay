@@ -5,31 +5,29 @@ import { connectDB } from '@/lib/db/connection';
 import SupplierInvoice from '@/lib/models/SupplierInvoice';
 
 export default async function SupplierInvoicesPage() {
+    // 1. Establish Database Connection
     await connectDB();
 
+    /**
+     * 2. Fetch Invoices
+     * We populate 'supplierId' to get the name for the list view.
+     * We sort by date (descending) so the newest purchases appear first.
+     */
     const invoices = await SupplierInvoice.find()
         .populate('supplierId', 'name')
         .sort({ date: -1, createdAt: -1 })
-        .lean<any[]>();
+        .lean();
 
-    // Explicitly serialize objects for Client Components
-    const safeInvoices = invoices.map(inv => ({
-        ...inv,
-        _id: inv._id.toString(),
-        supplierId: inv.supplierId ? {
-            ...inv.supplierId,
-            _id: inv.supplierId._id?.toString()
-        } : null,
-        date: inv.date instanceof Date ? inv.date.toISOString() : inv.date,
-        items: inv.items?.map((item: any) => ({
-            ...item,
-            _id: item._id?.toString(),
-            productId: item.productId?.toString(),
-            expirationDate: item.expirationDate instanceof Date ? item.expirationDate.toISOString() : item.expirationDate,
-        })),
-        createdAt: inv.createdAt?.toISOString(),
-        updatedAt: inv.updatedAt?.toISOString(),
-    }));
+    /**
+     * 3. Deep Serialization
+     * Invoices contain nested arrays (items) with their own ObjectIds and Dates.
+     * This utility pattern ensures the entire tree is safe for Client Components.
+     */
+    const safeInvoices = JSON.parse(JSON.stringify(invoices));
 
-    return <SupplierInvoicesListClient invoices={safeInvoices} />;
+    return (
+        <main style={{ minHeight: '100%' }}>
+            <SupplierInvoicesListClient invoices={safeInvoices} />
+        </main>
+    );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { Input, Button, Space, Tag, Typography } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { Input, Button, Space, Tag, Typography, Flex } from 'antd';
+import { EyeOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
@@ -23,43 +23,48 @@ export default function SupplierList({ data, loading, onSearch }: SupplierListPr
             title: ar.suppliers.name,
             dataIndex: 'name',
             key: 'name',
+            render: (text: string, record: any) => (
+                <Link href={`/suppliers/${record._id}`}>
+                    <Text strong style={{ color: '#1677ff' }}>{text}</Text>
+                </Link>
+            )
         },
         {
             title: ar.suppliers.phone,
             dataIndex: 'phone',
             key: 'phone',
-        },
-        {
-            title: ar.suppliers.contactPerson,
-            dataIndex: 'contactPerson',
-            key: 'contactPerson',
+            render: (phone: string) => phone ? (
+                <a href={`tel:${phone}`} style={{ color: 'inherit' }}>
+                    <Space><PhoneOutlined style={{ color: '#52c41a' }} /> {phone}</Space>
+                </a>
+            ) : '-'
         },
         {
             title: ar.suppliers.totalOwed,
             dataIndex: 'totalOwed',
             key: 'totalOwed',
             render: (val: number) => {
-                const color = val > 0 ? 'red' : 'green';
-                return <Tag color={color}>{formatPiasters(val || 0)}</Tag>;
+                const isDebt = val > 0;
+                return (
+                    <Tag 
+                        color={isDebt ? 'error' : 'success'} 
+                        style={{ borderRadius: 6, padding: '2px 8px' }}
+                    >
+                        {formatPiasters(val || 0)}
+                    </Tag>
+                );
             },
-        },
-        {
-            title: 'الحالة',
-            dataIndex: 'isActive',
-            key: 'isActive',
-            render: (active: boolean) => (
-                <Tag color={active ? 'blue' : 'default'}>{active ? 'نشط' : 'غير نشط'}</Tag>
-            ),
         },
         {
             title: 'الإجراءات',
             key: 'actions',
+            align: 'center' as const,
             render: (_: any, record: any) => (
-                <Space>
-                    <Link href={`/suppliers/${record._id}`}>
-                        <Button icon={<EyeOutlined />} size="small" type="text" />
-                    </Link>
-                </Space>
+                <Link href={`/suppliers/${record._id}`}>
+                    <Button icon={<EyeOutlined />} type="primary" ghost size="small">
+                        عرض
+                    </Button>
+                </Link>
             ),
         },
     ];
@@ -68,26 +73,43 @@ export default function SupplierList({ data, loading, onSearch }: SupplierListPr
         <DataCard
             title={
                 <Link href={`/suppliers/${record._id}`}>
-                    <span style={{ color: '#1677ff', fontSize: 16, fontWeight: 500 }}>{record.name}</span>
+                    <Text strong style={{ fontSize: 16 }}>{record.name}</Text>
                 </Link>
             }
-            subtitle={!record.isActive ? <Tag color="default">غير نشط</Tag> : undefined}
+            subtitle={
+                <Flex gap={8} align="center">
+                    {!record.isActive && <Tag color="default">غير نشط</Tag>}
+                    <Tag variant="filled" color="blue">{record.contactPerson || 'بدون مسؤول'}</Tag>
+                </Flex>
+            }
             badge={
-                <div style={{ textAlign: 'left' }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>إجمالي المديونية</Text>
-                    <Text strong type={record.totalOwed > 0 ? 'danger' : 'success'} style={{ fontSize: 16 }}>
+                <div style={{ textAlign: 'left', padding: '8px', background: record.totalOwed > 0 ? '#fff1f0' : '#f6ffed', borderRadius: 8 }}>
+                    <Text type="secondary" style={{ fontSize: 10, display: 'block', textTransform: 'uppercase' }}>
+                        {ar.suppliers.totalOwed}
+                    </Text>
+                    <Text strong style={{ fontSize: 16, color: record.totalOwed > 0 ? '#cf1322' : '#389e0d' }}>
                         {formatPiasters(record.totalOwed || 0)}
                     </Text>
                 </div>
             }
             properties={[
-                { label: ar.suppliers.phone, value: record.phone || '-' },
-                { label: ar.suppliers.contactPerson, value: record.contactPerson || '-' }
+                { 
+                    label: ar.suppliers.phone, 
+                    value: record.phone ? (
+                        <a href={`tel:${record.phone}`} style={{ color: '#1677ff', fontWeight: 500 }}>
+                            <PhoneOutlined /> {record.phone}
+                        </a>
+                    ) : '-' 
+                },
+                { 
+                    label: 'المسؤول', 
+                    value: <Space><UserOutlined style={{ fontSize: 12 }} /> {record.contactPerson || '-'}</Space> 
+                }
             ]}
             actions={
-                <Link href={`/suppliers/${record._id}`}>
-                    <Button type="primary" size="large" icon={<EyeOutlined />}>
-                        التفاصيل
+                <Link href={`/suppliers/${record._id}`} style={{ width: '100%' }}>
+                    <Button type="primary" block size="large" icon={<EyeOutlined />} style={{ borderRadius: 8 }}>
+                        ملف المورد
                     </Button>
                 </Link>
             }
@@ -95,14 +117,15 @@ export default function SupplierList({ data, loading, onSearch }: SupplierListPr
     );
 
     return (
-        <div>
-            <div style={{ marginBottom: 16 }}>
+        <div style={{ padding: '16px' }}>
+            <div style={{ marginBottom: 20 }}>
                 <Search
-                    placeholder="ابحث باسم المورد أو الهاتف..."
+                    placeholder="ابحث باسم المورد أو رقم الهاتف..."
                     allowClear
                     onSearch={onSearch}
-                    style={{ width: '100%', maxWidth: 400 }}
+                    style={{ width: '100%' }}
                     size="large"
+                    enterButton
                 />
             </div>
 
@@ -112,9 +135,7 @@ export default function SupplierList({ data, loading, onSearch }: SupplierListPr
                 rowKey="_id"
                 loading={loading}
                 renderCard={renderCard}
-                tableProps={{
-                    scroll: { x: 'max-content' }
-                }}
+                pagination={{ pageSize: 10, size: 'small' }}
             />
         </div>
     );
