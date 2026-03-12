@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Card, Col, Empty, Row, Space, Tag, Typography, Image, List, Flex, Divider } from 'antd';
+import { Card, Col, Empty, Row, Space, Tag, Typography, Image, Flex, Divider } from 'antd';
 import { 
     PictureOutlined, 
     FireOutlined, 
@@ -54,25 +54,40 @@ function ProductStatsList({ title, data, icon, color }: { title: string; data: D
             style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', height: '100%' }}
             styles={{ body: { padding: '0 12px' } }}
         >
-            <List
-                itemLayout="horizontal"
-                dataSource={data}
-                locale={{ emptyText: <Empty description={ar.actions.noData} image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
-                renderItem={(item) => (
-                    <List.Item style={{ padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
-                        <List.Item.Meta
-                            avatar={<ProductAvatar src={item.imageUrl} name={item.name} />}
-                            title={<Text strong style={{ fontSize: 14 }}>{item.name}</Text>}
-                            description={<Text type="secondary" style={{ fontSize: 12 }}>الكمية المباعة</Text>}
-                        />
-                        <div style={{ textAlign: 'center', minWidth: 60 }}>
-                            <Tag color={color} style={{ margin: 0, fontSize: 14, padding: '2px 8px', borderRadius: 12 }}>
-                                {item.quantity}
-                            </Tag>
-                        </div>
-                    </List.Item>
-                )}
-            />
+            {data.length === 0 ? (
+                <Empty 
+                    description={ar.actions.noData} 
+                    image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                    style={{ margin: '24px 0' }}
+                />
+            ) : (
+                <Flex vertical>
+                    {data.map((item, index) => (
+                        <Flex 
+                            key={index} 
+                            align="center" 
+                            justify="space-between" 
+                            style={{ 
+                                padding: '12px 0', 
+                                borderBottom: index < data.length - 1 ? '1px solid #f0f0f0' : 'none' 
+                            }}
+                        >
+                            <Flex align="center" gap={12} style={{ flex: 1 }}>
+                                <ProductAvatar src={item.imageUrl} name={item.name} />
+                                <Flex vertical>
+                                    <Text strong style={{ fontSize: 14, lineHeight: 1.2 }}>{item.name}</Text>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>الكمية المباعة</Text>
+                                </Flex>
+                            </Flex>
+                            <div style={{ textAlign: 'center', minWidth: 60 }}>
+                                <Tag color={color} style={{ margin: 0, fontSize: 14, padding: '2px 8px', borderRadius: 12 }}>
+                                    {item.quantity}
+                                </Tag>
+                            </div>
+                        </Flex>
+                    ))}
+                </Flex>
+            )}
         </Card>
     );
 }
@@ -88,30 +103,41 @@ function AlertListCard({ title, color, icon, items, renderMeta }: {
             style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', height: '100%' }}
             styles={{ body: { padding: '0 12px' } }}
         >
-            <List
-                itemLayout="horizontal"
-                dataSource={items}
-                locale={{ emptyText: <Empty description="لا توجد تنبيهات" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
-                renderItem={(item) => (
-                    <List.Item style={{ padding: '12px 0', borderBottom: '1px dashed #f0f0f0' }}>
-                        <List.Item.Meta
-                            avatar={<ProductAvatar src={item.imageUrl} name={item.nameAr} />}
-                            title={
+            {items.length === 0 ? (
+                <Empty 
+                    description="لا توجد تنبيهات" 
+                    image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                    style={{ margin: '24px 0' }}
+                />
+            ) : (
+                <Flex vertical>
+                    {items.map((item, index) => (
+                        <Flex 
+                            key={index} 
+                            align="center" 
+                            gap={12} 
+                            style={{ 
+                                padding: '12px 0', 
+                                borderBottom: index < items.length - 1 ? '1px dashed #f0f0f0' : 'none' 
+                            }}
+                        >
+                            <ProductAvatar src={item.imageUrl} name={item.nameAr} />
+                            <Flex vertical style={{ flex: 1 }}>
                                 <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 4, lineHeight: 1.2 }}>
                                     {item.nameAr}
                                 </Text>
-                            }
-                            description={
-                                renderMeta ? (
-                                    <Tag variant="filled" color={`${color}-inverse`} style={{ margin: 0, fontSize: 11 }}>
-                                        {renderMeta(item)}
-                                    </Tag>
-                                ) : null
-                            }
-                        />
-                    </List.Item>
-                )}
-            />
+                                {renderMeta && (
+                                    <div>
+                                        <Tag variant="solid" color={`${color}`} style={{ margin: 0, fontSize: 11 }}>
+                                            {renderMeta(item)}
+                                        </Tag>
+                                    </div>
+                                )}
+                            </Flex>
+                        </Flex>
+                    ))}
+                </Flex>
+            )}
         </Card>
     );
 }
