@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Button, Modal, Typography, Spin, Flex } from 'antd';
-import { CameraOutlined, CloseOutlined, LoadingOutlined } from '@ant-design/icons';
+import { 
+    CameraOutlined, 
+    CloseOutlined, 
+    LoadingOutlined, 
+    ThunderboltOutlined, 
+    ThunderboltFilled 
+} from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -17,18 +23,29 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isInitializing, setIsInitializing] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
+    const [isTorchOn, setIsTorchOn] = useState(false);
+    const [hasTorch, setHasTorch] = useState(false);
     
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const transitioningRef = useRef(false);
     const onScanRef = useRef(onScan);
 
-    // Update the ref whenever onScan changes so we always call the latest version
-    // without triggering effect restarts
     useEffect(() => {
         onScanRef.current = onScan;
     }, [onScan]);
 
     const SCANNER_ID = 'barcode-reader-container';
+
+    const stopScanner = async () => {
+        if (scannerRef.current?.isScanning) {
+            try {
+                await scannerRef.current.stop();
+                await scannerRef.current.clear();
+            } catch (e) {
+                console.log('Handled scanner transition');
+            }
+        }
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -41,54 +58,51 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
             transitioningRef.current = true;
 
             try {
-                // Wait for the Ant Design Modal to fully render the DOM node
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                if (!document.getElementById(SCANNER_ID)) {
-                    throw new Error('Scanner container not found in DOM');
-                }
+                // Ensure DOM is ready
+                await new Promise(resolve => setTimeout(resolve, 400));
+                
+                if (!isMounted || !isModalOpen) return;
 
                 if (!scannerRef.current) {
                     scannerRef.current = new Html5Qrcode(SCANNER_ID);
                 }
 
-                // If it's already scanning, stop it before restarting
-                if (scannerRef.current.isScanning) {
-                    await scannerRef.current.stop();
-                }
+                await stopScanner();
 
                 await scannerRef.current.start(
                     { facingMode: 'environment' },
                     {
-                        fps: 15,
+                        fps: 25,
                         qrbox: (viewfinderWidth, viewfinderHeight) => {
-                            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                            const size = Math.max(200, Math.floor(minEdge * 0.7));
-                            return { width: size, height: size };
+                            const w = viewfinderWidth * 0.8;
+                            const h = Math.min(w * 0.5, 150);
+                            return { width: w, height: h };
                         },
-                        aspectRatio: 1.0,
+                        // Setting a square aspect ratio often helps mobile browsers 
+                        // center the feed correctly within the cover fit
+                        aspectRatio: 1.0, 
                     },
                     (decodedText) => {
                         if (isMounted) {
                             onScanRef.current(decodedText);
                             handleClose();
+                            if (navigator.vibrate) navigator.vibrate(100);
                         }
                     },
-                    () => {}
+                    () => {} 
                 );
+
+                const cameraFeatures = scannerRef.current.getRunningTrackCapabilities();
+                if (cameraFeatures && (cameraFeatures as any).torch) {
+                    setHasTorch(true);
+                }
 
                 if (isMounted) setIsInitializing(false);
             } catch (err: any) {
-                // If it's already transitioning, we can safely ignore this specific error
-                if (err?.includes?.('already under transition') || err?.message?.includes?.('already under transition')) {
-                    console.log('Handled redundant transition attempt');
-                } else {
-                    console.error('Scanner start error:', err);
-                    if (isMounted) {
-                        setCameraError('تعذر الوصول للكاميرا. يرجى التحقق من الصلاحيات.');
-                    }
+                if (isMounted) {
+                    setCameraError('خطأ في تشغيل الكاميرا');
+                    setIsInitializing(false);
                 }
-                if (isMounted) setIsInitializing(false);
             } finally {
                 transitioningRef.current = false;
             }
@@ -98,40 +112,33 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
 
         return () => {
             isMounted = false;
-            if (scannerRef.current && scannerRef.current.isScanning && !transitioningRef.current) {
-                transitioningRef.current = true;
-                scannerRef.current.stop()
-                    .then(() => scannerRef.current?.clear())
-                    .catch(e => console.error('Stop error during unmount:', e))
-                    .finally(() => { transitioningRef.current = false; });
-            }
+            stopScanner();
         };
     }, [isModalOpen]);
 
-    const handleClose = async () => {
-        if (transitioningRef.current) return;
-        
+    const handleClose = () => {
         setIsModalOpen(false);
-        if (scannerRef.current && scannerRef.current.isScanning) {
-            transitioningRef.current = true;
+        setIsTorchOn(false);
+        stopScanner();
+    };
+
+    const toggleTorch = async () => {
+        if (scannerRef.current && hasTorch) {
+            const newState = !isTorchOn;
             try {
-                await scannerRef.current.stop();
-                scannerRef.current.clear();
+                await scannerRef.current.applyVideoConstraints({
+                    advanced: [{ torch: newState }] as any
+                });
+                setIsTorchOn(newState);
             } catch (e) {
-                console.error('Error stopping scanner:', e);
-            } finally {
-                transitioningRef.current = false;
+                console.error('Torch error:', e);
             }
         }
     };
 
     return (
         <>
-            <Button
-                icon={<CameraOutlined />}
-                onClick={() => setIsModalOpen(true)}
-                {...buttonProps}
-            >
+            <Button icon={<CameraOutlined />} onClick={() => setIsModalOpen(true)} {...buttonProps}>
                 {buttonText}
             </Button>
 
@@ -143,98 +150,132 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
                 destroyOnHidden
                 centered
                 width="100vw"
-                style={{ top: 0, margin: 0, padding: 0, maxWidth: '100vw' }}
+                // The Modal MUST have these styles to avoid "offset" shifts
+                style={{ top: 0, margin: 0, padding: 0, maxWidth: '100vw', height: '100dvh' }}
                 styles={{
                     mask: { background: '#000' },
-                    container: { 
-                        padding: 0, 
-                        borderRadius: 0, 
-                        background: '#000', 
-                        boxShadow: 'none' 
-                    },
-                    body: { 
-                        padding: 0, 
-                        height: '100dvh', // Dynamic Viewport Height prevents Safari bottom-bar clipping
-                        width: '100vw',
-                        overflow: 'hidden', 
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }
+                    container: { padding: 0, borderRadius: 0, background: '#000', height: '100dvh' },
+                    body: { padding: 0, height: '100dvh', width: '100vw', overflow: 'hidden' }
                 }}
             >
-                <div style={{ position: 'relative', flex: 1, width: '100%', backgroundColor: '#000' }}>
+                {/* 1. Viewport Wrapper: Lock the content to the absolute window */}
+                <div style={{ 
+                    position: 'fixed', 
+                    top: 0, 
+                    left: 0, 
+                    width: '100vw', 
+                    height: '100dvh', 
+                    backgroundColor: '#000',
+                    zIndex: 9999,
+                    overflow: 'hidden'
+                }}>
                     
-                    {/* Camera Feed Container */}
-                    <div 
-                        id={SCANNER_ID} 
-                        style={{ width: '100%', height: '100%', minHeight: '100dvh' }} 
-                    />
+                    {/* 2. Global CSS Overrides for html5-qrcode's injected elements */}
+                    <style>{`
+                        #${SCANNER_ID} {
+                            width: 100% !important;
+                            height: 100% !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                        }
+                        #${SCANNER_ID} video {
+                            width: 100% !important;
+                            height: 100% !important;
+                            object-fit: cover !important;
+                            position: absolute !important;
+                            top: 0 !important;
+                            left: 0 !important;
+                        }
+                        #${SCANNER_ID} canvas {
+                            display: none !important;
+                        }
+                        @keyframes scan-line {
+                            0% { transform: translateY(0); }
+                            100% { transform: translateY(120px); }
+                        }
+                    `}</style>
 
-                    {/* Loading State */}
-                    {isInitializing && !cameraError && (
+                    <div id={SCANNER_ID} />
+
+                    {/* 3. States Overlay */}
+                    {(isInitializing || cameraError) && (
                         <div style={{
                             position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', 
                             justifyContent: 'center', alignItems: 'center', background: '#000', zIndex: 10
                         }}>
-                            <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: '#1677ff' }} spin />} />
-                            <Text style={{ color: '#fff', marginTop: 16, fontSize: 16 }}>جاري تشغيل الكاميرا...</Text>
+                            {isInitializing ? (
+                                <Spin indicator={<LoadingOutlined style={{ fontSize: 40, color: '#1677ff' }} spin />} />
+                            ) : (
+                                <Flex vertical align="center" gap={16}>
+                                    <Text strong style={{ color: '#ff4d4f' }}>{cameraError}</Text>
+                                    <Button ghost onClick={handleClose}>إغلاق</Button>
+                                </Flex>
+                            )}
                         </div>
                     )}
 
-                    {/* Error State */}
-                    {cameraError && (
-                        <div style={{
-                            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', 
-                            justifyContent: 'center', alignItems: 'center', background: '#000', zIndex: 10, padding: 24, textAlign: 'center'
-                        }}>
-                            <Text strong style={{ color: '#ff4d4f', fontSize: 18, marginBottom: 8 }}>خطأ في الكاميرا</Text>
-                            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16 }}>{cameraError}</Text>
-                        </div>
-                    )}
-
-                    {/* Scanner UI Overlay (Visible only when camera is active) */}
+                    {/* 4. Scanning Mask (The Cutout) */}
                     {!isInitializing && !cameraError && (
                         <div style={{
                             position: 'absolute', inset: 0, pointerEvents: 'none',
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: 'inset 0 0 0 5000px rgba(0,0,0,0.4)' // Creates the darkened background with clear center
+                            zIndex: 5
                         }}>
-                            <Text style={{ color: '#fff', fontSize: 16, marginBottom: 32, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                                قم بتوجيه الكاميرا نحو الباركود
-                            </Text>
-
-                            {/* Center Target Box */}
-                            <div style={{
-                                width: '70vw', maxWidth: 300, height: '70vw', maxHeight: 300,
-                                border: '2px solid rgba(255, 255, 255, 0.5)', borderRadius: 16,
-                                position: 'relative', overflow: 'hidden'
-                            }}>
-                                {/* Animated Red Laser Line */}
-                                <div style={{
-                                    width: '100%', height: 2, background: '#ff4d4f',
-                                    position: 'absolute', top: '50%', boxShadow: '0 0 8px #ff4d4f'
-                                }} />
+                            {/* Dark Overlays */}
+                            <div style={{ flex: 1, width: '100%', background: 'rgba(0,0,0,0.5)' }} />
+                            <div style={{ display: 'flex', width: '100%', height: '140px' }}>
+                                <div style={{ flex: 1, background: 'rgba(0,0,0,0.5)' }} />
+                                <div style={{ 
+                                    width: '85vw', 
+                                    maxWidth: '340px', 
+                                    height: '100%', 
+                                    border: '2px solid #fff', 
+                                    borderRadius: '12px',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}>
+                                    {/* Laser */}
+                                    <div style={{
+                                        width: '100%', height: '2px', background: '#ff4d4f',
+                                        boxShadow: '0 0 10px #ff4d4f',
+                                        animation: 'scan-line 2s infinite linear'
+                                    }} />
+                                </div>
+                                <div style={{ flex: 1, background: 'rgba(0,0,0,0.5)' }} />
+                            </div>
+                            <div style={{ flex: 1, width: '100%', background: 'rgba(0,0,0,0.5)', textAlign: 'center', paddingTop: '20px' }}>
+                                <Text style={{ color: '#fff' }}>ضع الباركود داخل الإطار</Text>
                             </div>
                         </div>
                     )}
 
-                    {/* Thumb-Friendly Bottom Close Button */}
+                    {/* 5. Fixed Controls at the bottom */}
                     <div style={{
-                        position: 'absolute', bottom: 48, left: 0, right: 0,
-                        display: 'flex', justifyContent: 'center', pointerEvents: 'auto', zIndex: 20
+                        position: 'absolute', bottom: 'env(safe-area-inset-bottom, 20px)', left: 0, right: 0,
+                        display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 40,
+                        paddingBottom: '30px', zIndex: 100
                     }}>
+                        {hasTorch && (
+                            <Button 
+                                type={isTorchOn ? "primary" : "default"}
+                                shape="circle" 
+                                icon={isTorchOn ? <ThunderboltFilled /> : <ThunderboltOutlined />} 
+                                size="large"
+                                style={{ width: 56, height: 56, border: 'none', background: isTorchOn ? undefined : 'rgba(255,255,255,0.2)' }}
+                                onClick={toggleTorch}
+                            />
+                        )}
+
                         <Button 
-                            danger 
-                            type="primary" 
-                            shape="circle" 
+                            danger type="primary" shape="circle" 
                             icon={<CloseOutlined style={{ fontSize: 24 }} />} 
                             size="large"
-                            style={{ width: 64, height: 64, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                            style={{ width: 70, height: 70, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
                             onClick={handleClose}
                         />
+                        {hasTorch && <div style={{ width: 56 }} />}
                     </div>
-
                 </div>
             </Modal>
         </>
