@@ -1,12 +1,13 @@
 'use client';
 
-import { Table, InputNumber, Button, Space, Select, Typography, Row, Image, Col, Card } from 'antd';
+import { Table, InputNumber, Button, Space, Select, Typography, Row, Image, Col } from 'antd';
 import { DeleteOutlined, PictureOutlined } from '@ant-design/icons';
 import MoneyDisplay from '../common/MoneyDisplay';
 import ResponsiveDataView from '../common/ResponsiveDataView';
 import StickySubmitBar from '../common/StickySubmitBar';
 import ar from '@/i18n/ar';
 import type { CartItem, DiscountObj } from '@/lib/types';
+import { DataCard } from '../common/DataCard';
 
 const { Text } = Typography;
 
@@ -140,41 +141,45 @@ export default function Cart({
     ];
 
     const renderMobileCard = (record: CartItem) => {
+        const titleContent = (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div>
+                    {record.product.imageUrl ? (
+                        <Image
+                            src={record.product.imageUrl}
+                            alt={record.product.nameAr}
+                            width={48}
+                            height={48}
+                            style={{ objectFit: 'cover', borderRadius: 8 }}
+                            fallback="https://via.placeholder.com/48?text=No+Image"
+                        />
+                    ) : (
+                        <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                            <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
+                        </div>
+                    )}
+                </div>
+                <div>
+                    <div style={{ fontSize: 16, fontWeight: 500 }}>{record.product.nameAr}</div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                        <MoneyDisplay amount={record.computedUnitPrice} />
+                        {' / '}
+                        {record.unitSold === 'sub' ? record.product.subUnit : record.product.baseUnit}
+                    </Text>
+                </div>
+            </div>
+        );
+
         return (
-            <Card size="small" style={{ width: '100%', marginBottom: 8, borderRadius: 12 }}>
-                <Row align="middle" style={{ marginBottom: 12 }}>
-                    <Col flex="48px">
-                        {record.product.imageUrl ? (
-                            <Image
-                                src={record.product.imageUrl}
-                                alt={record.product.nameAr}
-                                width={48}
-                                height={48}
-                                style={{ objectFit: 'cover', borderRadius: 8 }}
-                                fallback="https://via.placeholder.com/48?text=No+Image"
-                            />
-                        ) : (
-                            <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
-                                <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
-                            </div>
-                        )}
-                    </Col>
-                    <Col flex="auto" style={{ paddingLeft: 12, paddingRight: 12 }}>
-                        <Text strong style={{ fontSize: 16 }}>{record.product.nameAr}</Text>
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            <MoneyDisplay amount={record.computedUnitPrice} />
-                            {' / '}
-                            {record.unitSold === 'sub' ? record.product.subUnit : record.product.baseUnit}
-                        </Text>
-                    </Col>
-                    <Col>
-                        <Button danger type="text" icon={<DeleteOutlined />} onClick={() => onRemoveItem(record.id)} />
-                    </Col>
-                </Row>
-                <div style={{ background: '#f5f5f5', padding: 8, borderRadius: 8 }}>
-                    <Row align="middle" justify="space-between">
-                        <Col>
+            <DataCard
+                title={titleContent}
+                badge={
+                    <Button danger type="text" icon={<DeleteOutlined />} size="large" onClick={() => onRemoveItem(record.id)} />
+                }
+                properties={[
+                    {
+                        label: 'الكمية',
+                        value: (
                             <Space size="small">
                                 <Button
                                     size="large"
@@ -197,15 +202,18 @@ export default function Cart({
                                     +
                                 </Button>
                             </Space>
-                        </Col>
-                        <Col>
-                            <Text strong style={{ fontSize: 16 }}>
+                        )
+                    },
+                    {
+                        label: 'الإجمالي',
+                        value: (
+                            <div style={{ fontSize: 16, fontWeight: 'bold', color: '#1677ff', display: 'flex', alignItems: 'center', height: '100%' }}>
                                 <MoneyDisplay amount={record.computedSubtotal} />
-                            </Text>
-                        </Col>
-                    </Row>
-                </div>
-            </Card>
+                            </div>
+                        )
+                    }
+                ]}
+            />
         );
     };
 

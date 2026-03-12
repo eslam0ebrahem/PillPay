@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Button, Input, Space, Switch, App, Row, Col, Grid } from 'antd';
+import { Typography, Card, Button, Input, Space, Switch, App, Grid } from 'antd';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -10,6 +10,7 @@ import CustomerForm from '@/components/customers/CustomerForm';
 import ResponsiveDataView from '@/components/common/ResponsiveDataView';
 import MobileFormWrapper from '@/components/common/MobileFormWrapper';
 import PageHeader from '@/components/common/PageHeader';
+import { DataCard } from '@/components/common/DataCard';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -99,36 +100,29 @@ export default function CustomersPage() {
     ];
 
     const renderCard = (record: any) => (
-        <Card size="small" style={{ marginBottom: 12, borderRadius: 12 }}>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
-                <Col>
-                    <Link href={`/customers/${record._id}`}>
-                        <Text strong style={{ fontSize: 16, color: '#1677ff' }}>{record.name}</Text>
-                    </Link>
-                </Col>
-                <Col>
-                    {record.phone && <Text type="secondary">{record.phone}</Text>}
-                </Col>
-            </Row>
-
-            <div style={{ background: '#f5f5f5', padding: '8px 12px', borderRadius: 8, marginTop: 8 }}>
-                <Row justify="space-between" align="middle">
-                    <Col>
-                        <Text type="secondary" style={{ fontSize: 12 }}>إجمالي المديونية:</Text><br />
-                        <Text strong type={record.totalOwed > 0 ? 'danger' : undefined} style={{ fontSize: 16 }}>
-                            <MoneyDisplay amount={record.totalOwed} />
-                        </Text>
-                    </Col>
-                    <Col>
-                        <Link href={`/customers/${record._id}`}>
-                            <Button type="primary" size="small" icon={<EyeOutlined />}>
-                                التفاصيل
-                            </Button>
-                        </Link>
-                    </Col>
-                </Row>
-            </div>
-        </Card>
+        <DataCard
+            title={
+                <Link href={`/customers/${record._id}`}>
+                    <span style={{ color: '#1677ff', fontSize: 16, fontWeight: 500 }}>{record.name}</span>
+                </Link>
+            }
+            subtitle={record.phone || '-'}
+            badge={
+                <div style={{ textAlign: 'left' }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>إجمالي المديونية</Text>
+                    <Text strong type={record.totalOwed > 0 ? 'danger' : undefined} style={{ fontSize: 16 }}>
+                        <MoneyDisplay amount={record.totalOwed} />
+                    </Text>
+                </div>
+            }
+            actions={
+                <Link href={`/customers/${record._id}`}>
+                    <Button type="primary" size="large" icon={<EyeOutlined />}>
+                        التفاصيل
+                    </Button>
+                </Link>
+            }
+        />
     );
 
     return (

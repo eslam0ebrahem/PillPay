@@ -27,16 +27,10 @@ export default async function SupplierDetailPage({ params }: { params: Promise<{
         .limit(10)
         .lean<any[]>();
 
-    // Need string copies for client
-    const safeSupplier = { ...supplier, _id: supplier._id.toString() };
-    const safeInvoices = recentInvoices.map(i => ({ ...i, _id: i._id.toString(), supplierId: i.supplierId.toString() }));
-    const safePayments = recentPayments.map(p => ({
-        ...p,
-        _id: p._id.toString(),
-        supplierId: p.supplierId.toString(),
-        supplierInvoiceId: p.supplierInvoiceId ? p.supplierInvoiceId.toString() : null,
-        recordedBy: p.recordedBy ? { ...p.recordedBy, _id: p.recordedBy._id.toString() } : null
-    }));
+    // JSON serialization to ensure plain objects for client components
+    const safeSupplier = JSON.parse(JSON.stringify(supplier));
+    const safeInvoices = JSON.parse(JSON.stringify(recentInvoices));
+    const safePayments = JSON.parse(JSON.stringify(recentPayments));
 
     return (
         <div>

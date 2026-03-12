@@ -8,6 +8,7 @@ import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
 import BarcodeScanner from '../common/BarcodeScanner';
 import ResponsiveDataView from '../common/ResponsiveDataView';
+import { DataCard } from '../common/DataCard';
 
 const { Search } = Input;
 const { Text } = Typography;
@@ -142,61 +143,59 @@ export default function ProductList({
 
         const brand = record.brand ? (record.brand.nameEn || record.brand.nameAr) : record.manufacturer;
 
+        const titleContent = (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div>
+                    {record.imageUrl ? (
+                        <Image
+                            src={record.imageUrl}
+                            alt={record.nameAr}
+                            width={48}
+                            height={48}
+                            style={{ objectFit: 'cover', borderRadius: 8 }}
+                            fallback="https://via.placeholder.com/48?text=No+Image"
+                        />
+                    ) : (
+                        <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                            <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
+                        </div>
+                    )}
+                </div>
+                <div>
+                    <Link href={`/products/${record._id}`}>
+                        <div style={{ color: '#1677ff', fontSize: 16, fontWeight: 500 }}>{record.nameAr}</div>
+                    </Link>
+                    {record.nameEn && <div style={{ color: '#8c8c8c', fontSize: 12 }}>{record.nameEn}</div>}
+                </div>
+            </div>
+        );
+
         return (
-            <Card size="small" style={{ marginBottom: 12, borderRadius: 12 }}>
-                <Row align="middle" style={{ marginBottom: 16 }}>
-                    <Col flex="48px">
-                        {record.imageUrl ? (
-                            <Image
-                                src={record.imageUrl}
-                                alt={record.nameAr}
-                                width={48}
-                                height={48}
-                                style={{ objectFit: 'cover', borderRadius: 8 }}
-                                fallback="https://via.placeholder.com/48?text=No+Image"
-                            />
-                        ) : (
-                            <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
-                                <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
-                            </div>
-                        )}
-                    </Col>
-                    <Col flex="auto" style={{ paddingLeft: 12, paddingRight: 12 }}>
-                        <Link href={`/products/${record._id}`}>
-                            <Text strong style={{ fontSize: 16, color: '#1677ff' }}>{record.nameAr}</Text>
-                        </Link>
-                        {record.nameEn && <><br /><Text type="secondary" style={{ fontSize: 12 }}>{record.nameEn}</Text></>}
-                        <div style={{ marginTop: 4 }}>
-                            <Tag color={stockColor}>
+            <DataCard
+                title={titleContent}
+                badge={
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: 16 }}>{formatPiasters(record.sellingPrice)}</div>
+                        <Space direction="vertical" size={2} align="end">
+                            <Tag color={stockColor} style={{ margin: 0 }}>
                                 {record.totalQty} {record.baseUnit}
                             </Tag>
-                            {!record.isActive && <Tag color="default">غير نشط</Tag>}
-                        </div>
-                    </Col>
-                    <Col>
-                        {formatPiasters(record.sellingPrice)}
-                    </Col>
-                </Row>
-                <div style={{ background: '#f5f5f5', padding: '8px 12px', borderRadius: 8 }}>
-                    <Row justify="space-between">
-                        <Col>
-                            <Text type="secondary" style={{ fontSize: 12 }}>{ar.products.barcode}:</Text><br />
-                            <Text strong>{record.barcode || '-'}</Text>
-                        </Col>
-                        <Col>
-                            <Text type="secondary" style={{ fontSize: 12 }}>{ar.products.brand}:</Text><br />
-                            <Text strong>{brand || '-'}</Text>
-                        </Col>
-                        <Col>
-                            <Link href={`/products/${record._id}`}>
-                                <Button type="primary" size="small" icon={<EyeOutlined />}>
-                                    التفاصيل
-                                </Button>
-                            </Link>
-                        </Col>
-                    </Row>
-                </div>
-            </Card>
+                            {!record.isActive && <Tag color="default" style={{ margin: 0, marginTop: 4 }}>غير نشط</Tag>}
+                        </Space>
+                    </div>
+                }
+                properties={[
+                    { label: ar.products.barcode, value: record.barcode || '-' },
+                    { label: ar.products.brand, value: brand || '-' }
+                ]}
+                actions={
+                    <Link href={`/products/${record._id}`}>
+                        <Button type="primary" size="large" icon={<EyeOutlined />} style={{ minWidth: 100 }}>
+                            التفاصيل
+                        </Button>
+                    </Link>
+                }
+            />
         );
     };
 
