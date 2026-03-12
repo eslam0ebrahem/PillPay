@@ -65,10 +65,10 @@ export default function MobileFormWrapper({
             onClose={onClose}
             destroyOnHidden={destroyOnHidden}
             footer={footer === undefined ? null : footer}
-            height="auto" // Wraps tight to small forms...
+            size="auto" // Wraps tight to small forms...
             style={{ maxHeight: '92dvh' }} // ...but never exceeds 92% of the screen height for large forms
             styles={{
-                content: {
+                section: {
                     borderTopLeftRadius: 20, // Native rounded top corners
                     borderTopRightRadius: 20,
                 },

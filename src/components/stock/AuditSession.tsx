@@ -13,8 +13,7 @@ import {
     App,
     Grid,
     Flex,
-    Divider,
-    List
+    Divider
 } from 'antd';
 import { CheckCircleOutlined, PlayCircleOutlined, SaveOutlined, MinusOutlined, PlusOutlined, InboxOutlined, ShopOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -317,42 +316,44 @@ export default function AuditSession() {
                         </Button>
                     }
                 >
-                    <List
-                        loading={sessionsQuery.isLoading}
-                        dataSource={sessionsQuery.data ?? []}
-                        rowKey="_id"
-                        locale={{ emptyText: <Empty description="لا توجد جلسات جرد" style={{ margin: '24px 0' }} /> }}
-                        renderItem={(session) => {
-                            const isSelected = session._id === selectedSessionId;
-                            return (
-                                <List.Item
-                                    onClick={() => {
-                                        setSelectedSessionId(session._id);
-                                        if (isMobile && detailsRef.current) {
-                                            detailsRef.current.scrollIntoView({ behavior: 'smooth' });
-                                        }
-                                    }}
-                                    style={{
-                                        cursor: 'pointer',
-                                        padding: '16px',
-                                        background: isSelected ? '#e6f4ff' : '#fff',
-                                        borderLeft: isSelected ? '4px solid #1677ff' : '4px solid transparent',
-                                        borderBottom: '1px solid #f0f0f0',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-                                        <Text strong={isSelected} style={{ fontSize: 15 }}>
-                                            {dayjs(session.startedAt).format('YYYY-MM-DD HH:mm')}
-                                        </Text>
-                                        <Tag color={session.status === 'completed' ? 'green' : 'blue'} style={{ margin: 0 }}>
-                                            {session.status === 'completed' ? 'مكتمل' : 'جاري'}
-                                        </Tag>
-                                    </Flex>
-                                </List.Item>
-                            );
-                        }}
-                    />
+                    <div style={{ maxHeight: isMobile ? 'none' : 'calc(100vh - 300px)', overflowY: 'auto' }}>
+                        <Flex vertical>
+                            {sessionsQuery.data?.map((session) => {
+                                const isSelected = session._id === selectedSessionId;
+                                return (
+                                    <div
+                                        key={session._id}
+                                        onClick={() => {
+                                            setSelectedSessionId(session._id);
+                                            if (isMobile && detailsRef.current) {
+                                                detailsRef.current.scrollIntoView({ behavior: 'smooth' });
+                                            }
+                                        }}
+                                        style={{
+                                            cursor: 'pointer',
+                                            padding: '16px',
+                                            background: isSelected ? '#e6f4ff' : '#fff',
+                                            borderLeft: isSelected ? '4px solid #1677ff' : '4px solid transparent',
+                                            borderBottom: '1px solid #f0f0f0',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+                                            <Text strong={isSelected} style={{ fontSize: 15 }}>
+                                                {dayjs(session.startedAt).format('YYYY-MM-DD HH:mm')}
+                                            </Text>
+                                            <Tag color={session.status === 'completed' ? 'green' : 'blue'} style={{ margin: 0 }}>
+                                                {session.status === 'completed' ? 'مكتمل' : 'جاري'}
+                                            </Tag>
+                                        </Flex>
+                                    </div>
+                                );
+                            })}
+                            {!sessionsQuery.isLoading && (!sessionsQuery.data || sessionsQuery.data.length === 0) && (
+                                <Empty description="لا توجد جلسات جرد" style={{ margin: '24px 0' }} />
+                            )}
+                        </Flex>
+                    </div>
                 </Card>
             </Col>
 

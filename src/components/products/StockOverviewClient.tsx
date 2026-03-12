@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Button, Form, InputNumber, Select, Input, Tag, Image, App, Grid, List, Card, Space, Typography, Divider, Flex } from 'antd';
+import { Table, Button, Form, InputNumber, Select, Input, Tag, Image, App, Grid, Card, Space, Typography, Divider, Flex } from 'antd';
 import { EditOutlined, PictureOutlined, CalendarOutlined, BarcodeOutlined, ShopOutlined, InboxOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import ar from '@/i18n/ar';
@@ -196,56 +196,53 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
         <div>
             {/* 3. Conditional Layout: List for Mobile, Table for Desktop */}
             {isMobile ? (
-                <List
-                    dataSource={batches}
-                    rowKey="_id"
-                    renderItem={(batch) => (
-                        <List.Item style={{ padding: '0 0 16px 0', border: 'none' }}>
-                            <Card 
-                                size="small" 
-                                style={{ width: '100%', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                <Flex vertical gap={16}>
+                    {batches.map((batch) => (
+                        <Card 
+                            key={batch._id}
+                            size="small" 
+                            style={{ width: '100%', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                        >
+                            {renderProductInfo(batch.productId)}
+                            
+                            <Divider style={{ margin: '12px 0' }} />
+                            
+                            <Space orientation="vertical" size="small" style={{ width: '100%' }}>
+                                <Flex justify="space-between" align="center">
+                                    <Text type="secondary"><BarcodeOutlined /> {ar.batches.batchNumber}</Text>
+                                    <Text strong>{batch.batchNumber}</Text>
+                                </Flex>
+                                
+                                <Flex justify="space-between" align="center">
+                                    <Text type="secondary"><CalendarOutlined /> {ar.batches.expirationDate}</Text>
+                                    {renderExpirationTag(batch.expirationDate)}
+                                </Flex>
+
+                                <Divider style={{ margin: '8px 0', borderStyle: 'dashed' }} />
+
+                                <Flex justify="space-between" align="center">
+                                    <Text type="secondary"><ShopOutlined /> {ar.batches.floorQty}</Text>
+                                    <Tag color="blue" style={{ margin: 0, padding: '0 12px', fontSize: 14 }}>{batch.floorQty}</Tag>
+                                </Flex>
+
+                                <Flex justify="space-between" align="center">
+                                    <Text type="secondary"><InboxOutlined /> {ar.batches.warehouseQty}</Text>
+                                    <Tag color="purple" style={{ margin: 0, padding: '0 12px', fontSize: 14 }}>{batch.warehouseQty}</Tag>
+                                </Flex>
+                            </Space>
+
+                            <Button 
+                                type="primary" 
+                                icon={<EditOutlined />} 
+                                block 
+                                style={{ marginTop: 16 }}
+                                onClick={() => openAdjustModal(batch)}
                             >
-                                {renderProductInfo(batch.productId)}
-                                
-                                <Divider style={{ margin: '12px 0' }} />
-                                
-                                <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                                    <Flex justify="space-between" align="center">
-                                        <Text type="secondary"><BarcodeOutlined /> {ar.batches.batchNumber}</Text>
-                                        <Text strong>{batch.batchNumber}</Text>
-                                    </Flex>
-                                    
-                                    <Flex justify="space-between" align="center">
-                                        <Text type="secondary"><CalendarOutlined /> {ar.batches.expirationDate}</Text>
-                                        {renderExpirationTag(batch.expirationDate)}
-                                    </Flex>
-
-                                    <Divider style={{ margin: '8px 0', borderStyle: 'dashed' }} />
-
-                                    <Flex justify="space-between" align="center">
-                                        <Text type="secondary"><ShopOutlined /> {ar.batches.floorQty}</Text>
-                                        <Tag color="blue" style={{ margin: 0, padding: '0 12px', fontSize: 14 }}>{batch.floorQty}</Tag>
-                                    </Flex>
-
-                                    <Flex justify="space-between" align="center">
-                                        <Text type="secondary"><InboxOutlined /> {ar.batches.warehouseQty}</Text>
-                                        <Tag color="purple" style={{ margin: 0, padding: '0 12px', fontSize: 14 }}>{batch.warehouseQty}</Tag>
-                                    </Flex>
-                                </Space>
-
-                                <Button 
-                                    type="primary" 
-                                    icon={<EditOutlined />} 
-                                    block 
-                                    style={{ marginTop: 16 }}
-                                    onClick={() => openAdjustModal(batch)}
-                                >
-                                    تعديل الرصيد
-                                </Button>
-                            </Card>
-                        </List.Item>
-                    )}
-                />
+                                تعديل الرصيد
+                            </Button>
+                        </Card>
+                    ))}
+                </Flex>
             ) : (
                 <Table
                     columns={columns}

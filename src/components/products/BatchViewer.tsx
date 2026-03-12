@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Table, Tag, List, Card, Space, Grid, Typography, Divider, Flex } from 'antd';
+import { Table, Tag, Card, Space, Grid, Typography, Divider, Flex } from 'antd';
 import { CalendarOutlined, InboxOutlined, ShopOutlined, DollarOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
 import { formatPiasters } from '@/utils/money';
@@ -120,52 +120,48 @@ export default function BatchViewer({ batches, loading, expiringSoonDays }: Batc
 
     if (isMobile) {
         return (
-            <List
-                loading={loading}
-                dataSource={batches}
-                rowKey="_id"
-                renderItem={(batch) => (
-                    <List.Item style={{ padding: '0 0 12px 0' }}>
-                        <Card 
-                            size="small" 
-                            style={{ width: '100%', borderRadius: 8 }}
-                            title={
-                                <Space>
-                                    <Text strong>#{batch.batchNumber}</Text>
-                                    {getExpirationTag(batch.expirationDate)}
-                                </Space>
-                            }
-                            extra={getSourceTag(batch.source)}
-                        >
-                            <Space orientation="vertical" size="small" style={{ width: '100%' }}>
-                                <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-                                    <Text type="secondary"><CalendarOutlined /> {ar.batches.expirationDate}</Text>
-                                    <Text>{dayjs(batch.expirationDate).format('YYYY-MM-DD')}</Text>
-                                </Flex>
-                                
-                                <Divider style={{ margin: '8px 0' }} />
-                                
-                                <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-                                    <Text type="secondary"><ShopOutlined /> {ar.batches.floorQty}</Text>
-                                    <Text strong>{batch.floorQty}</Text>
-                                </Flex>
-                                
-                                <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-                                    <Text type="secondary"><InboxOutlined /> {ar.batches.warehouseQty}</Text>
-                                    <Text strong>{batch.warehouseQty}</Text>
-                                </Flex>
-
-                                <Divider style={{ margin: '8px 0' }} />
-
-                                <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-                                    <Text type="secondary"><DollarOutlined /> {ar.batches.purchasePrice}</Text>
-                                    <Text strong>{formatPiasters(batch.purchasePrice)}</Text>
-                                </Flex>
+            <Flex vertical gap={12}>
+                {batches.map((batch) => (
+                    <Card 
+                        key={batch._id}
+                        size="small" 
+                        style={{ width: '100%', borderRadius: 8 }}
+                        title={
+                            <Space>
+                                <Text strong>#{batch.batchNumber}</Text>
+                                {getExpirationTag(batch.expirationDate)}
                             </Space>
-                        </Card>
-                    </List.Item>
-                )}
-            />
+                        }
+                        extra={getSourceTag(batch.source)}
+                    >
+                        <Space orientation="vertical" size="small" style={{ width: '100%' }}>
+                            <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+                                <Text type="secondary"><CalendarOutlined /> {ar.batches.expirationDate}</Text>
+                                <Text>{dayjs(batch.expirationDate).format('YYYY-MM-DD')}</Text>
+                            </Flex>
+                            
+                            <Divider style={{ margin: '8px 0' }} />
+                            
+                            <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+                                <Text type="secondary"><ShopOutlined /> {ar.batches.floorQty}</Text>
+                                <Text strong>{batch.floorQty}</Text>
+                            </Flex>
+                            
+                            <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+                                <Text type="secondary"><InboxOutlined /> {ar.batches.warehouseQty}</Text>
+                                <Text strong>{batch.warehouseQty}</Text>
+                            </Flex>
+
+                            <Divider style={{ margin: '8px 0' }} />
+
+                            <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+                                <Text type="secondary"><DollarOutlined /> {ar.batches.purchasePrice}</Text>
+                                <Text strong>{formatPiasters(batch.purchasePrice)}</Text>
+                            </Flex>
+                        </Space>
+                    </Card>
+                ))}
+            </Flex>
         );
     }
 
