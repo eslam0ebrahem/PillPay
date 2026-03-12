@@ -12,12 +12,25 @@ import {
     Typography,
     Upload,
     App,
+    Flex,
+    Alert,
+    Popconfirm,
+    Col,
+    Row,
 } from 'antd';
-import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { 
+    DownloadOutlined, 
+    UploadOutlined, 
+    SettingOutlined, 
+    CloudSyncOutlined,
+    WarningOutlined,
+    SaveOutlined
+} from '@ant-design/icons';
 import PageHeader from '@/components/common/PageHeader';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
+// --- Interfaces ---
 interface SettingsResponse {
     data: {
         expiringSoonDays: number;
@@ -37,252 +50,222 @@ export default function SettingsPage() {
     const [form] = Form.useForm<SettingsFormValues>();
     const [importFile, setImportFile] = useState<File | null>(null);
 
+    // --- Queries ---
     const settingsQuery = useQuery({
         queryKey: ['settings'],
         queryFn: async () => {
             const response = await fetch('/api/settings');
-            if (!response.ok) {
-                throw new Error('تعذر تحميل الإعدادات');
-            }
-
+            if (!response.ok) throw new Error('تعذر تحميل الإعدادات');
             return (await response.json()) as SettingsResponse;
         },
     });
 
     useEffect(() => {
-        if (!settingsQuery.data?.data) {
-            return;
-        }
-
+        if (!settingsQuery.data?.data) return;
         form.setFieldsValue({
             expiringSoonDays: settingsQuery.data.data.expiringSoonDays,
             defaultLowStockThreshold: settingsQuery.data.data.defaultLowStockThreshold,
-            maxDiscountPercentageDisplay:
-                settingsQuery.data.data.maxDiscountPercentage / 100,
+            maxDiscountPercentageDisplay: settingsQuery.data.data.maxDiscountPercentage / 100,
         });
     }, [form, settingsQuery.data]);
 
+    // --- Mutations ---
     const saveSettingsMutation = useMutation({
         mutationFn: async (values: SettingsFormValues) => {
             const response = await fetch('/api/settings', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     expiringSoonDays: values.expiringSoonDays,
                     defaultLowStockThreshold: values.defaultLowStockThreshold,
-                    maxDiscountPercentage: Math.round(
-                        values.maxDiscountPercentageDisplay * 100
-                    ),
+                    maxDiscountPercentage: Math.round(values.maxDiscountPercentageDisplay * 100),
                 }),
             });
-
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error?.message ?? 'تعذر حفظ الإعدادات');
-            }
-
-            return data;
+            if (!response.ok) throw new Error('تعذر حفظ الإعدادات');
+            return response.json();
         },
         onSuccess: () => {
-            message.success('تم حفظ الإعدادات بنجاح');
+            message.success('تم تحديث إعدادات النظام بنجاح');
             settingsQuery.refetch();
-        },
-        onError: (error) => {
-            message.error(error instanceof Error ? error.message : 'تعذر حفظ الإعدادات');
         },
     });
 
     const exportBackupMutation = useMutation({
         mutationFn: async () => {
-            const response = await fetch('/api/backup/export', {
-                method: 'POST',
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error?.message ?? 'تعذر تصدير النسخة الاحتياطية');
-            }
-
-            const disposition = response.headers.get('content-disposition') || '';
-            const match = disposition.match(/filename="(.+)"/);
-            const fileName = match?.[1] ?? 'pillpay-backup.json';
+            const response = await fetch('/api/backup/export', { method: 'POST' });
+            if (!response.ok) throw new Error('تعذر تصدير النسخة الاحتياطية');
+            
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
+            link.download = `pillpay-backup-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
-            link.remove();
             URL.revokeObjectURL(url);
         },
-        onSuccess: () => {
-            message.success('تم تصدير النسخة الاحتياطية');
-        },
-        onError: (error) => {
-            message.error(
-                error instanceof Error ? error.message : 'تعذر تصدير النسخة الاحتياطية'
-            );
-        },
+        onSuccess: () => message.success('تم تحميل ملف النسخة الاحتياطية بنجاح'),
     });
 
     const importBackupMutation = useMutation({
         mutationFn: async () => {
-            if (!importFile) {
-                throw new Error('يرجى اختيار ملف نسخة احتياطية أولاً');
-            }
-
+            if (!importFile) throw new Error('يرجى اختيار ملف أولاً');
             const formData = new FormData();
             formData.append('file', importFile);
-
-            const response = await fetch('/api/backup/import', {
-                method: 'POST',
-                body: formData,
-            });
-
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error?.message ?? 'تعذر استيراد النسخة الاحتياطية');
-            }
-
-            return data;
+            const response = await fetch('/api/backup/import', { method: 'POST', body: formData });
+            if (!response.ok) throw new Error('فشل استيراد البيانات');
+            return response.json();
         },
         onSuccess: (data) => {
-            message.success(
-                `تم استيراد النسخة الاحتياطية (${data.data.importedCollections} مجموعة)`
-            );
+            message.success(`تم الاستيراد بنجاح: ${data.data.importedCollections} سجل`);
             setImportFile(null);
             settingsQuery.refetch();
-        },
-        onError: (error) => {
-            message.error(
-                error instanceof Error ? error.message : 'تعذر استيراد النسخة الاحتياطية'
-            );
         },
     });
 
     return (
-        <div>
-            <PageHeader title="الإعدادات والنسخ الاحتياطي" />
+        <Flex vertical gap={24} style={{ paddingBottom: 40 }}>
+            <PageHeader 
+                title="إعدادات النظام" 
+                subtitle="تحكم في معايير التنبيهات، سياسات الخصم، والنسخ الاحتياطي للبيانات"
+            />
 
-            <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-                <Card loading={settingsQuery.isLoading}>
-                    <Form<SettingsFormValues>
-                        form={form}
-                        layout="vertical"
-                        onFinish={(values) => saveSettingsMutation.mutate(values)}
+            <div style={{ maxWidth: 800, width: '100%', margin: '0 auto' }}>
+                <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                    
+                    {/* --- Section 1: Business Logic --- */}
+                    <Card 
+                        title={<Space><SettingOutlined /> إعدادات التشغيل</Space>}
+                        variant="borderless"
+                        loading={settingsQuery.isLoading}
+                        style={{ borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
                     >
-                        <Form.Item
-                            name="expiringSoonDays"
-                            label="عدد أيام التنبيه قبل الانتهاء"
-                            rules={[{ required: true, message: 'هذا الحقل مطلوب' }]}
+                        <Form<SettingsFormValues>
+                            form={form}
+                            layout="vertical"
+                            onFinish={(v) => saveSettingsMutation.mutate(v)}
                         >
-                            <InputNumber min={1} style={{ width: '100%' }} />
-                        </Form.Item>
+                            <Row gutter={24}>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        name="expiringSoonDays"
+                                        label="تنبيه الصلاحية (أيام)"
+                                        rules={[{ required: true }]}
+                                        extra="سيتم تمييز الأدوية التي تنتهي صلاحيتها خلال هذه المدة"
+                                    >
+                                        <InputNumber min={1} style={{ width: '100%' }} size="large" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        name="defaultLowStockThreshold"
+                                        label="حد النقص الافتراضي"
+                                        rules={[{ required: true }]}
+                                        extra="التنبيه عند وصول رصيد الصنف لهذا الرقم"
+                                    >
+                                        <InputNumber min={0} style={{ width: '100%' }} size="large" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24}>
+                                    <Form.Item label="أقصى نسبة خصم مسموحة" required>
+                                        <Flex gap={0}>
+                                            <Form.Item name="maxDiscountPercentageDisplay" noStyle>
+                                                <InputNumber 
+                                                    min={0} max={100} step={0.5} size="large"
+                                                    style={{ width: '100%', borderRadius: '0 8px 8px 0' }} 
+                                                />
+                                            </Form.Item>
+                                            <span style={{ 
+                                                display: 'flex', alignItems: 'center', padding: '0 16px', 
+                                                background: '#f5f5f5', border: '1px solid #d9d9d9',
+                                                borderRight: 0, borderRadius: '8px 0 0 8px' 
+                                            }}>%</span>
+                                        </Flex>
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                            <Button 
+                                type="primary" 
+                                htmlType="submit" 
+                                icon={<SaveOutlined />} 
+                                loading={saveSettingsMutation.isPending}
+                                size="large"
+                                style={{ borderRadius: 8 }}
+                            >
+                                حفظ التغييرات
+                            </Button>
+                        </Form>
+                    </Card>
 
-                        <Form.Item
-                            name="defaultLowStockThreshold"
-                            label="الحد الافتراضي للمخزون المنخفض"
-                            rules={[{ required: true, message: 'هذا الحقل مطلوب' }]}
-                        >
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
+                    {/* --- Section 2: Backup & Restore --- */}
+                    <Card 
+                        title={<Space><CloudSyncOutlined /> النسخ الاحتياطي والأمان</Space>}
+                        variant="borderless"
+                        style={{ borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                    >
+                        <Alert
+                            message="تحذير أمني"
+                            description="عملية الاستيراد ستقوم باستبدال البيانات الحالية. تأكد من امتلاك نسخة حديثة قبل البدء."
+                            type="warning"
+                            showIcon
+                            icon={<WarningOutlined />}
+                            style={{ marginBottom: 24, borderRadius: 8 }}
+                        />
 
-                        <Form.Item
-                            label="أقصى نسبة خصم مسموحة"
-                            required
-                        >
-                            <Space.Compact style={{ width: '100%' }}>
-                                <Form.Item
-                                    name="maxDiscountPercentageDisplay"
-                                    noStyle
-                                    rules={[{ required: true, message: 'هذا الحقل مطلوب' }]}
+                        <Flex vertical gap={24}>
+                            <div>
+                                <Text strong style={{ display: 'block', marginBottom: 8 }}>تصدير البيانات</Text>
+                                <Button
+                                    icon={<DownloadOutlined />}
+                                    loading={exportBackupMutation.isPending}
+                                    onClick={() => exportBackupMutation.mutate()}
+                                    size="large"
                                 >
-                                    <InputNumber
-                                        min={0}
-                                        max={100}
-                                        step={0.5}
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                                <div style={{
-                                    padding: '0 11px',
-                                    backgroundColor: '#f5f5f5',
-                                    border: '1px solid #d9d9d9',
-                                    borderLeft: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    borderRadius: '0 6px 6px 0',
-                                    whiteSpace: 'nowrap'
-                                }}>
-                                    %
-                                </div>
-                            </Space.Compact>
-                            <Text type="secondary" style={{ fontSize: '12px', marginTop: 4, display: 'block' }}>
-                                القيمة المعروضة بالنسبة المئوية العادية، وليست بوحدة basis points.
-                            </Text>
-                        </Form.Item>
+                                    تحميل نسخة احتياطية (JSON)
+                                </Button>
+                            </div>
 
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            loading={saveSettingsMutation.isPending}
-                        >
-                            حفظ الإعدادات
-                        </Button>
-                    </Form>
-                </Card>
+                            <Divider style={{ margin: 0 }} />
 
-                <Card>
-                    <Divider style={{ marginTop: 0 }}>
-                        النسخ الاحتياطي
-                    </Divider>
-
-                    <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-                        <div>
-                            <Button
-                                icon={<DownloadOutlined />}
-                                loading={exportBackupMutation.isPending}
-                                onClick={() => exportBackupMutation.mutate()}
-                            >
-                                تصدير نسخة احتياطية
-                            </Button>
-                        </div>
-
-                        <div>
-                            <Upload
-                                maxCount={1}
-                                beforeUpload={(file) => {
-                                    setImportFile(file);
-                                    return false;
-                                }}
-                                onRemove={() => {
-                                    setImportFile(null);
-                                }}
-                            >
-                                <Button icon={<UploadOutlined />}>اختيار ملف للاستيراد</Button>
-                            </Upload>
-                            <Text type="secondary">
-                                {importFile
-                                    ? `الملف المختار: ${importFile.name}`
-                                    : 'لم يتم اختيار ملف بعد'}
-                            </Text>
-                        </div>
-
-                        <div>
-                            <Button
-                                type="primary"
-                                loading={importBackupMutation.isPending}
-                                onClick={() => importBackupMutation.mutate()}
-                            >
-                                استيراد النسخة الاحتياطية
-                            </Button>
-                        </div>
-                    </Space>
-                </Card>
-            </Space>
-        </div>
+                            <div>
+                                <Text strong style={{ display: 'block', marginBottom: 12 }}>استيراد البيانات</Text>
+                                <Flex vertical gap={12}>
+                                    <Upload
+                                        maxCount={1}
+                                        beforeUpload={(file) => { setImportFile(file); return false; }}
+                                        onRemove={() => setImportFile(null)}
+                                        fileList={importFile ? [importFile as any] : []}
+                                    >
+                                        <Button icon={<UploadOutlined />} size="large" block>
+                                            {importFile ? 'تغيير الملف المختاري' : 'اختر ملف النسخة الاحتياطية'}
+                                        </Button>
+                                    </Upload>
+                                    
+                                    <Popconfirm
+                                        title="تأكيد الاستيراد"
+                                        description="هل أنت متأكد؟ سيتم حذف البيانات الحالية واستبدالها بالنسخة المرفوعة."
+                                        onConfirm={() => importBackupMutation.mutate()}
+                                        okText="نعم، استورد البيانات"
+                                        cancelText="إلغاء"
+                                        okButtonProps={{ danger: true, size: 'large' }}
+                                    >
+                                        <Button
+                                            type="primary"
+                                            danger
+                                            block
+                                            size="large"
+                                            disabled={!importFile}
+                                            loading={importBackupMutation.isPending}
+                                            style={{ borderRadius: 8 }}
+                                        >
+                                            بدء استيراد النسخة الاحتياطية
+                                        </Button>
+                                    </Popconfirm>
+                                </Flex>
+                            </div>
+                        </Flex>
+                    </Card>
+                </Space>
+            </div>
+        </Flex>
     );
 }

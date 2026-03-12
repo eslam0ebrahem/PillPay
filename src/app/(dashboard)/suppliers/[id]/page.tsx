@@ -11,33 +11,39 @@ export default async function SupplierDetailPage({ params }: { params: Promise<{
     await connectDB();
     const { id } = await params;
 
-    const supplier = await Supplier.findById(id).lean<any>();
+    // PERFORMANCE FIX: Parallelize data fetching to eliminate the "Waterfall" effect
+    // We fetch everything at once rather than waiting for each to finish sequentially.
+    const [supplier, recentInvoices, recentPayments] = await Promise.all([
+        Supplier.findById(id).lean(),
+        SupplierInvoice.find({ supplierId: id })
+            .sort({ date: -1 })
+            .limit(10)
+            .lean(),
+        SupplierPayment.find({ supplierId: id })
+            .sort({ date: -1 })
+            .populate('recordedBy', 'name')
+            .limit(10)
+            .lean()
+    ]);
+
+    // Handle non-existent IDs gracefully
     if (!supplier) {
         notFound();
     }
 
-    const recentInvoices = await SupplierInvoice.find({ supplierId: id })
-        .sort({ date: -1 })
-        .limit(10)
-        .lean<any[]>();
-
-    const recentPayments = await SupplierPayment.find({ supplierId: id })
-        .sort({ date: -1 })
-        .populate('recordedBy', 'name')
-        .limit(10)
-        .lean<any[]>();
-
-    // Use deep serialization for Client Components to handle ObjectIds and Dates
-    const safeSupplier = JSON.parse(JSON.stringify(supplier));
-    const safeInvoices = JSON.parse(JSON.stringify(recentInvoices));
-    const safePayments = JSON.parse(JSON.stringify(recentPayments));
+    /**
+     * Deep serialization for Client Components.
+     * This converts MongoDB ObjectIds and Dates into plain strings to prevent 
+     * Next.js hydration errors.
+     */
+    const serialize = (obj: any) => JSON.parse(JSON.stringify(obj));
 
     return (
-        <div>
+        <div style={{ minHeight: '100%', paddingBottom: '2rem' }}>
             <SupplierDetailClient
-                supplier={safeSupplier}
-                recentInvoices={safeInvoices}
-                recentPayments={safePayments}
+                supplier={serialize(supplier)}
+                recentInvoices={serialize(recentInvoices)}
+                recentPayments={serialize(recentPayments)}
             />
         </div>
     );

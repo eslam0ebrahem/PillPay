@@ -1,8 +1,16 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Card, Col, Empty, Row, Space, Table, Tag, Typography, Image } from 'antd';
-import { PictureOutlined } from '@ant-design/icons';
+import { Card, Col, Empty, Row, Space, Tag, Typography, Image, List, Flex, Divider } from 'antd';
+import { 
+    PictureOutlined, 
+    FireOutlined, 
+    CoffeeOutlined, 
+    WarningOutlined, 
+    ClockCircleOutlined,
+    StopOutlined,
+    FallOutlined
+} from '@ant-design/icons';
 import DashboardCards from '@/components/reports/DashboardCards';
 import PageHeader from '@/components/common/PageHeader';
 import { formatEGP } from '@/utils/money';
@@ -11,113 +19,99 @@ import type { DashboardProductStat, DashboardSummary } from '@/lib/services/repo
 
 const { Text, Title } = Typography;
 
-function ProductStatsTable({
-    title,
-    data,
-}: {
-    title: string;
-    data: DashboardProductStat[];
-}) {
+// --- Helper: Native-feeling Product Avatar ---
+const ProductAvatar = ({ src, name }: { src?: string, name: string }) => {
+    if (src) {
+        return (
+            <Image
+                src={src}
+                alt={name}
+                width={40}
+                height={40}
+                style={{ objectFit: 'cover', borderRadius: 8 }}
+                fallback="https://via.placeholder.com/40?text=No+Image"
+                preview={false}
+            />
+        );
+    }
     return (
-        <Card title={title} variant="borderless">
-            <Table
-                size="small"
-                rowKey="id"
-                pagination={false}
-                locale={{ emptyText: <Empty description={ar.actions.noData} /> }}
-                columns={[
-                    {
-                        title: 'المنتج',
-                        key: 'name',
-                        render: (_: any, record: DashboardProductStat) => (
-                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                                {record.imageUrl ? (
-                                    <Image
-                                        src={record.imageUrl}
-                                        alt={record.name}
-                                        width={32}
-                                        height={32}
-                                        style={{ objectFit: 'cover', borderRadius: 4 }}
-                                        fallback="https://via.placeholder.com/32?text=No+Image"
-                                    />
-                                ) : (
-                                    <div style={{ width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
-                                        <PictureOutlined style={{ fontSize: 14, color: '#d9d9d9' }} />
-                                    </div>
-                                )}
-                                <span>{record.name}</span>
-                            </div>
-                        ),
-                    },
-                    {
-                        title: 'الكمية',
-                        dataIndex: 'quantity',
-                        key: 'quantity',
-                        width: 140,
-                    },
-                ]}
+        <div style={{ 
+            width: 40, height: 40, backgroundColor: '#f5f5f5', 
+            display: 'flex', justifyContent: 'center', alignItems: 'center', 
+            borderRadius: 8, border: '1px solid #f0f0f0'
+        }}>
+            <PictureOutlined style={{ fontSize: 18, color: '#d9d9d9' }} />
+        </div>
+    );
+};
+
+// --- Optimized Product Stats List ---
+function ProductStatsList({ title, data, icon, color }: { title: string; data: DashboardProductStat[]; icon: ReactNode, color: string }) {
+    return (
+        <Card 
+            title={<Space><span style={{ color }}>{icon}</span> {title}</Space>} 
+            variant="borderless"
+            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', height: '100%' }}
+            styles={{ body: { padding: '0 12px' } }}
+        >
+            <List
+                itemLayout="horizontal"
                 dataSource={data}
+                locale={{ emptyText: <Empty description={ar.actions.noData} image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                renderItem={(item) => (
+                    <List.Item style={{ padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
+                        <List.Item.Meta
+                            avatar={<ProductAvatar src={item.imageUrl} name={item.name} />}
+                            title={<Text strong style={{ fontSize: 14 }}>{item.name}</Text>}
+                            description={<Text type="secondary" style={{ fontSize: 12 }}>الكمية المباعة</Text>}
+                        />
+                        <div style={{ textAlign: 'center', minWidth: 60 }}>
+                            <Tag color={color} style={{ margin: 0, fontSize: 14, padding: '2px 8px', borderRadius: 12 }}>
+                                {item.quantity}
+                            </Tag>
+                        </div>
+                    </List.Item>
+                )}
             />
         </Card>
     );
 }
 
-function AlertListCard({
-    title,
-    color,
-    items,
-    renderMeta,
-}: {
-    title: string;
-    color: string;
-    items: Array<{ _id: string; nameAr: string }>;
-    renderMeta?: (item: any) => ReactNode;
+// --- Optimized Alert List ---
+function AlertListCard({ title, color, icon, items, renderMeta }: { 
+    title: string; color: string; icon: ReactNode; items: any[]; renderMeta?: (item: any) => ReactNode 
 }) {
     return (
-        <Card title={title} variant="borderless">
-            {items.length === 0 ? (
-                <Empty description={ar.actions.noData} image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-                <Table
-                    dataSource={items}
-                    rowKey="_id"
-                    showHeader={false}
-                    size="small"
-                    pagination={false}
-                    columns={[
-                        {
-                            title: 'Alert',
-                            key: 'alert',
-                            render: (_, item: any) => (
-                                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                                    {item.imageUrl ? (
-                                        <Image
-                                            src={item.imageUrl}
-                                            alt={item.nameAr}
-                                            width={32}
-                                            height={32}
-                                            style={{ objectFit: 'cover', borderRadius: 4 }}
-                                            fallback="https://via.placeholder.com/32?text=No+Image"
-                                        />
-                                    ) : (
-                                        <div style={{ width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
-                                            <PictureOutlined style={{ fontSize: 14, color: '#d9d9d9' }} />
-                                        </div>
-                                    )}
-                                    <Space orientation="vertical" size={2}>
-                                        <Space>
-                                            <Tag color={color}>{item.nameAr}</Tag>
-                                        </Space>
-                                        {renderMeta ? (
-                                            <Text type="secondary">{renderMeta(item)}</Text>
-                                        ) : null}
-                                    </Space>
-                                </div>
-                            ),
-                        },
-                    ]}
-                />
-            )}
+        <Card 
+            title={<Space><span style={{ color }}>{icon}</span> {title}</Space>} 
+            variant="borderless"
+            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', height: '100%' }}
+            styles={{ body: { padding: '0 12px' } }}
+        >
+            <List
+                itemLayout="horizontal"
+                dataSource={items}
+                locale={{ emptyText: <Empty description="لا توجد تنبيهات" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                renderItem={(item) => (
+                    <List.Item style={{ padding: '12px 0', borderBottom: '1px dashed #f0f0f0' }}>
+                        <List.Item.Meta
+                            avatar={<ProductAvatar src={item.imageUrl} name={item.nameAr} />}
+                            title={
+                                <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 4, lineHeight: 1.2 }}>
+                                    {item.nameAr}
+                                </Text>
+                            }
+                            description={
+                                renderMeta ? (
+                                    <Tag variant="filled" color={`${color}-inverse`} style={{ margin: 0, fontSize: 11 }}>
+                                        {renderMeta(item)}
+                                    </Tag>
+                                ) : null
+                            }
+                        />
+                    </List.Item>
+                )}
+            />
         </Card>
     );
 }
@@ -134,79 +128,101 @@ interface DashboardSummaryClientProps {
 
 export default function DashboardSummaryClient({ summary, alerts }: DashboardSummaryClientProps) {
     return (
-        <div>
+        <div style={{ paddingBottom: 24 }}>
             <PageHeader title={ar.reports.dashboard} />
 
             <DashboardCards summary={summary} />
 
-            <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-                <Col xs={24} xl={12}>
-                    <ProductStatsTable
+            {/* Performance Section */}
+            <Title level={5} style={{ marginTop: 32, marginBottom: 16, color: '#595959' }}>أداء المنتجات</Title>
+            <Row gutter={[12, 12]}>
+                <Col xs={24} lg={12}>
+                    <ProductStatsList
                         title={ar.reports.topProducts}
                         data={summary.topSellingProducts}
+                        icon={<FireOutlined />}
+                        color="#ff4d4f" // Red for hot items
                     />
                 </Col>
-                <Col xs={24} xl={12}>
-                    <ProductStatsTable
+                <Col xs={24} lg={12}>
+                    <ProductStatsList
                         title={ar.reports.slowProducts}
                         data={summary.slowMovingProducts}
+                        icon={<CoffeeOutlined />}
+                        color="#8c8c8c" // Grey for slow items
                     />
                 </Col>
             </Row>
 
-            <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
-                <Col xs={24} lg={12}>
+            {/* Alerts Section */}
+            <Title level={5} style={{ marginTop: 32, marginBottom: 16, color: '#595959' }}>تنبيهات المخزون</Title>
+            <Row gutter={[12, 12]}>
+                <Col xs={24} md={12} lg={6}>
                     <AlertListCard
                         title={ar.alerts.expired}
-                        color="red"
+                        color="error"
+                        icon={<StopOutlined />}
                         items={alerts.expired}
-                        renderMeta={(item: { batchCount: number }) =>
-                            `${item.batchCount} تشغيلة منتهية`
-                        }
+                        renderMeta={(item) => `${item.batchCount} تشغيلة منتهية`}
                     />
                 </Col>
-                <Col xs={24} lg={12}>
+                <Col xs={24} md={12} lg={6}>
                     <AlertListCard
                         title={ar.alerts.expiringSoon}
-                        color="orange"
+                        color="warning"
+                        icon={<ClockCircleOutlined />}
                         items={alerts.expiringSoon}
-                        renderMeta={(item: { earliestExpiry: string; batchCount: number }) =>
-                            `أقرب انتهاء: ${item.earliestExpiry} | ${item.batchCount} تشغيلة`
-                        }
+                        renderMeta={(item) => `أقرب انتهاء: ${item.earliestExpiry}`}
                     />
                 </Col>
-                <Col xs={24} lg={12}>
+                <Col xs={24} md={12} lg={6}>
                     <AlertListCard
                         title={ar.alerts.lowStock}
-                        color="gold"
+                        color="processing"
+                        icon={<FallOutlined />}
                         items={alerts.lowStock}
-                        renderMeta={(item: { floorStock: number; lowStockThreshold: number }) =>
-                            `المتاح: ${item.floorStock} | الحد الأدنى: ${item.lowStockThreshold}`
-                        }
+                        renderMeta={(item) => `المتاح: ${item.floorStock} | الحد: ${item.lowStockThreshold}`}
                     />
                 </Col>
-                <Col xs={24} lg={12}>
+                <Col xs={24} md={12} lg={6}>
                     <AlertListCard
                         title={ar.alerts.outOfStock}
                         color="default"
+                        icon={<WarningOutlined />}
                         items={alerts.outOfStock}
-                        renderMeta={() => 'لا يوجد رصيد على رف الصيدلية'}
+                        renderMeta={() => 'رصيد الصيدلية: صفر'}
                     />
                 </Col>
             </Row>
 
-            <Card variant="borderless" style={{ marginTop: 24 }}>
-                <Space orientation="vertical" size={4}>
-                    <Text strong>ملخص اليوم</Text>
-                    <Text type="secondary">
-                        المبيعات: {formatEGP(summary.todaySales)} | الربح: {formatEGP(summary.netProfit)} |
-                        النقدية المحصلة: {formatEGP(summary.cashInHand)}
-                    </Text>
-                    <Text type="secondary">
-                        مديونية العملاء: {formatEGP(summary.totalCustomerDebt)} | مستحقات الموردين:{' '}
-                        {formatEGP(summary.totalSupplierDebt)}
-                    </Text>
-                </Space>
+            {/* Daily Summary Strip */}
+            <Card 
+                variant="borderless" 
+                style={{ 
+                    marginTop: 32, 
+                    borderRadius: 12, 
+                    background: 'linear-gradient(90deg, #f0f5ff 0%, #e6f4ff 100%)',
+                    border: '1px solid #91caff'
+                }}
+                styles={{ body: { padding: '16px 20px' } }}
+            >
+                <Flex vertical gap={12}>
+                    <Text strong style={{ color: '#003a8c', fontSize: 16 }}>ملخص الخزينة (اليوم)</Text>
+                    <Flex wrap="wrap" gap={16} justify="space-between">
+                        <Space orientation="vertical" size={0}>
+                            <Text type="secondary" style={{ fontSize: 12 }}>المبيعات</Text>
+                            <Text strong style={{ fontSize: 15 }}>{formatEGP(summary.todaySales)}</Text>
+                        </Space>
+                        <Space orientation="vertical" size={0}>
+                            <Text type="secondary" style={{ fontSize: 12 }}>الربح الصافي</Text>
+                            <Text strong style={{ fontSize: 15, color: '#389e0d' }}>{formatEGP(summary.netProfit)}</Text>
+                        </Space>
+                        <Space orientation="vertical" size={0}>
+                            <Text type="secondary" style={{ fontSize: 12 }}>النقدية بالدرج</Text>
+                            <Text strong style={{ fontSize: 15, color: '#d46b08' }}>{formatEGP(summary.cashInHand)}</Text>
+                        </Space>
+                    </Flex>
+                </Flex>
             </Card>
         </div>
     );

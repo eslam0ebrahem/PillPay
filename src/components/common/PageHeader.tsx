@@ -8,10 +8,11 @@ const { useBreakpoint } = Grid;
 
 interface PageHeaderProps {
     title: string;
+    subtitle?: string;
     extra?: React.ReactNode;
 }
 
-export default function PageHeader({ title, extra }: PageHeaderProps) {
+export default function PageHeader({ title, subtitle, extra }: PageHeaderProps) {
     const screens = useBreakpoint();
     const [mounted, setMounted] = useState(false);
 
@@ -24,7 +25,10 @@ export default function PageHeader({ title, extra }: PageHeaderProps) {
     if (!mounted) {
         return (
             <Flex justify="space-between" align="center" style={{ marginBottom: 24, visibility: 'hidden' }}>
-                <Title level={2} style={{ margin: 0 }}>{title}</Title>
+                <Flex vertical>
+                    <Title level={2} style={{ margin: 0 }}>{title}</Title>
+                    {subtitle && <Typography.Text type="secondary">{subtitle}</Typography.Text>}
+                </Flex>
             </Flex>
         );
     }
@@ -47,9 +51,16 @@ export default function PageHeader({ title, extra }: PageHeaderProps) {
     // Desktop Layout
     return (
         <Flex justify="space-between" align="center" style={{ marginBottom: 24 }}>
-            <Title level={2} style={{ margin: 0, color: '#1f1f1f' }}>
-                {title}
-            </Title>
+            <Flex vertical>
+                <Title level={2} style={{ margin: 0, color: '#1f1f1f' }}>
+                    {title}
+                </Title>
+                {subtitle && (
+                    <Typography.Text type="secondary" style={{ marginTop: 4 }}>
+                        {subtitle}
+                    </Typography.Text>
+                )}
+            </Flex>
             {extra && (
                 <Flex gap={12} align="center">
                     {extra}

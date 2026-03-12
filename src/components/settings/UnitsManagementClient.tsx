@@ -1,13 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Space, Card, Typography, App, Popconfirm, Tabs, Flex, Grid } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+    Table, Button, Form, Input, Select, Space, Card,
+    Typography, App, Popconfirm, Tabs, Flex, Grid, Tag, Empty,
+    Col,
+    Row
+} from 'antd';
+import {
+    PlusOutlined, EditOutlined, DeleteOutlined,
+    AppstoreOutlined, PartitionOutlined, ExperimentOutlined
+} from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MobileFormWrapper from '../common/MobileFormWrapper';
 import ar from '@/i18n/ar';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
 interface Unit {
@@ -27,6 +35,9 @@ export default function UnitsManagementClient() {
     const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
     const [form] = Form.useForm();
 
+    const isMobile = !screens.md;
+
+    // --- Data Fetching ---
     const { data: unitsData, isLoading } = useQuery({
         queryKey: ['units'],
         queryFn: async () => {
@@ -36,6 +47,7 @@ export default function UnitsManagementClient() {
         },
     });
 
+    // --- Mutations ---
     const createMutation = useMutation({
         mutationFn: async (values: any) => {
             const res = await fetch('/api/units', {
@@ -43,21 +55,14 @@ export default function UnitsManagementClient() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(values),
             });
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error?.message || 'Failed to create unit');
-            }
+            if (!res.ok) throw new Error((await res.json()).error?.message || 'Error');
             return res.json();
         },
         onSuccess: () => {
             message.success(ar.messages.created);
             setIsModalOpen(false);
             queryClient.invalidateQueries({ queryKey: ['units'] });
-            queryClient.invalidateQueries({ queryKey: ['units-filter'] });
-        },
-        onError: (error) => {
-            message.error(error.message);
-        },
+        }
     });
 
     const updateMutation = useMutation({
@@ -67,10 +72,7 @@ export default function UnitsManagementClient() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(values),
             });
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error?.message || 'Failed to update unit');
-            }
+            if (!res.ok) throw new Error((await res.json()).error?.message || 'Error');
             return res.json();
         },
         onSuccess: () => {
@@ -78,40 +80,25 @@ export default function UnitsManagementClient() {
             setIsModalOpen(false);
             setEditingUnit(null);
             queryClient.invalidateQueries({ queryKey: ['units'] });
-            queryClient.invalidateQueries({ queryKey: ['units-filter'] });
-        },
-        onError: (error) => {
-            message.error(error.message);
-        },
+        }
     });
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            const res = await fetch(`/api/units/${id}`, {
-                method: 'DELETE',
-            });
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error?.message || 'Failed to delete unit');
-            }
+            const res = await fetch(`/api/units/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Error deleting unit');
             return res.json();
         },
         onSuccess: () => {
             message.success(ar.messages.deleted);
             queryClient.invalidateQueries({ queryKey: ['units'] });
-            queryClient.invalidateQueries({ queryKey: ['units-filter'] });
-        },
-        onError: (error) => {
-            message.error(error.message);
-        },
+        }
     });
 
+    // --- Actions ---
     const handleSubmit = (values: any) => {
-        if (editingUnit) {
-            updateMutation.mutate({ id: editingUnit._id, values });
-        } else {
-            createMutation.mutate(values);
-        }
+        if (editingUnit) updateMutation.mutate({ id: editingUnit._id, values });
+        else createMutation.mutate(values);
     };
 
     const handleEdit = (unit: Unit) => {
@@ -127,23 +114,32 @@ export default function UnitsManagementClient() {
     };
 
     const columns = [
-        { title: ar.units.code, dataIndex: 'code', key: 'code', responsive: ['md'] as any },
-        { title: ar.units.nameAr, dataIndex: 'nameAr', key: 'nameAr' },
+        {
+            title: ar.units.code,
+            dataIndex: 'code',
+            key: 'code',
+            render: (code: string) => <Tag color="blue" variant ="filled" style={{ fontWeight: '600' }}>{code}</Tag>
+        },
+        {
+            title: ar.units.nameAr,
+            dataIndex: 'nameAr',
+            key: 'nameAr',
+            render: (text: string) => <Text strong>{text}</Text>
+        },
         { title: ar.units.nameEn, dataIndex: 'nameEn', key: 'nameEn', responsive: ['sm'] as any },
-        { title: ar.units.description, dataIndex: 'description', key: 'description', responsive: ['lg'] as any },
         {
             title: ar.actions.actions,
             key: 'actions',
+            align: 'center' as const,
             render: (_: any, record: Unit) => (
                 <Space>
-                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+                    <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
                     <Popconfirm
                         title={ar.units.confirmDelete}
                         onConfirm={() => deleteMutation.mutate(record._id)}
-                        okText={ar.actions.confirm}
-                        cancelText={ar.actions.cancel}
+                        okButtonProps={{ loading: deleteMutation.isPending, danger: true }}
                     >
-                        <Button icon={<DeleteOutlined />} danger />
+                        <Button type="text" icon={<DeleteOutlined />} danger />
                     </Popconfirm>
                 </Space>
             ),
@@ -153,59 +149,64 @@ export default function UnitsManagementClient() {
     const tabItems = [
         {
             key: 'base_unit',
-            label: ar.units.baseUnit,
-            children: (
-                <Table
-                    columns={columns}
-                    dataSource={unitsData?.data?.base_units || []}
-                    rowKey="_id"
-                    loading={isLoading}
-                    pagination={false}
-                    scroll={{ x: 'max-content' }}
-                />
-            ),
+            label: <Space><AppstoreOutlined /> {ar.units.baseUnit}</Space>,
+            children: renderTable(unitsData?.data?.base_units || [])
         },
         {
             key: 'sub_unit',
-            label: ar.units.subUnit,
-            children: (
-                <Table
-                    columns={columns}
-                    dataSource={unitsData?.data?.sub_units || []}
-                    rowKey="_id"
-                    loading={isLoading}
-                    pagination={false}
-                    scroll={{ x: 'max-content' }}
-                />
-            ),
+            label: <Space><PartitionOutlined /> {ar.units.subUnit}</Space>,
+            children: renderTable(unitsData?.data?.sub_units || [])
         },
         {
             key: 'measurement',
-            label: ar.units.measurement,
-            children: (
-                <Table
-                    columns={columns}
-                    dataSource={unitsData?.data?.measurements || []}
-                    rowKey="_id"
-                    loading={isLoading}
-                    pagination={false}
-                    scroll={{ x: 'max-content' }}
-                />
-            ),
+            label: <Space><ExperimentOutlined /> {ar.units.measurement}</Space>,
+            children: renderTable(unitsData?.data?.measurements || [])
         },
     ];
 
+    function renderTable(data: Unit[]) {
+        if (!isLoading && data.length === 0) {
+            return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="لا توجد وحدات في هذا القسم" />;
+        }
+        return (
+            <Table
+                columns={columns}
+                dataSource={data}
+                rowKey="_id"
+                loading={isLoading}
+                pagination={false}
+                size={isMobile ? "small" : "middle"}
+                scroll={{ x: 'max-content' }}
+                style={{ marginTop: 8 }}
+            />
+        );
+    }
+
     return (
-        <div>
-            <Card>
+        <Flex vertical gap={24} style={{ paddingBottom: 40 }}>
+            <Card variant="borderless" style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                 <Flex justify="space-between" align="center" style={{ marginBottom: 24 }} wrap="wrap" gap="middle">
-                    <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>{ar.units.title}</Title>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                    <Flex vertical>
+                        <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>{ar.units.title}</Title>
+                        <Text type="secondary" style={{ fontSize: 13 }}>تحديد وحدات البيع والقياس الأساسية للمنتجات</Text>
+                    </Flex>
+                    <Button
+                        type="primary"
+                        size="large"
+                        icon={<PlusOutlined />}
+                        onClick={handleAdd}
+                        style={{ borderRadius: 8 }}
+                    >
                         {ar.units.addUnit}
                     </Button>
                 </Flex>
 
-                <Tabs items={tabItems} defaultActiveKey="base_unit" />
+                <Tabs
+                    items={tabItems}
+                    defaultActiveKey="base_unit"
+                    size="middle"
+                    tabBarGutter={isMobile ? 12 : 32}
+                />
             </Card>
 
             <MobileFormWrapper
@@ -213,12 +214,13 @@ export default function UnitsManagementClient() {
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             >
-                <div>
+                <div style={{ padding: isMobile ? '4px' : '0' }}>
                     <Form
                         form={form}
                         layout="vertical"
                         onFinish={handleSubmit}
                         initialValues={{ type: 'base_unit' }}
+                        size="large"
                     >
                         <Form.Item
                             name="code"
@@ -227,20 +229,26 @@ export default function UnitsManagementClient() {
                         >
                             <Input placeholder="e.g., box, strip, ml" disabled={!!editingUnit} />
                         </Form.Item>
-                        <Form.Item
-                            name="nameAr"
-                            label={ar.units.nameAr}
-                            rules={[{ required: true, message: 'مطلوب إدخال الاسم بالعربية' }]}
-                        >
-                            <Input />
-                        </Form.Item>
-                        <Form.Item
-                            name="nameEn"
-                            label={ar.units.nameEn}
-                            rules={[{ required: true, message: 'مطلوب إدخال الاسم بالإنجليزية' }]}
-                        >
-                            <Input />
-                        </Form.Item>
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="nameAr"
+                                    label={ar.units.nameAr}
+                                    rules={[{ required: true, message: 'مطلوب الاسم' }]}
+                                >
+                                    <Input placeholder="علبة" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="nameEn"
+                                    label={ar.units.nameEn}
+                                    rules={[{ required: true, message: 'Required' }]}
+                                >
+                                    <Input placeholder="Box" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
                         <Form.Item
                             name="type"
                             label={ar.units.type}
@@ -256,24 +264,27 @@ export default function UnitsManagementClient() {
                             name="description"
                             label={ar.units.description}
                         >
-                            <Input.TextArea rows={2} />
+                            <Input.TextArea rows={3} placeholder="شرح اختياري لطريقة استخدام هذه الوحدة..." />
                         </Form.Item>
                     </Form>
-                    <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
-                        <Button block onClick={() => setIsModalOpen(false)}>
+
+                    <Flex gap={12} style={{ marginTop: 32 }}>
+                        <Button size="large" block onClick={() => setIsModalOpen(false)} style={{ borderRadius: 8 }}>
                             {ar.actions.cancel}
                         </Button>
                         <Button
                             type="primary"
+                            size="large"
                             block
                             onClick={() => form.submit()}
                             loading={createMutation.isPending || updateMutation.isPending}
+                            style={{ borderRadius: 8 }}
                         >
                             {ar.actions.save}
                         </Button>
-                    </div>
+                    </Flex>
                 </div>
             </MobileFormWrapper>
-        </div>
+        </Flex>
     );
 }

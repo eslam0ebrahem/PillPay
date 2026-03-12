@@ -10,32 +10,49 @@ import dayjs from 'dayjs';
 export default async function StockPage() {
     await connectDB();
 
-    const now = dayjs();
+    const now = new Date();
     const thirtyDaysFromNow = dayjs().add(30, 'day').toDate();
 
-    // Find all products and batches
-    const products = await Product.find({ isActive: true }).lean<any[]>();
-    const batches = await Batch.find().populate('productId', 'nameAr nameEn baseUnit lowStockThreshold imageUrl').lean<any[]>();
+    // PERFORMANCE FIX: Use Promise.all to fetch data in parallel instead of sequentially
+    const [products, batches] = await Promise.all([
+        Product.find({ isActive: true }).lean(),
+        Batch.find()
+            .populate('productId', 'nameAr nameEn baseUnit lowStockThreshold imageUrl')
+            .lean()
+    ]);
 
+    // Data categorization buckets
     const expiredBatches: any[] = [];
     const expiringSoonBatches: any[] = [];
     const lowStockProducts: any[] = [];
     const outOfStockProducts: any[] = [];
 
-    // Process batches for expiration
-    batches.forEach(b => {
-        const exp = dayjs(b.expirationDate);
-        if (exp.isBefore(now)) {
-            if (b.floorQty > 0 || b.warehouseQty > 0) expiredBatches.push(b);
-        } else if (exp.isBefore(thirtyDaysFromNow)) {
-            if (b.floorQty > 0 || b.warehouseQty > 0) expiringSoonBatches.push(b);
+    // Optimization: Pre-calculate product stock levels using a Map for O(1) lookup
+    const productStockMap = new Map<string, number>();
+
+    batches.forEach((b: any) => {
+        const totalBatchQty = (b.floorQty || 0) + (b.warehouseQty || 0);
+        const productId = b.productId?._id?.toString();
+
+        if (productId) {
+            const currentTotal = productStockMap.get(productId) || 0;
+            productStockMap.set(productId, currentTotal + totalBatchQty);
+        }
+
+        // Process expiration alerts
+        const expDate = new Date(b.expirationDate);
+        if (totalBatchQty > 0) {
+            if (expDate < now) {
+                expiredBatches.push(b);
+            } else if (expDate < thirtyDaysFromNow) {
+                expiringSoonBatches.push(b);
+            }
         }
     });
 
-    // Process products for stock
-    products.forEach(p => {
-        const pBatches = batches.filter(b => b.productId?._id?.toString() === p._id.toString());
-        const totalQty = pBatches.reduce((acc, b) => acc + b.floorQty + b.warehouseQty, 0);
+    // Determine low/out of stock products
+    products.forEach((p: any) => {
+        const totalQty = productStockMap.get(p._id.toString()) || 0;
 
         if (totalQty === 0) {
             outOfStockProducts.push({ ...p, totalQty });
@@ -44,12 +61,12 @@ export default async function StockPage() {
         }
     });
 
-    // Use deep serialization for Client Components to handle ObjectIds and Dates
-    const safeBatches = JSON.parse(JSON.stringify(batches));
-    const safeProducts = JSON.parse(JSON.stringify(products));
+    // Deep serialization for Next.js Client Components
+    const serialize = (data: any) => JSON.parse(JSON.stringify(data));
 
     return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Contextual Stats Header */}
             <StockHeaderClient
                 outOfStockCount={outOfStockProducts.length}
                 lowStockCount={lowStockProducts.length}
@@ -57,10 +74,13 @@ export default async function StockPage() {
                 expiringSoonCount={expiringSoonBatches.length}
             />
 
-            <StockManagerClient
-                safeBatches={safeBatches}
-                products={safeProducts}
-            />
+            {/* Main Inventory Manager */}
+            <div className="stock-content-wrapper">
+                <StockManagerClient
+                    safeBatches={serialize(batches)}
+                    products={serialize(products)}
+                />
+            </div>
         </div>
     );
 }

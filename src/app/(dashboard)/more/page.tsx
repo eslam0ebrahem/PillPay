@@ -1,6 +1,7 @@
 'use client';
 
-import { Card, Avatar, Typography, Button, Space, Row, Col } from 'antd';
+import React from 'react';
+import { Card, Avatar, Typography, Button, Space, Row, Col, Flex, Divider } from 'antd';
 import {
     UserOutlined,
     LogoutOutlined,
@@ -10,6 +11,9 @@ import {
     BarChartOutlined,
     AuditOutlined,
     SettingOutlined,
+    RightOutlined,
+    AppstoreOutlined,
+    SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -25,57 +29,70 @@ export default function MorePage() {
 
     const menuGroups = [
         {
-            title: ar.permissionGroups.stock || 'المخزون والمنتجات',
+            title: ar.permissionGroups?.stock || 'إدارة المخزون',
+            icon: <InboxOutlined />,
             items: [
-                { key: '/suppliers', icon: <TruckOutlined style={{ fontSize: 24 }} />, label: ar.nav.suppliers, permission: 'suppliers.view' as const },
-                { key: '/supplier-invoices', icon: <FileTextOutlined style={{ fontSize: 24 }} />, label: ar.nav.supplierInvoices, permission: 'supplier-invoices.view' as const },
-                { key: '/stock', icon: <InboxOutlined style={{ fontSize: 24 }} />, label: ar.nav.stock, permission: 'stock.view' as const },
+                { key: '/suppliers', icon: <TruckOutlined />, label: ar.nav.suppliers, permission: 'suppliers.view' as const },
+                { key: '/supplier-invoices', icon: <FileTextOutlined />, label: ar.nav.supplierInvoices, permission: 'supplier-invoices.view' as const },
+                { key: '/stock', icon: <InboxOutlined />, label: ar.nav.stock, permission: 'stock.view' as const },
             ]
         },
         {
-            title: ar.permissionGroups.reports || 'التقارير وسجل المراجعة',
+            title: ar.permissionGroups?.reports || 'التقارير والبيانات',
+            icon: <BarChartOutlined />,
             items: [
-                { key: '/reports', icon: <BarChartOutlined style={{ fontSize: 24 }} />, label: ar.nav.reports, permission: 'reports.view' as const },
-                { key: '/audit-logs', icon: <AuditOutlined style={{ fontSize: 24 }} />, label: ar.nav.auditLogs, permission: 'audit-logs.view' as const },
+                { key: '/reports', icon: <BarChartOutlined />, label: ar.nav.reports, permission: 'reports.view' as const },
+                { key: '/audit-logs', icon: <AuditOutlined />, label: ar.nav.auditLogs, permission: 'audit-logs.view' as const },
             ]
         },
         {
-            title: ar.permissionGroups.system || 'النظام والإدارة',
+            title: ar.permissionGroups?.system || 'إعدادات النظام',
+            icon: <SettingOutlined />,
             items: [
-                { key: '/users', icon: <UserOutlined style={{ fontSize: 24 }} />, label: ar.nav.users, permission: 'users.manage' as const },
-                { key: '/settings/units', icon: <SettingOutlined style={{ fontSize: 24 }} />, label: ar.nav.units, permission: 'settings.manage' as const }, // Assuming settings.manage exists or similar
-                { key: '/settings', icon: <SettingOutlined style={{ fontSize: 24 }} />, label: ar.nav.settings, permission: 'settings.view' as const },
+                { key: '/users', icon: <UserOutlined />, label: ar.nav.users, permission: 'users.manage' as const },
+                { key: '/settings/units', icon: <AppstoreOutlined />, label: ar.nav.units, permission: 'users.manage' as const },
+                { key: '/settings', icon: <SettingOutlined />, label: ar.nav.settings, permission: 'settings.view' as const },
             ]
         }
     ];
 
     return (
-        <div style={{ paddingBottom: 24 }}>
-            {/* User Profile Section */}
-            <Card style={{ marginBottom: 24, borderRadius: 12 }}>
-                <Space size="large" align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+        <div style={{ padding: '8px 4px 100px 4px' }}>
+            {/* --- Premium Profile Header --- */}
+            <Card 
+                variant="borderless" 
+                style={{ 
+                    marginBottom: 32, 
+                    borderRadius: 16, 
+                    background: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)',
+                    boxShadow: '0 4px 12px rgba(22, 119, 255, 0.2)'
+                }}
+            >
+                <Flex align="center" justify="space-between">
                     <Space size="middle">
-                        <Avatar size={56} icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
-                        <div>
-                            <Title level={5} style={{ margin: 0 }}>{user?.name}</Title>
-                            <Text type="secondary">
+                        <Avatar 
+                            size={64} 
+                            icon={<UserOutlined />} 
+                            style={{ backgroundColor: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)' }} 
+                        />
+                        <Flex vertical>
+                            <Title level={4} style={{ margin: 0, color: '#fff' }}>{user?.name}</Title>
+                            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>
                                 {user?.role === 'owner' ? ar.users.owner : ar.users.cashier}
                             </Text>
-                        </div>
+                        </Flex>
                     </Space>
                     <Button
-                        type="primary"
-                        danger
-                        icon={<LogoutOutlined />}
+                        type="text"
+                        icon={<LogoutOutlined style={{ color: '#fff', fontSize: 20 }} />}
                         loading={isLoggingOut}
                         onClick={() => logout()}
-                        shape="circle"
-                        size="large"
+                        style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '50%', height: 44, width: 44 }}
                     />
-                </Space>
+                </Flex>
             </Card>
 
-            {/* Navigation Cards */}
+            {/* --- Navigation Grid --- */}
             {menuGroups.map((group, groupIdx) => {
                 const filteredItems = group.items.filter(item =>
                     !item.permission || hasPermission(item.permission)
@@ -84,28 +101,68 @@ export default function MorePage() {
                 if (filteredItems.length === 0) return null;
 
                 return (
-                    <div key={groupIdx} style={{ marginBottom: 24 }}>
-                        <Title level={5} style={{ marginBottom: 16, color: '#8c8c8c' }}>{group.title}</Title>
-                        <Row gutter={[16, 16]}>
+                    <div key={groupIdx} style={{ marginBottom: 32 }}>
+                        <Flex align="center" gap={8} style={{ marginBottom: 16, paddingLeft: 8 }}>
+                            <span style={{ color: '#1677ff', display: 'flex' }}>{group.icon}</span>
+                            <Text strong type="secondary" style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                {group.title}
+                            </Text>
+                        </Flex>
+
+                        <Row gutter={[12, 12]}>
                             {filteredItems.map(item => (
-                                <Col span={12} key={item.key}>
-                                    <Card
-                                        hoverable
+                                <Col span={8} key={item.key}>
+                                    <Flex 
+                                        vertical 
+                                        align="center" 
+                                        justify="center"
                                         onClick={() => router.push(item.key)}
-                                        style={{ height: '100%', borderRadius: 12, textAlign: 'center' }}
-                                        styles={{ body: { padding: '24px 16px' } }}
+                                        style={{ 
+                                            background: '#fff', 
+                                            padding: '20px 8px', 
+                                            borderRadius: 16,
+                                            border: '1px solid #f0f0f0',
+                                            cursor: 'pointer',
+                                            height: '100%',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                                        }}
                                     >
-                                        <div style={{ color: '#1677ff', marginBottom: 16 }}>
+                                        <div style={{ 
+                                            fontSize: 24, 
+                                            color: '#1677ff', 
+                                            marginBottom: 8,
+                                            background: '#e6f4ff',
+                                            width: 48,
+                                            height: 48,
+                                            borderRadius: 12,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
                                             {item.icon}
                                         </div>
-                                        <Text strong>{item.label}</Text>
-                                    </Card>
+                                        <Text 
+                                            style={{ 
+                                                fontSize: 11, 
+                                                textAlign: 'center', 
+                                                lineHeight: 1.2,
+                                                fontWeight: 500
+                                            }}
+                                        >
+                                            {item.label}
+                                        </Text>
+                                    </Flex>
                                 </Col>
                             ))}
                         </Row>
                     </div>
                 );
             })}
+
+            {/* --- Footer Branding --- */}
+            <Divider plain>
+                <Text type="secondary" style={{ fontSize: 12 }}>{ar.appName} v1.0.4</Text>
+            </Divider>
         </div>
     );
 }
