@@ -15,7 +15,7 @@ function decodeJWTPayload(token: string): { userId: string; email: string; role:
     }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Skip Next.js internals and static files
