@@ -1,15 +1,16 @@
 'use client';
 
-import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space, Typography, App, Select, Divider, DatePicker, Radio } from 'antd';
+import { Form, Input, InputNumber, Switch, Button, Row, Col, Card, Space, Typography, App, Select, Divider, DatePicker, Radio, Grid, Flex } from 'antd';
 import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { SearchOutlined, BarcodeOutlined, InboxOutlined, LockOutlined, UnlockOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { SearchOutlined, BarcodeOutlined, InboxOutlined, LockOutlined, UnlockOutlined, PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
 import { toEGP, toPiasters } from '@/lib/utils/money';
 import BarcodeScanner from '../common/BarcodeScanner';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 export interface ProductFormValues {
     _id?: string;
@@ -27,13 +28,12 @@ export interface ProductFormValues {
     route?: string;
     uses?: string;
     pharmacology?: string;
-    sellingPrice: number; // Stored in DB as piasters, but form handles EGP
+    sellingPrice: number;
     baseUnit: string;
     subUnit?: string;
     subUnitConversionFactor?: number;
     lowStockThreshold: number;
     isActive: boolean;
-    // Initial Stock fields
     addInitialStock?: boolean;
     initialStocks?: Array<{
         batchNumber: string;
@@ -56,6 +56,9 @@ interface ProductFormProps {
 
 export default function ProductForm({ initialValues, onSubmit, isSubmitting, onProductFound, mode = 'create' }: ProductFormProps) {
     const { message } = App.useApp();
+    const screens = useBreakpoint();
+    const isMobile = screens.xs || (screens.sm && !screens.md);
+    
     const [form] = Form.useForm<ProductFormValues>();
     const [isSearching, setIsSearching] = useState(false);
     const [searchSource, setSearchSource] = useState<'barcode' | 'name' | null>(null);
@@ -123,10 +126,8 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
         const barcode = (e.target as HTMLInputElement).value;
         if (!barcode) return;
 
-        // If we are in a hard-coded edit page (e.g. /products/[id]/edit), don't search
         if (mode === 'edit' && initialValues?._id) return;
 
-        // Reset form but keep the barcode we just scanned/typed
         form.resetFields();
         form.setFieldsValue({ barcode });
         if (onProductFound) onProductFound(null);
@@ -140,16 +141,14 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 if (product) {
                     message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
                     setSearchSource('barcode');
-                    setIsLocked(true); // Lock when found
+                    setIsLocked(true);
                     const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
                     form.setFieldsValue({
                         ...product,
                         brand: brandId,
                         sellingPrice: product.sellingPrice ? toEGP(product.sellingPrice) : undefined,
                     });
-                    if (onProductFound) {
-                        onProductFound(product);
-                    }
+                    if (onProductFound) onProductFound(product);
                 } else {
                     message.info('منتج جديد. يمكنك إكمال باقي البيانات.');
                     setSearchSource(null);
@@ -178,14 +177,13 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                     const json = await res.json();
                     setNameSearchOptions(json.data.map((p: any) => ({
                         label: (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                                 <span style={{ fontWeight: 500 }}>{p.nameAr}</span>
-                                <span style={{ color: '#8c8c8c', fontSize: '12px', marginLeft: 16 }}>{p.nameEn || ''}</span>
+                                <span style={{ color: '#8c8c8c', fontSize: '12px', marginInlineStart: 16 }}>{p.nameEn || ''}</span>
                             </div>
                         ),
                         value: p._id,
                         product: p,
-                        // Search matches on both for local filtering if needed, though we use remote
                         searchText: `${p.nameAr} ${p.nameEn || ''}`
                     })));
                 }
@@ -200,9 +198,8 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
     const handleProductSelect = (productId: string, option: any) => {
         const product = option?.product;
         if (product) {
-            // Reset form before loading new product
             form.resetFields();
-            setIsLocked(true); // Lock when found
+            setIsLocked(true);
             message.info('المنتج موجود مسبقاً، تم الانتقال لوضع التعديل');
             setSearchSource('name');
             const brandId = typeof product.brand === 'object' && product.brand ? product.brand._id : product.brand;
@@ -211,27 +208,22 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 brand: brandId,
                 sellingPrice: product.sellingPrice ? toEGP(product.sellingPrice) : undefined,
             });
-            if (onProductFound) {
-                onProductFound(product);
-            }
+            if (onProductFound) onProductFound(product);
         }
     };
 
     const handleValuesChange = (changedValues: any, allValues: any) => {
         const sellingPrice = allValues.sellingPrice;
 
-        // Sync purchasePrice and discount for initial stocks
         if (allValues.addInitialStock && allValues.initialStocks) {
             const changedStocks = changedValues.initialStocks;
             if (changedStocks) {
-                // Find which index was changed
                 const index = changedStocks.findIndex((s: any) => s !== undefined);
                 if (index !== -1) {
                     const changedItem = changedStocks[index];
                     const currentStocks = [...allValues.initialStocks];
                     const currentItem = currentStocks[index];
 
-                    // If discount changed, recalculate purchasePrice
                     if (changedItem.discount !== undefined) {
                         const discount = changedItem.discount;
                         if (sellingPrice) {
@@ -241,7 +233,6 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                         }
                     }
 
-                    // If purchasePrice changed, recalculate discount
                     if (changedItem.purchasePrice !== undefined) {
                         const purchasePrice = changedItem.purchasePrice;
                         if (sellingPrice && sellingPrice > 0) {
@@ -253,7 +244,6 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 }
             }
 
-            // If sellingPrice changed, recalculate all purchasePrices based on discounts
             if (changedValues.sellingPrice !== undefined) {
                 const currentStocks = allValues.initialStocks.map((stock: any) => {
                     if (stock && stock.discount !== undefined && stock.discount !== null) {
@@ -278,40 +268,40 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 lowStockThreshold: 10,
                 baseUnit: 'علبة',
             }}
+            style={{ paddingBottom: isMobile ? 80 : 0 }} // Pad bottom for sticky footer on mobile
         >
-            <Card style={{ marginBottom: 24, border: '2px solid #1890ff', backgroundColor: '#e6f7ff', position: 'relative' }}>
-                {(mode === 'edit' || searchSource) && (
-                    <Button
-                        type={isLocked ? "primary" : "default"}
-                        danger={!isLocked}
-                        icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
-                        onClick={() => setIsLocked(!isLocked)}
-                        style={{
-                            position: 'absolute',
-                            top: 16,
-                            left: 16,
-                            zIndex: 10,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                        }}
-                    >
-                        {isLocked ? "فتح التعديل" : "قفل البيانات"}
-                    </Button>
-                )}
-                <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                    <BarcodeOutlined style={{ fontSize: 36, color: '#1890ff', marginBottom: 12 }} />
-                    <Title level={4} style={{ margin: 0 }}>المسح الضوئي للباركود والبحث</Title>
-                    <Text type="secondary">امسح الباركود للبحث عن منتج موجود أو ابحث بالاسم (عربي/إنجليزي)</Text>
-                </div>
+            <Card size={isMobile ? 'small' : 'medium'} style={{ marginBottom: 24, border: '2px solid #1890ff', backgroundColor: '#e6f7ff' }}>
+                <Flex justify="space-between" align="flex-start" style={{ marginBottom: 20 }}>
+                    <div style={{ flex: 1, textAlign: 'center' }}>
+                        <BarcodeOutlined style={{ fontSize: 36, color: '#1890ff', marginBottom: 12 }} />
+                        <Title level={isMobile ? 5 : 4} style={{ margin: 0 }}>المسح الضوئي للباركود والبحث</Title>
+                        <Text type="secondary" style={{ fontSize: isMobile ? '12px' : '14px' }}>
+                            امسح الباركود للبحث عن منتج أو ابحث بالاسم
+                        </Text>
+                    </div>
+                    {(mode === 'edit' || searchSource) && (
+                        <Button
+                            type={isLocked ? "primary" : "default"}
+                            danger={!isLocked}
+                            icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+                            onClick={() => setIsLocked(!isLocked)}
+                            size={isMobile ? 'small' : 'middle'}
+                            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+                        >
+                            {isMobile ? (isLocked ? "فتح" : "قفل") : (isLocked ? "فتح التعديل" : "قفل البيانات")}
+                        </Button>
+                    )}
+                </Flex>
 
-                <Row justify="center" gutter={24}>
+                <Row justify="center" gutter={[16, 0]}>
                     <Col xs={24} md={10}>
                         <Form.Item name="barcode" label="الباركود (سكان)" style={{ marginBottom: 12 }}>
                             <Input
                                 size="large"
-                                autoFocus
+                                autoFocus={!isMobile} // AutoFocus on mobile opens keyboard annoyingly
                                 prefix={<BarcodeOutlined style={{ color: '#bfbfbf' }} />}
                                 onPressEnter={(e) => handleBarcodeSearch(e)}
-                                placeholder="امسح الباركود هنا واضغط Enter..."
+                                placeholder="امسح الباركود هنا..."
                                 disabled={isSearching || (mode === 'edit' && searchSource === 'barcode')}
                                 style={{ textAlign: 'center', fontSize: '18px' }}
                                 allowClear
@@ -332,12 +322,12 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                 disabled={mode === 'edit' && searchSource === 'name'}
                                 style={{ width: '100%' }}
                                 allowClear
-                                styles={{ popup: { root: { minWidth: 300 } } }}
+                                styles={{ popup: { root: { width: '100%', maxWidth: '90vw' } } }}
                                 prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
                             />
                         </Form.Item>
                     </Col>
-                    <Col xs={24} md={2} style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 12 }}>
+                    <Col xs={24} md={4} style={{ display: 'flex', alignItems: 'center', paddingBottom: 12 }}>
                         <Button
                             danger
                             icon={<DeleteOutlined />}
@@ -345,7 +335,9 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                             size="large"
                             block
                             title="إعادة ضبط وبحث جديد"
-                        />
+                        >
+                            {isMobile && "مسح وبحث جديد"}
+                        </Button>
                     </Col>
                 </Row>
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
@@ -359,15 +351,11 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 </div>
             </Card>
 
-            <Card title="البيانات الأساسية" style={{ marginBottom: 16 }}>
+            <Card title="البيانات الأساسية" size={isMobile ? 'small' : 'medium'} style={{ marginBottom: 16 }}>
                 <fieldset disabled={isLocked} style={{ border: 'none', padding: 0, margin: 0 }}>
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
-                            <Form.Item
-                                name="nameAr"
-                                label={ar.products.nameAr}
-                                rules={[{ required: true, message: 'مطلوب إدخال الاسم بالعربية' }]}
-                            >
+                            <Form.Item name="nameAr" label={ar.products.nameAr} rules={[{ required: true, message: 'مطلوب إدخال الاسم بالعربية' }]}>
                                 <Input />
                             </Form.Item>
                         </Col>
@@ -376,12 +364,12 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item name="barcode2" label={ar.products.barcode2}>
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item name="category" label={ar.products.category}>
                                 <Input />
                             </Form.Item>
@@ -390,34 +378,23 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 </fieldset>
             </Card>
 
-            <Card title="تفاصيل التسعير والوحدات" style={{ marginBottom: 16 }}>
+            <Card title="تفاصيل التسعير والوحدات" size={isMobile ? 'small' : 'medium'} style={{ marginBottom: 16 }}>
                 <fieldset disabled={isLocked} style={{ border: 'none', padding: 0, margin: 0 }}>
                     <Row gutter={16}>
-                        <Col xs={24} md={8}>
-                            <Form.Item
-                                label={ar.products.sellingPrice}
-                                required
-                            >
+                        <Col xs={24} sm={12} md={8}>
+                            <Form.Item label={ar.products.sellingPrice} required>
                                 <Space.Compact style={{ width: '100%' }}>
-                                    <Form.Item
-                                        name="sellingPrice"
-                                        noStyle
-                                        rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}
-                                    >
-                                        <InputNumber
-                                            min={0}
-                                            step={0.25}
-                                            style={{ width: '100%' }}
-                                        />
+                                    <Form.Item name="sellingPrice" noStyle rules={[{ required: true, message: 'مطلوب إدخال سعر البيع' }]}>
+                                        <InputNumber min={0} step={0.25} style={{ width: '100%' }} />
                                     </Form.Item>
                                     <div style={{
                                         padding: '0 11px',
                                         backgroundColor: '#f5f5f5',
                                         border: '1px solid #d9d9d9',
-                                        borderLeft: 0,
+                                        borderInlineStart: 0, // RTL Safe
                                         display: 'flex',
                                         alignItems: 'center',
-                                        borderRadius: '0 6px 6px 0',
+                                        borderRadius: '6px 0 0 6px', // RTL Safe border radius
                                         whiteSpace: 'nowrap',
                                         color: 'rgba(0, 0, 0, 0.45)'
                                     }}>
@@ -426,46 +403,36 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                 </Space.Compact>
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={8}>
-                            <Form.Item
-                                name="baseUnit"
-                                label={ar.products.baseUnit}
-                                rules={[{ required: true, message: 'مطلوب إدخال الوحدة الأساسية' }]}
-                            >
+                        <Col xs={24} sm={12} md={8}>
+                            <Form.Item name="baseUnit" label={ar.products.baseUnit} rules={[{ required: true, message: 'مطلوب إدخال الوحدة الأساسية' }]}>
                                 <Select
-                                    placeholder="اختر الوحدة (مثال: علبة)"
+                                    placeholder="اختر الوحدة"
                                     allowClear
                                     showSearch
                                     optionFilterProp="label"
                                     loading={isLoadingUnits}
-                                    options={(unitsData?.data?.base_units || []).map((u: any) => ({
-                                        value: u.nameAr,
-                                        label: u.nameAr,
-                                    }))}
+                                    options={(unitsData?.data?.base_units || []).map((u: any) => ({ value: u.nameAr, label: u.nameAr }))}
                                 />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={8}>
+                        <Col xs={24} sm={12} md={8}>
                             <Form.Item name="subUnit" label={ar.products.subUnit}>
                                 <Select
-                                    placeholder="اختر وحدة فرعية (اختياري)"
+                                    placeholder="اختر وحدة فرعية"
                                     allowClear
                                     showSearch
                                     optionFilterProp="label"
                                     loading={isLoadingUnits}
-                                    options={(unitsData?.data?.sub_units || []).map((u: any) => ({
-                                        value: u.nameAr,
-                                        label: u.nameAr,
-                                    }))}
+                                    options={(unitsData?.data?.sub_units || []).map((u: any) => ({ value: u.nameAr, label: u.nameAr }))}
                                 />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={8}>
+                        <Col xs={24} sm={12} md={8}>
                             <Form.Item name="subUnitConversionFactor" label={ar.products.conversionFactor}>
                                 <InputNumber min={1} style={{ width: '100%' }} placeholder="كم وحدة فرعية في الأساسية؟" />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={8}>
+                        <Col xs={24} sm={12} md={8}>
                             <Form.Item name="lowStockThreshold" label={ar.products.lowStockThreshold}>
                                 <InputNumber min={0} style={{ width: '100%' }} />
                             </Form.Item>
@@ -474,10 +441,10 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 </fieldset>
             </Card>
 
-            <Card title="البيانات الطبية والإضافية" style={{ marginBottom: 16 }}>
+            <Card title="البيانات الطبية والإضافية" size={isMobile ? 'small' : 'medium'} style={{ marginBottom: 16 }}>
                 <fieldset disabled={isLocked} style={{ border: 'none', padding: 0, margin: 0 }}>
                     <Row gutter={16}>
-                        <Col xs={24} md={8}>
+                        <Col xs={24} sm={12} md={8}>
                             <Form.Item name="brand" label={ar.products.brand}>
                                 <Select
                                     placeholder="اختر الماركة التجارية"
@@ -485,34 +452,31 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                                     showSearch
                                     optionFilterProp="label"
                                     loading={isLoadingBrands}
-                                    options={(brandsData?.data || []).map((b: any) => ({
-                                        value: b._id,
-                                        label: b.nameEn || b.nameAr,
-                                    }))}
+                                    options={(brandsData?.data || []).map((b: any) => ({ value: b._id, label: b.nameEn || b.nameAr }))}
                                 />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={8}>
+                        <Col xs={24} sm={12} md={8}>
                             <Form.Item name="manufacturer" label={ar.products.manufacturer}>
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={8}>
+                        <Col xs={24} sm={12} md={8}>
                             <Form.Item name="activeIngredient" label={ar.products.activeIngredient}>
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={8}>
+                        <Col xs={24} sm={12} md={8}>
                             <Form.Item name="dosageForm" label={ar.products.dosageForm}>
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={12}>
+                        <Col xs={24} sm={12} md={12}>
                             <Form.Item name="pharmacology" label={ar.products.pharmacology}>
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={12}>
+                        <Col xs={24} sm={12} md={12}>
                             <Form.Item name="route" label={ar.products.route}>
                                 <Input />
                             </Form.Item>
@@ -536,9 +500,9 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 </fieldset>
             </Card>
 
-            {/* Show initial stock section in create mode, or if a product was found during the create flow */}
             {(mode === 'create' || searchSource) && (
                 <Card
+                    size={isMobile ? 'small' : 'medium'}
                     title={
                         <Space>
                             <InboxOutlined />
@@ -565,101 +529,59 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                             {(fields, { add, remove }) => (
                                 <>
                                     {fields.map(({ key, name, ...restField }) => (
-                                        <div key={key} style={{ marginBottom: 24, padding: 16, backgroundColor: '#f9f9f9', borderRadius: 8, border: '1px solid #f0f0f0', position: 'relative' }}>
+                                        <div key={key} style={{ 
+                                            marginBottom: 16, 
+                                            padding: isMobile ? '24px 12px 12px 12px' : 16, // Extra top padding on mobile for the delete button
+                                            backgroundColor: '#f9f9f9', 
+                                            borderRadius: 8, 
+                                            border: '1px solid #f0f0f0', 
+                                            position: 'relative' 
+                                        }}>
                                             {fields.length > 1 && (
                                                 <Button
                                                     type="text"
                                                     danger
                                                     icon={<DeleteOutlined />}
                                                     onClick={() => remove(name)}
-                                                    style={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}
+                                                    style={{ position: 'absolute', top: 8, insetInlineEnd: 8, zIndex: 1 }} // RTL Safe Position
                                                 />
                                             )}
                                             <Row gutter={16}>
-                                                <Col xs={24} md={12}>
-                                                    <Form.Item
-                                                        {...restField}
-                                                        name={[name, 'batchNumber']}
-                                                        label={ar.initialStock.batchNumber}
-                                                        rules={[{ required: true, message: 'رقم التشغيلة مطلوب' }]}
-                                                    >
+                                                <Col xs={24} sm={12}>
+                                                    <Form.Item {...restField} name={[name, 'batchNumber']} label={ar.initialStock.batchNumber} rules={[{ required: true, message: 'رقم التشغيلة مطلوب' }]}>
                                                         <Input placeholder="مثال: Shelf-1" />
                                                     </Form.Item>
                                                 </Col>
-                                                <Col xs={24} md={12}>
-                                                    <Form.Item
-                                                        {...restField}
-                                                        name={[name, 'expirationDate']}
-                                                        label={ar.initialStock.expirationDate}
-                                                        rules={[{ required: true, message: 'تاريخ الانتهاء مطلوب' }]}
-                                                    >
-                                                        <DatePicker
-                                                            picker="month"
-                                                            format="YYYY-MM"
-                                                            style={{ width: '100%' }}
-                                                        />
+                                                <Col xs={24} sm={12}>
+                                                    <Form.Item {...restField} name={[name, 'expirationDate']} label={ar.initialStock.expirationDate} rules={[{ required: true, message: 'تاريخ الانتهاء مطلوب' }]}>
+                                                        <DatePicker picker="month" format="YYYY-MM" style={{ width: '100%' }} />
                                                     </Form.Item>
                                                 </Col>
-                                                <Col xs={24} md={6}>
-                                                    <Form.Item
-                                                        {...restField}
-                                                        name={[name, 'quantity']}
-                                                        label={ar.initialStock.quantity}
-                                                        rules={[{ required: true, message: 'الكمية مطلوبة' }]}
-                                                    >
+                                                <Col xs={12} sm={6}>
+                                                    <Form.Item {...restField} name={[name, 'quantity']} label={ar.initialStock.quantity} rules={[{ required: true, message: 'مطلوبة' }]}>
                                                         <InputNumber min={1} style={{ width: '100%' }} />
                                                     </Form.Item>
                                                 </Col>
-                                                <Col xs={24} md={6}>
-                                                    <Form.Item
-                                                        {...restField}
-                                                        name={[name, 'discount']}
-                                                        label="خصم %"
-                                                    >
-                                                        <InputNumber
-                                                            min={0}
-                                                            max={100}
-                                                            step={0.1}
-                                                            style={{ width: '100%' }}
-                                                            suffix="%"
-                                                            placeholder="%"
-                                                        />
+                                                <Col xs={12} sm={6}>
+                                                    <Form.Item {...restField} name={[name, 'discount']} label="خصم %">
+                                                        <InputNumber min={0} max={100} step={0.1} style={{ width: '100%' }} suffix="%" placeholder="%" />
                                                     </Form.Item>
                                                 </Col>
-                                                <Col xs={24} md={6}>
-                                                    <Form.Item
-                                                        {...restField}
-                                                        name={[name, 'purchasePrice']}
-                                                        label={ar.initialStock.purchasePrice}
-                                                        rules={[{ required: true, message: 'سعر الشراء مطلوب' }]}
-                                                    >
-                                                        <InputNumber
-                                                            min={0}
-                                                            step={0.25}
-                                                            style={{ width: '100%' }}
-                                                            suffix="ج.م"
-                                                        />
+                                                <Col xs={24} sm={12}>
+                                                    <Form.Item {...restField} name={[name, 'purchasePrice']} label={ar.initialStock.purchasePrice} rules={[{ required: true, message: 'سعر الشراء مطلوب' }]}>
+                                                        <InputNumber min={0} step={0.25} style={{ width: '100%' }} suffix="ج.م" />
                                                     </Form.Item>
                                                 </Col>
-                                                <Col xs={24} md={6}>
-                                                    <Form.Item
-                                                        {...restField}
-                                                        name={[name, 'location']}
-                                                        label={ar.initialStock.location}
-                                                        initialValue="floor"
-                                                    >
-                                                        <Radio.Group>
-                                                            <Radio value="floor">{ar.initialStock.floor}</Radio>
-                                                            <Radio value="warehouse">{ar.initialStock.warehouse}</Radio>
+                                                <Col xs={24} sm={12}>
+                                                    <Form.Item {...restField} name={[name, 'location']} label={ar.initialStock.location} initialValue="floor">
+                                                        <Radio.Group style={{ width: '100%', display: 'flex', gap: '8px' }}>
+                                                            <Radio.Button value="floor" style={{ flex: 1, textAlign: 'center' }}>{ar.initialStock.floor}</Radio.Button>
+                                                            <Radio.Button value="warehouse" style={{ flex: 1, textAlign: 'center' }}>{ar.initialStock.warehouse}</Radio.Button>
                                                         </Radio.Group>
                                                     </Form.Item>
                                                 </Col>
                                                 <Col xs={24}>
-                                                    <Form.Item
-                                                        {...restField}
-                                                        name={[name, 'notes']}
-                                                        label={ar.initialStock.notes}
-                                                    >
+                                                    <Form.Item {...restField} name={[name, 'notes']} label={ar.initialStock.notes} style={{ marginBottom: 0 }}>
                                                         <Input.TextArea rows={1} />
                                                     </Form.Item>
                                                 </Col>
@@ -676,15 +598,38 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
                 </Card>
             )}
 
-            <Form.Item name="isActive" valuePropName="checked">
-                <Switch checkedChildren="نشط" unCheckedChildren="غير نشط" />
-            </Form.Item>
+            <Card size="small" style={{ marginBottom: isMobile ? 0 : 24 }}>
+                <Flex justify="space-between" align="center">
+                    <Text strong>حالة المنتج:</Text>
+                    <Form.Item name="isActive" valuePropName="checked" style={{ margin: 0 }}>
+                        <Switch checkedChildren="نشط" unCheckedChildren="غير نشط" />
+                    </Form.Item>
+                </Flex>
+            </Card>
 
-            <Form.Item>
-                <Button type="primary" htmlType="submit" loading={isSubmitting} block size="large">
+            {/* Sticky Action Footer for Mobile UX */}
+            <div style={isMobile ? {
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '12px 16px',
+                background: '#fff',
+                borderTop: '1px solid #f0f0f0',
+                boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
+                zIndex: 1000
+            } : { marginTop: 24 }}>
+                <Button 
+                    type="primary" 
+                    htmlType="submit" 
+                    icon={<SaveOutlined />} 
+                    loading={isSubmitting} 
+                    block 
+                    size="large"
+                >
                     {mode === 'edit' ? 'حفظ التعديلات' : ar.actions.save}
                 </Button>
-            </Form.Item>
+            </div>
         </Form>
     );
 }

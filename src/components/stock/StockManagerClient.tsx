@@ -1,15 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Table, Button, Modal, Tabs, Space, Tag, App } from 'antd';
-import { SyncOutlined, HistoryOutlined, PlusOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Tabs, Space, Tag, App, Grid, Typography, Button } from 'antd';
+import { SyncOutlined, HistoryOutlined, PlusOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import StockOverviewClient from '@/components/products/StockOverviewClient';
 import TransferForm from './TransferForm';
 import InitialStockForm from './InitialStockForm';
 import MobileFormWrapper from '../common/MobileFormWrapper';
+import PageHeader from '../common/PageHeader';
+import ResponsiveDataView from '../common/ResponsiveDataView';
+import { DataCard } from '../common/DataCard';
 import ar from '@/i18n/ar';
 import dayjs from 'dayjs';
+
+const { Text } = Typography;
+const { useBreakpoint } = Grid;
 
 interface StockManagerClientProps {
     safeBatches: any[];
@@ -19,8 +25,15 @@ interface StockManagerClientProps {
 export default function StockManagerClient({ safeBatches, products }: StockManagerClientProps) {
     const { message } = App.useApp();
     const queryClient = useQueryClient();
+    const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
+    
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
     const [isInitialStockModalOpen, setIsInitialStockModalOpen] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const { data: transfers, isLoading: loadingTransfers } = useQuery({
         queryKey: ['stockTransfers'],
@@ -48,13 +61,12 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
         onSuccess: () => {
             message.success('تمت عملية التحويل بنجاح');
             setIsTransferModalOpen(false);
+            // Invalidate everything related to stock so the UI updates without a reload
             queryClient.invalidateQueries({ queryKey: ['stockTransfers'] });
-            // Fully refresh to get latest batch quantities
-            window.location.reload();
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['batches'] });
         },
-        onError: (error: any) => {
-            message.error(error.message);
-        },
+        onError: (error: any) => message.error(error.message),
     });
 
     const initialStockMutation = useMutation({
@@ -73,11 +85,10 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
         onSuccess: () => {
             message.success(ar.initialStock.success);
             setIsInitialStockModalOpen(false);
-            window.location.reload();
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['batches'] });
         },
-        onError: (error: any) => {
-            message.error(error.message);
-        },
+        onError: (error: any) => message.error(error.message),
     });
 
     const transferColumns = [
@@ -89,63 +100,83 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
         {
             title: 'المنتج',
             dataIndex: ['productId', 'nameAr'],
-        },
-        {
-            title: 'الدفعة',
-            dataIndex: ['batchId', 'batchNumber'],
+            render: (name: string) => <Text strong>{name}</Text>
         },
         {
             title: 'الكمية',
             dataIndex: 'quantity',
-            render: (qty: number) => <strong>{qty}</strong>,
+            render: (qty: number) => <Tag color="cyan" style={{ fontSize: '14px' }}>{qty}</Tag>,
         },
         {
             title: 'الاتجاه',
             dataIndex: 'direction',
-            render: (dir: string) => {
-                const isToFloor = dir === 'to_floor';
-                return (
-                    <Tag color={isToFloor ? 'blue' : 'orange'}>
-                        {isToFloor ? 'إلى الصيدلية' : 'إلى المخزن'}
-                    </Tag>
-                );
-            },
+            render: (dir: string) => (
+                <Tag color={dir === 'to_floor' ? 'blue' : 'orange'}>
+                    {dir === 'to_floor' ? 'إلى الصيدلية' : 'إلى المخزن'}
+                </Tag>
+            ),
         },
         {
             title: 'السبب',
             dataIndex: 'reason',
         },
-        {
-            title: 'المستخدم',
-            dataIndex: ['transferredBy', 'name'],
-        },
     ];
+
+    const renderTransferCard = (item: any) => (
+        <DataCard
+            title={item.productId?.nameAr || 'منتج غير معروف'}
+            badge={
+                <Tag color={item.direction === 'to_floor' ? 'blue' : 'orange'}>
+                    {item.direction === 'to_floor' ? 'إلى الصيدلية' : 'إلى المخزن'}
+                </Tag>
+            }
+            properties={[
+                { label: 'التاريخ', value: dayjs(item.createdAt).format('YYYY-MM-DD HH:mm') },
+                { label: 'الكمية المحولة', value: <Text strong>{item.quantity}</Text> },
+                { label: 'رقم التشغيلة', value: item.batchId?.batchNumber },
+                { label: 'بواسطة', value: item.transferredBy?.name },
+                { label: 'السبب', value: item.reason, fullWidth: true }
+            ]}
+        />
+    );
+
+    if (!mounted) return null;
 
     return (
         <div>
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <Button
-                    icon={<PlusOutlined />}
-                    onClick={() => setIsInitialStockModalOpen(true)}
-                >
-                    {ar.initialStock.addInitialStock}
-                </Button>
-                <Button
-                    type="primary"
-                    icon={<SyncOutlined />}
-                    onClick={() => setIsTransferModalOpen(true)}
-                >
-                    تحويل رصيد
-                </Button>
-            </div>
+            <PageHeader 
+                title="إدارة المخزون" 
+                extra={
+                    <Space>
+                        <Button
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsInitialStockModalOpen(true)}
+                        >
+                            {ar.initialStock.addInitialStock}
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<SyncOutlined />}
+                            onClick={() => setIsTransferModalOpen(true)}
+                        >
+                            تحويل رصيد
+                        </Button>
+                    </Space>
+                }
+            />
 
             <Tabs
                 defaultActiveKey="1"
+                type="card"
                 items={[
                     {
                         key: '1',
                         label: 'أرصدة الدفعات',
-                        children: <StockOverviewClient batches={safeBatches} />,
+                        children: (
+                            <div style={{ marginTop: 16 }}>
+                                <StockOverviewClient batches={safeBatches} />
+                            </div>
+                        ),
                     },
                     {
                         key: '2',
@@ -155,20 +186,23 @@ export default function StockManagerClient({ safeBatches, products }: StockManag
                             </span>
                         ),
                         children: (
-                            <Table
-                                columns={transferColumns}
-                                dataSource={transfers}
-                                rowKey="_id"
-                                loading={loadingTransfers}
-                                pagination={{ pageSize: 20 }}
-                            />
+                            <div style={{ marginTop: 16 }}>
+                                <ResponsiveDataView
+                                    data={transfers || []}
+                                    loading={loadingTransfers}
+                                    tableColumns={transferColumns}
+                                    renderCard={renderTransferCard}
+                                    rowKey="_id"
+                                />
+                            </div>
                         ),
                     },
                 ]}
             />
 
+            {/* Forms remain wrapped for mobile/desktop flexibility */}
             <MobileFormWrapper
-                title="تحويل رصيد"
+                title="تحويل رصيد بين المخازن"
                 open={isTransferModalOpen}
                 onClose={() => !transferMutation.isPending && setIsTransferModalOpen(false)}
             >

@@ -42,7 +42,7 @@ const unitSchema = new Schema<IUnit>(
 );
 
 unitSchema.index({ type: 1 });
-unitSchema.index({ code: 1 });
+// unitSchema.index({ code: 1 }); // Redundant since unique: true is in the field definition
 
 const Unit = models.Unit || model<IUnit>('Unit', unitSchema);
 

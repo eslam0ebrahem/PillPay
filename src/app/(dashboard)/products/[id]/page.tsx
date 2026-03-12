@@ -27,7 +27,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         totalWarehouseQty += b.warehouseQty;
     });
 
-    // JSON serialization to ensure plain objects for client components
+    // Use deep serialization for Client Components to handle ObjectIds and Dates
     const safeProduct = JSON.parse(JSON.stringify(product));
     const safeBatches = JSON.parse(JSON.stringify(batches));
 

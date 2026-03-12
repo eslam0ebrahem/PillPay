@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Form, Input, InputNumber, Button, Select, Radio, Alert } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, InputNumber, Button, Select, Radio, Alert, Flex, Typography, Grid, Tag, Divider } from 'antd';
 import { useQuery } from '@tanstack/react-query';
+import { SwapOutlined, ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import BarcodeScanner from '../common/BarcodeScanner';
-import { Flex } from 'antd';
+import StickySubmitBar from '../common/StickySubmitBar';
+
+const { Text } = Typography;
+const { useBreakpoint } = Grid;
 
 interface TransferFormProps {
     products: any[];
@@ -14,7 +18,15 @@ interface TransferFormProps {
 
 export default function TransferForm({ products, onSubmit, isLoading }: TransferFormProps) {
     const [form] = Form.useForm();
+    const screens = useBreakpoint();
+    const [mounted, setMounted] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isMobile = screens.xs || (screens.sm && !screens.md);
 
     const { data: batches, isLoading: loadingBatches } = useQuery({
         queryKey: ['productBatches', selectedProduct],
@@ -30,12 +42,13 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
 
     const direction = Form.useWatch('direction', form);
     const selectedBatchId = Form.useWatch('batchId', form);
-
     const selectedBatch = batches?.find(b => b._id === selectedBatchId);
 
     const maxQty = selectedBatch
-        ? (direction === 'to_floor' ? selectedBatch.warehouseQty : selectedBatch.floorQty)
+        ? (direction === 'to_floor' ? (selectedBatch.warehouseQty || 0) : (selectedBatch.floorQty || 0))
         : 0;
+
+    if (!mounted) return null;
 
     return (
         <Form
@@ -43,49 +56,48 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
             layout="vertical"
             onFinish={onSubmit}
             initialValues={{ direction: 'to_floor' }}
+            style={{ paddingBottom: isMobile ? 80 : 0 }}
         >
             <Form.Item
                 name="direction"
-                label="نوع التحويل"
-                rules={[{ required: true, message: 'مطلوب' }]}
+                label="مسار التحويل"
+                rules={[{ required: true }]}
             >
-                <Radio.Group buttonStyle="solid" style={{ width: '100%', display: 'flex' }}>
-                    <Radio.Button value="to_floor" style={{ flex: 1, textAlign: 'center' }}>
-                        إلى الصيدلية
-                    </Radio.Button>
-                    <Radio.Button value="to_warehouse" style={{ flex: 1, textAlign: 'center' }}>
-                        إلى المخزن
-                    </Radio.Button>
+                <Radio.Group buttonStyle="solid" style={{ width: '100%' }}>
+                    <Flex gap={8}>
+                        <Radio.Button value="to_floor" style={{ flex: 1, textAlign: 'center', height: 45, lineHeight: '45px' }}>
+                            <Flex align="center" justify="center" gap={4}>
+                                <ArrowRightOutlined /> إلى الصيدلية
+                            </Flex>
+                        </Radio.Button>
+                        <Radio.Button value="to_warehouse" style={{ flex: 1, textAlign: 'center', height: 45, lineHeight: '45px' }}>
+                            <Flex align="center" justify="center" gap={4}>
+                                <ArrowRightOutlined style={{ transform: 'rotate(180deg)' }} /> إلى المخزن
+                            </Flex>
+                        </Radio.Button>
+                    </Flex>
                 </Radio.Group>
             </Form.Item>
 
-            <Form.Item
-                label="المنتج"
-                required
-            >
-                <Flex gap="small">
+            <Form.Item label="المنتج المراد نقله" required>
+                <Flex gap={8}>
                     <Form.Item
                         name="productId"
                         noStyle
-                        rules={[{ required: true, message: 'يرجى اختيار المنتج' }]}
+                        rules={[{ required: true, message: 'اختر المنتج' }]}
                     >
                         <Select
                             showSearch
-                            placeholder="اختر منتج"
+                            size="large"
+                            placeholder="ابحث بالاسم أو الباركود..."
                             onChange={(val) => {
                                 setSelectedProduct(val);
-                                form.setFieldValue('batchId', undefined);
-                                form.setFieldValue('quantity', undefined);
+                                form.setFieldsValue({ batchId: undefined, quantity: undefined });
                             }}
                             options={products.map(p => ({
                                 value: p._id as string,
                                 label: `${p.nameAr} | ${p.barcode}`,
-                                barcode: p.barcode,
-                                barcode2: p.barcode2,
                             }))}
-                            filterOption={(input, option) =>
-                                (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                            }
                             style={{ flex: 1 }}
                         />
                     </Form.Item>
@@ -95,42 +107,55 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
                             if (product) {
                                 form.setFieldValue('productId', product._id);
                                 setSelectedProduct(product._id);
-                                form.setFieldValue('batchId', undefined);
-                                form.setFieldValue('quantity', undefined);
+                                form.setFieldsValue({ batchId: undefined, quantity: undefined });
                             }
                         }}
-                        buttonProps={{ type: 'default' }}
+                        buttonProps={{ type: 'primary', ghost: true, size: 'large' }}
                     />
                 </Flex>
             </Form.Item>
 
             <Form.Item
                 name="batchId"
-                label="الدفعة"
-                rules={[{ required: true, message: 'يرجى اختيار الدفعة' }]}
+                label="اختر الدفعة (Batch)"
+                rules={[{ required: true, message: 'اختر الدفعة' }]}
             >
                 <Select
                     loading={loadingBatches}
+                    size="large"
                     disabled={!selectedProduct || loadingBatches}
-                    placeholder="اختر دفعة"
+                    placeholder="اختر الدفعة لتحديد الرصيد"
                     options={batches?.map(b => ({
                         value: b._id as string,
-                        label: `رقم ${b.batchNumber} - انتهاء ${new Date(b.expirationDate).toLocaleDateString()} (المخزن: ${b.warehouseQty}, الصيدلية: ${b.floorQty})`,
+                        label: `رقم ${b.batchNumber} - ينتهي ${new Date(b.expirationDate).toLocaleDateString('ar-EG')}`,
                     }))}
                 />
             </Form.Item>
+
+            {selectedBatch && (
+                <div style={{ background: '#f5f5f5', padding: '12px', borderRadius: '8px', marginBottom: '24px' }}>
+                    <Flex justify="space-between" align="center">
+                        <Text type="secondary">الرصيد المتاح حالياً:</Text>
+                        <Tag color={maxQty > 0 ? "green" : "red"} style={{ fontSize: '16px', padding: '4px 12px' }}>
+                            {maxQty} وحدة
+                        </Tag>
+                    </Flex>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <Text type="secondary" italic style={{ fontSize: '13px' }}>
+                        <InfoCircleOutlined /> يتم النقل من {direction === 'to_floor' ? 'المخزن الرئيسي' : 'أرفف الصيدلية'}
+                    </Text>
+                </div>
+            )}
 
             <Form.Item
                 name="quantity"
                 label="الكمية المراد تحويلها"
                 rules={[
-                    { required: true, message: 'يرجى إدخال الكمية' },
+                    { required: true, message: 'أدخل الكمية' },
                     {
                         validator: async (_, value) => {
-                            if (value && value > maxQty) {
-                                return Promise.reject(new Error(`الحد الأقصى المتاح ${maxQty}`));
-                            }
-                            return Promise.resolve();
+                            if (value && value > maxQty) throw new Error(`الرصيد المتاح ${maxQty} فقط`);
+                            if (value && value <= 0) throw new Error('الكمية يجب أن تكون أكبر من صفر');
                         }
                     }
                 ]}
@@ -138,38 +163,54 @@ export default function TransferForm({ products, onSubmit, isLoading }: Transfer
                 <InputNumber
                     min={1}
                     max={maxQty}
+                    size="large"
                     style={{ width: '100%' }}
+                    placeholder="0"
                     disabled={!selectedBatchId || maxQty === 0}
                 />
             </Form.Item>
 
-            {selectedBatch && maxQty === 0 && (
-                <Alert
-                    title="عفواً، لا يوجد رصيد كافي لهذه الدفعة في الموقع المصدر للقيام بهذا التحويل."
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 16 }}
-                />
-            )}
-
             <Form.Item
                 name="reason"
-                label="سبب التحويل"
-                rules={[{ required: true, message: 'يرجى ذكر سبب التحويل' }]}
+                label="ملاحظات التحويل"
+                rules={[{ required: true, message: 'يرجى كتابة سبب التحويل' }]}
             >
-                <Input.TextArea rows={2} placeholder="مثال: نقل بضاعة للعرض بالصيدلية" />
+                <Input.TextArea 
+                    rows={2} 
+                    size="large" 
+                    placeholder="مثال: تعويض نقص الأرفف / جرد دوري" 
+                />
             </Form.Item>
 
-            <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-                <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={isLoading}
-                    disabled={!selectedBatch || maxQty === 0}
-                >
-                    تنفيذ التحويل
-                </Button>
-            </Form.Item>
+            {isMobile ? (
+                <StickySubmitBar>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        loading={isLoading}
+                        disabled={!selectedBatch || maxQty === 0}
+                        block
+                        icon={<SwapOutlined />}
+                    >
+                        تأكيد نقل الكمية
+                    </Button>
+                </StickySubmitBar>
+            ) : (
+                <Form.Item style={{ marginBottom: 0, textAlign: 'left' }}>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        icon={<SwapOutlined />}
+                        loading={isLoading}
+                        disabled={!selectedBatch || maxQty === 0}
+                        style={{ minWidth: 180 }}
+                    >
+                        تنفيذ التحويل
+                    </Button>
+                </Form.Item>
+            )}
         </Form>
     );
 }

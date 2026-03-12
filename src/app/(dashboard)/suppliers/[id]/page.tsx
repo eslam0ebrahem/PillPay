@@ -27,7 +27,7 @@ export default async function SupplierDetailPage({ params }: { params: Promise<{
         .limit(10)
         .lean<any[]>();
 
-    // JSON serialization to ensure plain objects for client components
+    // Use deep serialization for Client Components to handle ObjectIds and Dates
     const safeSupplier = JSON.parse(JSON.stringify(supplier));
     const safeInvoices = JSON.parse(JSON.stringify(recentInvoices));
     const safePayments = JSON.parse(JSON.stringify(recentPayments));

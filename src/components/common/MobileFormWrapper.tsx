@@ -12,10 +12,10 @@ interface MobileFormWrapperProps {
     children: React.ReactNode;
     footer?: React.ReactNode;
     destroyOnHidden?: boolean;
-    width?: number;
+    width?: number | string;
 }
 
-export function MobileFormWrapper({
+export default function MobileFormWrapper({
     open,
     onClose,
     title,
@@ -31,14 +31,15 @@ export function MobileFormWrapper({
         setMounted(true);
     }, []);
 
-    // Return null or a consistent placeholder during SSR and first client pass
+    // Return null during SSR to prevent hydration mismatch
     if (!mounted) {
         return null;
     }
 
-    const isDesktop = screens.md !== false;
+    const isMobile = screens.xs || (screens.sm && !screens.md);
 
-    if (isDesktop) {
+    // --- Desktop Layout (Centered Modal) ---
+    if (!isMobile) {
         return (
             <Modal
                 title={title}
@@ -47,6 +48,7 @@ export function MobileFormWrapper({
                 footer={footer === undefined ? null : footer}
                 destroyOnHidden={destroyOnHidden}
                 width={width}
+                centered // Centered modals feel much more premium on desktop monitors
                 forceRender
             >
                 {children}
@@ -54,20 +56,54 @@ export function MobileFormWrapper({
         );
     }
 
+    // --- Mobile Layout (Native-Style Bottom Sheet) ---
     return (
         <Drawer
             title={title}
             placement="bottom"
-            size="large"
             open={open}
             onClose={onClose}
             destroyOnHidden={destroyOnHidden}
             footer={footer === undefined ? null : footer}
+            height="auto" // Wraps tight to small forms...
+            style={{ maxHeight: '92dvh' }} // ...but never exceeds 92% of the screen height for large forms
+            styles={{
+                content: {
+                    borderTopLeftRadius: 20, // Native rounded top corners
+                    borderTopRightRadius: 20,
+                },
+                header: {
+                    borderBottom: '1px solid #f0f0f0',
+                    padding: '16px 20px',
+                    textAlign: 'center', // Centers the title for a native feel
+                },
+                body: {
+                    padding: '20px',
+                    overflowY: 'auto',
+                },
+                footer: {
+                    // Safe area inset ensures the footer isn't blocked by the iPhone home indicator
+                    padding: '12px 20px calc(12px + env(safe-area-inset-bottom, 0px))',
+                    borderTop: '1px solid #f0f0f0',
+                    background: '#fff',
+                }
+            }}
             forceRender
         >
+            {/* Visual Drag Handle (Affordance) */}
+            <div style={{
+                position: 'absolute',
+                top: 8,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 36,
+                height: 5,
+                backgroundColor: '#e6e6e6',
+                borderRadius: 3,
+                zIndex: 10
+            }} />
+            
             {children}
         </Drawer>
     );
 }
-
-export default MobileFormWrapper;

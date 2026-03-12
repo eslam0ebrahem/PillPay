@@ -12,8 +12,24 @@ export default async function SupplierInvoicesPage() {
         .sort({ date: -1, createdAt: -1 })
         .lean<any[]>();
 
-    // Use JSON serialization for deep copy and conversion of ObjectIds/Dates
-    const safeInvoices = JSON.parse(JSON.stringify(invoices));
+    // Explicitly serialize objects for Client Components
+    const safeInvoices = invoices.map(inv => ({
+        ...inv,
+        _id: inv._id.toString(),
+        supplierId: inv.supplierId ? {
+            ...inv.supplierId,
+            _id: inv.supplierId._id?.toString()
+        } : null,
+        date: inv.date instanceof Date ? inv.date.toISOString() : inv.date,
+        items: inv.items?.map((item: any) => ({
+            ...item,
+            _id: item._id?.toString(),
+            productId: item.productId?.toString(),
+            expirationDate: item.expirationDate instanceof Date ? item.expirationDate.toISOString() : item.expirationDate,
+        })),
+        createdAt: inv.createdAt?.toISOString(),
+        updatedAt: inv.updatedAt?.toISOString(),
+    }));
 
     return <SupplierInvoicesListClient invoices={safeInvoices} />;
 }

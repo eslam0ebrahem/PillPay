@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Card, Typography, Divider } from 'antd';
+import { Card, Typography, Divider, Flex } from 'antd';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export interface DataCardProperty {
     label: React.ReactNode;
@@ -27,47 +27,67 @@ export function DataCard({ title, subtitle, badge, properties, actions, onClick 
             onClick={onClick}
             style={{ 
                 borderRadius: 12, 
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)', 
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)', // Slightly softer shadow for modern mobile feel
                 marginBottom: 12,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                border: '1px solid #f0f0f0'
             }}
             styles={{
                 body: { padding: 16 }
             }}
         >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: properties && properties.length > 0 ? 12 : 0 }}>
-                <div style={{ flex: 1, marginRight: badge ? 12 : 0 }}>
-                    <Title level={5} style={{ margin: 0, fontSize: 16 }}>
+            {/* Header Section */}
+            <Flex 
+                justify="space-between" 
+                align="flex-start" 
+                gap={12} 
+                style={{ marginBottom: properties && properties.length > 0 ? 12 : 0 }}
+            >
+                {/* minWidth: 0 is CRITICAL here so long text truncates instead of breaking the flex container */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ 
+                        fontSize: 16, 
+                        fontWeight: 600, 
+                        color: '#1f1f1f',
+                        wordBreak: 'break-word' // Safely wrap extremely long product names/barcodes
+                    }}>
                         {title}
-                    </Title>
+                    </div>
                     {subtitle && (
                         <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 4 }}>
                             {subtitle}
                         </Text>
                     )}
                 </div>
+                
                 {badge && (
                     <div style={{ flexShrink: 0 }}>
                         {badge}
                     </div>
                 )}
-            </div>
+            </Flex>
 
+            {/* Properties Grid Section */}
             {properties && properties.length > 0 && (
                 <div style={{ 
                     display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', // Strict 2-column layout
                     gap: '12px 8px',
-                    marginTop: 12,
                     paddingTop: 12,
-                    borderTop: '1px solid #f0f0f0'
+                    borderTop: '1px dashed #f0f0f0' // Dashed looks cleaner for data separation
                 }}>
                     {properties.map((prop, index) => (
-                        <div key={index} style={{ gridColumn: prop.fullWidth ? '1 / -1' : 'auto' }}>
-                            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 2 }}>
+                        <div 
+                            key={index} 
+                            style={{ 
+                                gridColumn: prop.fullWidth ? '1 / -1' : 'auto',
+                                minWidth: 0 // Prevent grid blowout
+                            }}
+                        >
+                            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
                                 {prop.label}
                             </Text>
-                            <div style={{ fontSize: 14, fontWeight: 500 }}>
+                            <div style={{ fontSize: 14, fontWeight: 500, wordBreak: 'break-word' }}>
                                 {prop.value}
                             </div>
                         </div>
@@ -75,14 +95,16 @@ export function DataCard({ title, subtitle, badge, properties, actions, onClick 
                 </div>
             )}
 
+            {/* Actions Section */}
             {actions && (
                 <>
-                    <Divider style={{ margin: '12px 0' }} />
+                    <Divider style={{ margin: '16px 0 12px 0' }} />
                     <div style={{ 
                         display: 'flex', 
                         justifyContent: 'flex-end', 
                         gap: 8,
-                        flexWrap: 'wrap'
+                        flexWrap: 'wrap',
+                        width: '100%'
                     }}>
                         {actions}
                     </div>

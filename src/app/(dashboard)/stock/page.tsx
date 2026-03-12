@@ -44,7 +44,7 @@ export default async function StockPage() {
         }
     });
 
-    // Make data safe for client components (Next.js requirement)
+    // Use deep serialization for Client Components to handle ObjectIds and Dates
     const safeBatches = JSON.parse(JSON.stringify(batches));
     const safeProducts = JSON.parse(JSON.stringify(products));
 

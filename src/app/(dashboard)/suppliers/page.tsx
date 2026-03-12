@@ -9,10 +9,8 @@ export default async function SuppliersPage() {
 
     const suppliers = await Supplier.find().sort({ name: 1 }).lean<any[]>();
 
-    const safeSuppliers = suppliers.map((s) => ({
-        ...s,
-        _id: s._id.toString(),
-    }));
+    // Use deep serialization for Client Components to handle ObjectIds and Dates
+    const safeSuppliers = JSON.parse(JSON.stringify(suppliers));
 
     return <SuppliersPageClient data={safeSuppliers} />;
 }
