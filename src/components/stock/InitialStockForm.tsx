@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, Select, DatePicker, Radio, Flex, Card, Row, Col, Typography, Grid } from 'antd';
+import { Form, Input, InputNumber, Button, Select, DatePicker, Radio, Flex, Card, Row, Col, Typography, Grid, Space } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import BarcodeScanner from '../common/BarcodeScanner';
 import StickySubmitBar from '../common/StickySubmitBar';
@@ -242,13 +242,17 @@ export default function InitialStockForm({ products, preselectedProductId, onSub
                                             label={ar.initialStock.purchasePrice}
                                             rules={[{ required: true, message: 'مطلوب' }]}
                                         >
-                                            <InputNumber
-                                                min={0}
-                                                step={0.25}
-                                                size={isMobile ? "large" : "middle"}
-                                                style={{ width: '100%' }}
-                                                addonAfter="ج.م"
-                                            />
+                                            <Space.Compact style={{ width: '100%' }}>
+                                                <InputNumber
+                                                    min={0}
+                                                    step={0.25}
+                                                    size={isMobile ? "large" : "middle"}
+                                                    style={{ flex: 1 }}
+                                                />
+                                                <Button size={isMobile ? "large" : "middle"} disabled style={{ background: '#f5f5f5', color: '#000', cursor: 'default' }}>
+                                                    ج.م
+                                                </Button>
+                                            </Space.Compact>
                                         </Form.Item>
                                     </Col>
 

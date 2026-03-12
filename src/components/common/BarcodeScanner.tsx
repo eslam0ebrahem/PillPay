@@ -19,16 +19,26 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
     const [cameraError, setCameraError] = useState<string | null>(null);
     
     const scannerRef = useRef<Html5Qrcode | null>(null);
+    const transitioningRef = useRef(false);
+    const onScanRef = useRef(onScan);
+
+    // Update the ref whenever onScan changes so we always call the latest version
+    // without triggering effect restarts
+    useEffect(() => {
+        onScanRef.current = onScan;
+    }, [onScan]);
+
     const SCANNER_ID = 'barcode-reader-container';
 
     useEffect(() => {
         let isMounted = true;
 
         const startScanner = async () => {
-            if (!isModalOpen) return;
+            if (!isModalOpen || transitioningRef.current) return;
             
             setIsInitializing(true);
             setCameraError(null);
+            transitioningRef.current = true;
 
             try {
                 // Wait for the Ant Design Modal to fully render the DOM node
@@ -48,10 +58,9 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
                 }
 
                 await scannerRef.current.start(
-                    { facingMode: 'environment' }, // Force back camera on mobile
+                    { facingMode: 'environment' },
                     {
                         fps: 15,
-                        // Dynamic qrbox size to ensure it fits nicely on any screen size
                         qrbox: (viewfinderWidth, viewfinderHeight) => {
                             const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
                             const size = Math.max(200, Math.floor(minEdge * 0.7));
@@ -61,24 +70,27 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
                     },
                     (decodedText) => {
                         if (isMounted) {
-                            onScan(decodedText);
+                            onScanRef.current(decodedText);
                             handleClose();
                         }
                     },
-                    (errorMessage) => {
-                        // html5-qrcode spams errors for every frame that doesn't have a barcode.
-                        // We safely ignore these background parsing errors.
-                    }
+                    () => {}
                 );
 
                 if (isMounted) setIsInitializing(false);
-
             } catch (err: any) {
-                console.error('Scanner start error:', err);
-                if (isMounted) {
-                    setIsInitializing(false);
-                    setCameraError('تعذر الوصول للكاميرا. يرجى التحقق من الصلاحيات.');
+                // If it's already transitioning, we can safely ignore this specific error
+                if (err?.includes?.('already under transition') || err?.message?.includes?.('already under transition')) {
+                    console.log('Handled redundant transition attempt');
+                } else {
+                    console.error('Scanner start error:', err);
+                    if (isMounted) {
+                        setCameraError('تعذر الوصول للكاميرا. يرجى التحقق من الصلاحيات.');
+                    }
                 }
+                if (isMounted) setIsInitializing(false);
+            } finally {
+                transitioningRef.current = false;
             }
         };
 
@@ -86,22 +98,29 @@ export default function BarcodeScanner({ onScan, buttonText = 'مسح بالكا
 
         return () => {
             isMounted = false;
-            if (scannerRef.current && scannerRef.current.isScanning) {
+            if (scannerRef.current && scannerRef.current.isScanning && !transitioningRef.current) {
+                transitioningRef.current = true;
                 scannerRef.current.stop()
                     .then(() => scannerRef.current?.clear())
-                    .catch(e => console.error('Stop error during unmount:', e));
+                    .catch(e => console.error('Stop error during unmount:', e))
+                    .finally(() => { transitioningRef.current = false; });
             }
         };
-    }, [isModalOpen, onScan]);
+    }, [isModalOpen]);
 
     const handleClose = async () => {
+        if (transitioningRef.current) return;
+        
         setIsModalOpen(false);
         if (scannerRef.current && scannerRef.current.isScanning) {
+            transitioningRef.current = true;
             try {
                 await scannerRef.current.stop();
                 scannerRef.current.clear();
             } catch (e) {
                 console.error('Error stopping scanner:', e);
+            } finally {
+                transitioningRef.current = false;
             }
         }
     };

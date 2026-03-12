@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, InputNumber, Button, Typography, Select, App, Grid, Flex, Radio, Divider } from 'antd';
+import { Card, InputNumber, Button, Typography, Select, App, Grid, Flex, Radio, Divider, Space } from 'antd';
 import { DollarOutlined, UserOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
 import MoneyDisplay from '../common/MoneyDisplay';
@@ -133,16 +133,20 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
             {paymentMode === 'partial' && (
                 <div>
                     <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.pos.paidAmount} (نقداً)</Text>
-                    <InputNumber
-                        size="large"
-                        style={{ width: '100%', fontSize: 18 }}
-                        value={paidAmount / 100}
-                        onChange={(val) => setPaidAmount((val || 0) * 100)}
-                        min={0}
-                        max={total / 100}
-                        inputMode="decimal"
-                        addonAfter="ج.م"
-                    />
+                    <Space.Compact style={{ width: '100%' }}>
+                        <InputNumber
+                            size="large"
+                            style={{ flex: 1, fontSize: 18 }}
+                            value={paidAmount / 100}
+                            onChange={(val) => setPaidAmount((val || 0) * 100)}
+                            min={0}
+                            max={total / 100}
+                            inputMode="decimal"
+                        />
+                        <Button size="large" disabled style={{ background: '#f5f5f5', color: '#000', cursor: 'default' }}>
+                            ج.م
+                        </Button>
+                    </Space.Compact>
                     <Flex justify="space-between" style={{ marginTop: 8, padding: '0 4px' }}>
                         <Text type="secondary">المتبقي آجل:</Text>
                         <Text strong type="danger"><MoneyDisplay amount={total - paidAmount} /></Text>
@@ -155,16 +159,20 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
                     <Text strong style={{ display: 'block', marginBottom: 8 }}>
                         المبلغ المدفوع من العميل (لحساب الباقي)
                     </Text>
-                    <InputNumber
-                        size="large"
-                        style={{ width: '100%', fontSize: 18 }}
-                        value={paidAmount / 100}
-                        onChange={(val) => setPaidAmount((val || 0) * 100)}
-                        min={0}
-                        inputMode="decimal"
-                        addonAfter="ج.م"
-                        placeholder="أدخل المبلغ لحساب الباقي..."
-                    />
+                    <Space.Compact style={{ width: '100%' }}>
+                        <InputNumber
+                            size="large"
+                            style={{ flex: 1, fontSize: 18 }}
+                            value={paidAmount / 100}
+                            onChange={(val) => setPaidAmount((val || 0) * 100)}
+                            min={0}
+                            inputMode="decimal"
+                            placeholder="أدخل المبلغ لحساب الباقي..."
+                        />
+                        <Button size="large" disabled style={{ background: '#f5f5f5', color: '#000', cursor: 'default' }}>
+                            ج.م
+                        </Button>
+                    </Space.Compact>
                     {paidAmount > total && (
                         <Card size="small" style={{ marginTop: 12, background: '#f6ffed', borderColor: '#b7eb8f' }}>
                             <Flex justify="space-between" align="center">
@@ -212,7 +220,7 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
     }
 
     return (
-        <Card title={ar.pos.checkout} variant="borderless" styles={{ header: { fontSize: 18 } }}>
+        <Card title={ar.pos.checkout} variant="outlined" styles={{ header: { fontSize: 18 } }}>
             {/* Desktop prominent total display */}
             <Flex justify="space-between" align="center" style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
                 <Text type="secondary" style={{ fontSize: 16 }}>الإجمالي المطلوب:</Text>
