@@ -3,7 +3,8 @@
 import {
     Form, Input, InputNumber, Switch, Button, Row, Col, Card,
     Space, Typography, App, Select, Divider, DatePicker, Radio,
-    Grid, Flex, Tooltip, Badge, Collapse
+    Grid, Flex, Tooltip, Badge, Collapse,
+    Spin
 } from 'antd';
 import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +20,10 @@ import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
-
+const selectStyle: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0, // CRITICAL: Allows the select to shrink/truncate inside a flexbox
+};
 export interface ProductFormValues {
     _id?: string;
     barcode?: string;
@@ -239,71 +243,88 @@ export default function ProductForm({ initialValues, onSubmit, isSubmitting, onP
             initialValues={{ isActive: true, lowStockThreshold: 10, baseUnit: 'علبة' }}
             style={{ paddingBottom: isMobile ? 100 : 40 }}
         >
-            {/* --- Search & Header Card --- */}
-            <Card
+{/* --- CSS for Truncation (Place at top of file or in global CSS) --- */}
+
+
+{/* --- Refined Unified Search Card --- */}
+<Card
+    size="small"
+    style={{
+        marginBottom: 20,
+        borderRadius: 12,
+        border: '1px solid #91caff',
+        background: '#fff',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    }}
+>
+    {/* Header Section */}
+    <Flex justify="space-between" align="center" style={{ marginBottom: 12, padding: '4px 8px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
+                {isLocked ? 'المنتج المختار حالياً:' : 'البحث عن منتج'}
+            </Text>
+            <Title level={5} style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {form.getFieldValue('nameAr') || (mode === 'edit' ? 'يرجى اختيار منتج...' : 'منتج جديد')}
+            </Title>
+        </div>
+
+        <Space>
+            <Button
+                type={isLocked ? "primary" : "dashed"}
+                icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+                onClick={() => setIsLocked(!isLocked)}
                 size="small"
-                style={{
-                    marginBottom: 20,
-                    borderRadius: 12,
-                    border: '1px solid #91caff',
-                    background: 'linear-gradient(180deg, #e6f7ff 0%, #ffffff 100%)'
+            />
+
+        </Space>
+    </Flex>
+
+    {/* The Unified Input Row */}
+    <div style={{ padding: '0 4px 8px 4px' }}>
+        <Space.Compact style={{ width: '100%', display: 'flex' }}>
+            <Select
+                showSearch
+                size="large"
+                placeholder="اسم المنتج أو الباركود..."
+                filterOption={false}
+                allowClear
+                // FIX: This ensures when 'X' is clicked, the app resets
+                onClear={handleReset} 
+                onChange={(value) => {
+                    if (!value) handleReset();
                 }}
-            >
-                <Flex vertical={isMobile} justify="space-between" align="center" gap={16}>
-                    <div style={{ textAlign: isMobile ? 'center' : 'right' }}>
-                        <Title level={isMobile ? 5 : 4} style={{ margin: 0 }}>
-                            <BarcodeOutlined /> {mode === 'edit' ? 'تعديل منتج' : 'إضافة منتج جديد'}
-                        </Title>
-                        <Text type="secondary">استخدم الباركود أو الاسم للبحث</Text>
-                    </div>
-
-                    <Space>
-                        <Button
-                            type={isLocked ? "primary" : "dashed"}
-                            danger={!isLocked}
-                            icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
-                            onClick={() => setIsLocked(!isLocked)}
-                        >
-                            {isLocked ? "فتح التعديل" : "قفل"}
-                        </Button>
-                        <Button danger icon={<DeleteOutlined />} onClick={handleReset} />
-                    </Space>
-                </Flex>
-
-                <Divider style={{ margin: '12px 0' }} />
-
-                <Row gutter={[12, 12]}>
-                    <Col xs={24} md={12}>
-                        <Select
-                            showSearch
-                            size="large"
-                            placeholder="ابحث بالاسم..."
-                            filterOption={false}
-                            onSearch={handleProductNameSearch}
-                            onSelect={(id, opt) => handleProductSelect(id, opt)}
-                            options={nameSearchOptions}
-                            loading={isSearching}
-                            style={{ width: '100%' }}
-                            suffixIcon={<SearchOutlined />}
-                        />
-                    </Col>
-                    <Col xs={24} md={12}>
-                        <Space.Compact style={{ width: '100%' }}>
-                            <Input
-                                size="large"
-                                placeholder="مسح الباركود..."
-                                prefix={<BarcodeOutlined />}
-                                onPressEnter={(e) => handleBarcodeSearch(e.currentTarget.value)}
-                            />
-                            <BarcodeScanner
-                                onScan={(text) => handleBarcodeSearch(text)}
-                                buttonProps={{ size: 'large', type: 'primary' }}
-                                buttonText=""
-                            />
-                        </Space.Compact>
-                    </Col>
-                </Row>
-            </Card>
+                onSearch={(val) => {
+                    if (val.length >= 5 && /^\d+$/.test(val)) {
+                        handleBarcodeSearch(val);
+                    } else {
+                        handleProductNameSearch(val);
+                    }
+                }}
+                onSelect={(id, opt) => handleProductSelect(id, opt)}
+                options={nameSearchOptions}
+                loading={isSearching}
+                style={{ flex: 1, minWidth: 0 }} // Prevents expanding
+                suffixIcon={<SearchOutlined style={{ color: '#1890ff' }} />}
+                styles={{ popup: { root: { maxWidth: '90vw' } } }}
+            />
+            
+            <BarcodeScanner
+                onScan={(text) => handleBarcodeSearch(text)}
+                buttonProps={{ 
+                    size: 'large', 
+                    type: 'primary', 
+                    style: { 
+                        width: 50, 
+                        flexShrink: 0, 
+                        display: 'flex', 
+                        justifyContent: 'center' 
+                    } 
+                }}
+                buttonText=""
+            />
+        </Space.Compact>
+    </div>
+</Card>
 
             {/* --- Basic Info --- */}
             <Card
