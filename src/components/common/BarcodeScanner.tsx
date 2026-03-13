@@ -52,7 +52,7 @@ interface TorchCapabilities {
 interface BarcodeScannerProps {
     onScan: (decodedText: string) => void;
     buttonText?: string;
-    buttonProps?: Omit<ButtonProps, 'onClick' | 'icon'>;
+    buttonProps?: Omit<ButtonProps, 'onClick'>;
 }
 
 export default function BarcodeScanner({
