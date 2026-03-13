@@ -3,8 +3,8 @@ services:
     name: pillpay
     runtime: node
     plan: starter
-    buildCommand: npm install && npm run build && cp -r .next/static .next/standalone/.next/static && (test -d public && cp -r public .next/standalone/public || true)
-    startCommand: node .next/standalone/server.js
+    buildCommand: npm install && npm run build && cp -r .next/static .next/standalone/.next/static && (test -d public && cp -r public .next/standalone/public || true) && cp -r scripts .next/standalone/scripts
+    startCommand: node .next/standalone/scripts/keep-alive.mjs & node .next/standalone/server.js
     envVars:
       - key: NODE_ENV
         value: production
