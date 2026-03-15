@@ -4,7 +4,7 @@ import { withPermission } from '@/lib/auth/middleware';
 import { connectDB } from '@/lib/db/connection';
 import User from '@/lib/models/User';
 import { logAction } from '@/lib/services/audit.service';
-import { updateUserSchema } from '@/lib/utils/validation';
+import { updateUserSchema, isValidObjectId } from '@/lib/utils/validation';
 import {
     ALL_PERMISSIONS,
     CASHIER_DEFAULT_PERMISSIONS,
@@ -60,6 +60,14 @@ export const PUT = withPermission('users.manage', async (request: NextRequest, c
 
         const params = await context.params;
         const userId = params.id;
+
+        if (!isValidObjectId(userId)) {
+            return NextResponse.json(
+                { error: { code: 'INVALID_INPUT', message: 'المعرف غير صالح' } },
+                { status: 400 }
+            );
+        }
+
         const payload = updateUserSchema.parse(await request.json());
         const user = await User.findById(userId);
 
@@ -74,10 +82,7 @@ export const PUT = withPermission('users.manage', async (request: NextRequest, c
         const nextIsActive = payload.isActive ?? user.isActive;
         const wasCashier = user.role === 'cashier';
 
-        if (
-            user.role === 'owner' &&
-            (nextRole !== 'owner' || !nextIsActive)
-        ) {
+        if (user.role === 'owner' && (nextRole !== 'owner' || !nextIsActive)) {
             const otherActiveOwners = await User.countDocuments({
                 _id: { $ne: user._id },
                 role: 'owner',
@@ -177,9 +182,6 @@ export const PUT = withPermission('users.manage', async (request: NextRequest, c
 
         const message = error instanceof Error ? error.message : 'تعذر تحديث المستخدم';
         const status = message.includes('صلاحيات غير معروفة') ? 400 : 500;
-        return NextResponse.json(
-            { error: { code: 'UPDATE_USER_ERROR', message } },
-            { status }
-        );
+        return NextResponse.json({ error: { code: 'UPDATE_USER_ERROR', message } }, { status });
     }
 });

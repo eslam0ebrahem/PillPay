@@ -1,7 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, InputNumber, Button, Space, Select, Typography, Row, Image, Col, Grid, Flex, Divider, Empty } from 'antd';
+import {
+    Table,
+    InputNumber,
+    Button,
+    Space,
+    Select,
+    Typography,
+    Row,
+    Image,
+    Col,
+    Grid,
+    Flex,
+    Divider,
+    Empty,
+} from 'antd';
 import { DeleteOutlined, PictureOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import MoneyDisplay from '../common/MoneyDisplay';
 import ResponsiveDataView from '../common/ResponsiveDataView';
@@ -49,7 +63,10 @@ export default function Cart({
         if (invoiceDiscount.type === 'amount') {
             total = Math.max(0, invoiceSubtotal - invoiceDiscount.value);
         } else {
-            total = Math.max(0, invoiceSubtotal - Math.round((invoiceSubtotal * invoiceDiscount.value) / 10000));
+            total = Math.max(
+                0,
+                invoiceSubtotal - Math.round((invoiceSubtotal * invoiceDiscount.value) / 10000)
+            );
         }
     }
 
@@ -68,10 +85,20 @@ export default function Cart({
                                 width={48}
                                 height={48}
                                 style={{ objectFit: 'cover', borderRadius: 6 }}
-                                fallback="https://via.placeholder.com/48?text=No+Image"
+                                fallback="/no-image.svg"
                             />
                         ) : (
-                            <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 6 }}>
+                            <div
+                                style={{
+                                    width: 48,
+                                    height: 48,
+                                    backgroundColor: '#f5f5f5',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    borderRadius: 6,
+                                }}
+                            >
                                 <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
                             </div>
                         )}
@@ -79,7 +106,9 @@ export default function Cart({
                     <div>
                         <div style={{ fontWeight: 500, fontSize: 15 }}>{record.product.nameAr}</div>
                         {record.product.nameEn && (
-                            <div style={{ color: '#8c8c8c', fontSize: '13px' }}>{record.product.nameEn}</div>
+                            <div style={{ color: '#8c8c8c', fontSize: '13px' }}>
+                                {record.product.nameEn}
+                            </div>
                         )}
                     </div>
                 </Flex>
@@ -98,7 +127,9 @@ export default function Cart({
                         style={{ width: 70, textAlign: 'center' }}
                     />
                     <Button disabled style={{ color: '#595959', backgroundColor: '#fafafa' }}>
-                        {record.unitSold === 'sub' ? record.product.subUnit : record.product.baseUnit}
+                        {record.unitSold === 'sub'
+                            ? record.product.subUnit
+                            : record.product.baseUnit}
                     </Button>
                 </Space.Compact>
             ),
@@ -107,7 +138,9 @@ export default function Cart({
             title: ar.pos.unitPrice,
             key: 'price',
             width: 120,
-            render: (_: any, record: CartItem) => <MoneyDisplay amount={record.computedUnitPrice} />,
+            render: (_: any, record: CartItem) => (
+                <MoneyDisplay amount={record.computedUnitPrice} />
+            ),
         },
         {
             title: ar.pos.discount,
@@ -129,7 +162,13 @@ export default function Cart({
                     />
                     <InputNumber
                         min={0}
-                        value={record.discount?.type === 'percentage' ? (record.discount.value / 100) : (record.discount?.value ? record.discount.value / 100 : 0)}
+                        value={
+                            record.discount?.type === 'percentage'
+                                ? record.discount.value / 100
+                                : record.discount?.value
+                                  ? record.discount.value / 100
+                                  : 0
+                        }
                         onChange={(val) => {
                             if (val === null || val === undefined) {
                                 onUpdateDiscount(record.id, undefined);
@@ -148,7 +187,11 @@ export default function Cart({
             title: ar.pos.subtotal,
             key: 'subtotal',
             width: 120,
-            render: (_: any, record: CartItem) => <Text strong><MoneyDisplay amount={record.computedSubtotal} /></Text>,
+            render: (_: any, record: CartItem) => (
+                <Text strong>
+                    <MoneyDisplay amount={record.computedSubtotal} />
+                </Text>
+            ),
         },
         {
             title: '',
@@ -156,7 +199,12 @@ export default function Cart({
             width: 60,
             align: 'center' as const,
             render: (_: any, record: CartItem) => (
-                <Button danger type="text" icon={<DeleteOutlined />} onClick={() => onRemoveItem(record.id)} />
+                <Button
+                    danger
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    onClick={() => onRemoveItem(record.id)}
+                />
             ),
         },
     ];
@@ -173,25 +221,53 @@ export default function Cart({
                             width={56}
                             height={56}
                             style={{ objectFit: 'cover', borderRadius: 8 }}
-                            fallback="https://via.placeholder.com/56?text=No+Image"
+                            fallback="/no-image.svg"
                         />
                     ) : (
-                        <div style={{ width: 56, height: 56, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                        <div
+                            style={{
+                                width: 56,
+                                height: 56,
+                                backgroundColor: '#f5f5f5',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderRadius: 8,
+                            }}
+                        >
                             <PictureOutlined style={{ fontSize: 24, color: '#d9d9d9' }} />
                         </div>
                     )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <Flex justify="space-between" align="flex-start">
-                        <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 8 }}>
+                        <div
+                            style={{
+                                fontSize: 15,
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                paddingRight: 8,
+                            }}
+                        >
                             {record.product.nameAr}
                         </div>
-                        <Button danger type="text" icon={<DeleteOutlined />} size="small" onClick={() => onRemoveItem(record.id)} style={{ marginTop: -4, marginRight: -8 }} />
+                        <Button
+                            danger
+                            type="text"
+                            icon={<DeleteOutlined />}
+                            size="small"
+                            onClick={() => onRemoveItem(record.id)}
+                            style={{ marginTop: -4, marginRight: -8 }}
+                        />
                     </Flex>
                     <Text type="secondary" style={{ fontSize: 13 }}>
                         <MoneyDisplay amount={record.computedUnitPrice} />
                         {' / '}
-                        {record.unitSold === 'sub' ? record.product.subUnit : record.product.baseUnit}
+                        {record.unitSold === 'sub'
+                            ? record.product.subUnit
+                            : record.product.baseUnit}
                     </Text>
                 </div>
             </Flex>
@@ -208,7 +284,12 @@ export default function Cart({
                             <Flex align="center" style={{ width: '100%', marginTop: 4 }}>
                                 <Button
                                     size="large"
-                                    onClick={() => onUpdateQuantity(record.id, Math.max(1, record.quantity - 1))}
+                                    onClick={() =>
+                                        onUpdateQuantity(
+                                            record.id,
+                                            Math.max(1, record.quantity - 1)
+                                        )
+                                    }
                                     style={{ borderRadius: '8px 0 0 8px', width: 44 }}
                                 >
                                     -
@@ -229,7 +310,7 @@ export default function Cart({
                                     +
                                 </Button>
                             </Flex>
-                        )
+                        ),
                     },
                     {
                         label: 'خصم الصنف',
@@ -241,7 +322,10 @@ export default function Cart({
                                     value={record.discount?.type || 'amount'}
                                     onChange={(val) => {
                                         const currentVal = record.discount?.value || 0;
-                                        onUpdateDiscount(record.id, { type: val, value: currentVal });
+                                        onUpdateDiscount(record.id, {
+                                            type: val,
+                                            value: currentVal,
+                                        });
                                     }}
                                     style={{ width: 80 }}
                                     options={[
@@ -253,29 +337,46 @@ export default function Cart({
                                     size="large"
                                     min={0}
                                     placeholder="بدون خصم"
-                                    value={record.discount?.type === 'percentage' ? (record.discount.value / 100) : (record.discount?.value ? record.discount.value / 100 : undefined)}
+                                    value={
+                                        record.discount?.type === 'percentage'
+                                            ? record.discount.value / 100
+                                            : record.discount?.value
+                                              ? record.discount.value / 100
+                                              : undefined
+                                    }
                                     onChange={(val) => {
                                         if (val === null || val === undefined) {
                                             onUpdateDiscount(record.id, undefined);
                                             return;
                                         }
                                         const type = record.discount?.type || 'amount';
-                                        const dbValue = type === 'percentage' ? val * 100 : val * 100;
-                                        onUpdateDiscount(record.id, { type, value: Math.round(dbValue) });
+                                        const dbValue =
+                                            type === 'percentage' ? val * 100 : val * 100;
+                                        onUpdateDiscount(record.id, {
+                                            type,
+                                            value: Math.round(dbValue),
+                                        });
                                     }}
                                     style={{ width: '100%' }}
                                 />
                             </Space.Compact>
-                        )
+                        ),
                     },
                     {
                         label: 'الإجمالي',
                         value: (
-                            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1677ff', paddingTop: 8 }}>
+                            <div
+                                style={{
+                                    fontSize: 18,
+                                    fontWeight: 'bold',
+                                    color: '#1677ff',
+                                    paddingTop: 8,
+                                }}
+                            >
                                 <MoneyDisplay amount={record.computedSubtotal} />
                             </div>
-                        )
-                    }
+                        ),
+                    },
                 ]}
             />
         );
@@ -285,17 +386,36 @@ export default function Cart({
 
     if (items.length === 0) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 300 }}>
-                <Empty 
-                    image={<ShoppingCartOutlined style={{ fontSize: 64, color: '#e6e6e6' }} />} 
-                    description={<Text type="secondary" style={{ fontSize: 16 }}>السلة فارغة حالياً</Text>} 
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    minHeight: 300,
+                }}
+            >
+                <Empty
+                    image={<ShoppingCartOutlined style={{ fontSize: 64, color: '#e6e6e6' }} />}
+                    description={
+                        <Text type="secondary" style={{ fontSize: 16 }}>
+                            السلة فارغة حالياً
+                        </Text>
+                    }
                 />
             </div>
         );
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: isMobile && onGoToCheckout ? 100 : 0 }}>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                paddingBottom: isMobile && onGoToCheckout ? 100 : 0,
+            }}
+        >
             <div style={{ flex: 1, minHeight: 0 }}>
                 <ResponsiveDataView
                     data={items}
@@ -305,25 +425,29 @@ export default function Cart({
                     pagination={false}
                     tableProps={{
                         scroll: { x: 'max-content', y: isMobile ? undefined : 400 },
-                        size: 'middle'
+                        size: 'middle',
                     }}
                 />
             </div>
 
             {/* --- Invoice Summary Bottom Bar --- */}
-            <div style={{ 
-                marginTop: 'auto', 
-                padding: isMobile ? '16px 0 0 0' : 24, 
-                borderTop: '2px dashed #f0f0f0',
-                background: isMobile ? 'transparent' : '#fafafa',
-                borderRadius: isMobile ? 0 : '0 0 8px 8px'
-            }}>
+            <div
+                style={{
+                    marginTop: 'auto',
+                    padding: isMobile ? '16px 0 0 0' : 24,
+                    borderTop: '2px dashed #f0f0f0',
+                    background: isMobile ? 'transparent' : '#fafafa',
+                    borderRadius: isMobile ? 0 : '0 0 8px 8px',
+                }}
+            >
                 <Flex vertical gap={12}>
                     <Flex justify="space-between" align="center">
                         <Text style={{ fontSize: 15 }}>{ar.pos.subtotal}</Text>
-                        <Text strong style={{ fontSize: 16 }}><MoneyDisplay amount={invoiceSubtotal} /></Text>
+                        <Text strong style={{ fontSize: 16 }}>
+                            <MoneyDisplay amount={invoiceSubtotal} />
+                        </Text>
                     </Flex>
-                    
+
                     <Flex justify="space-between" align="center" wrap="wrap" gap={8}>
                         <Text style={{ fontSize: 15 }}>{ar.pos.invoiceDiscount}</Text>
                         <Flex gap={8} align="center">
@@ -333,7 +457,10 @@ export default function Cart({
                                     value={invoiceDiscount?.type || 'amount'}
                                     onChange={(val) => {
                                         const currentVal = invoiceDiscount?.value || 0;
-                                        onUpdateInvoiceDiscount({ type: val as 'amount' | 'percentage', value: currentVal });
+                                        onUpdateInvoiceDiscount({
+                                            type: val as 'amount' | 'percentage',
+                                            value: currentVal,
+                                        });
                                     }}
                                     options={[
                                         { value: 'amount', label: 'ج.م' },
@@ -345,15 +472,25 @@ export default function Cart({
                                     size="middle"
                                     min={0}
                                     placeholder="0"
-                                    value={invoiceDiscount?.type === 'percentage' ? (invoiceDiscount.value / 100) : (invoiceDiscount?.value ? invoiceDiscount.value / 100 : undefined)}
+                                    value={
+                                        invoiceDiscount?.type === 'percentage'
+                                            ? invoiceDiscount.value / 100
+                                            : invoiceDiscount?.value
+                                              ? invoiceDiscount.value / 100
+                                              : undefined
+                                    }
                                     onChange={(val) => {
                                         if (!val) {
                                             onUpdateInvoiceDiscount(undefined);
                                             return;
                                         }
                                         const type = invoiceDiscount?.type || 'amount';
-                                        const dbValue = type === 'percentage' ? val * 100 : val * 100;
-                                        onUpdateInvoiceDiscount({ type, value: Math.round(dbValue) });
+                                        const dbValue =
+                                            type === 'percentage' ? val * 100 : val * 100;
+                                        onUpdateInvoiceDiscount({
+                                            type,
+                                            value: Math.round(dbValue),
+                                        });
                                     }}
                                     style={{ width: 100 }}
                                 />
@@ -369,7 +506,9 @@ export default function Cart({
                     <Divider style={{ margin: '8px 0' }} />
 
                     <Flex justify="space-between" align="center">
-                        <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>{ar.pos.total}:</Title>
+                        <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
+                            {ar.pos.total}:
+                        </Title>
                         <Title level={isMobile ? 3 : 2} style={{ margin: 0, color: '#1677ff' }}>
                             <MoneyDisplay amount={total} />
                         </Title>
@@ -379,10 +518,10 @@ export default function Cart({
 
             {onGoToCheckout && items.length > 0 && isMobile && (
                 <StickySubmitBar>
-                    <Button 
-                        type="primary" 
-                        size="large" 
-                        block 
+                    <Button
+                        type="primary"
+                        size="large"
+                        block
                         onClick={onGoToCheckout}
                         style={{ height: 56, fontSize: 18, borderRadius: 8 }}
                     >

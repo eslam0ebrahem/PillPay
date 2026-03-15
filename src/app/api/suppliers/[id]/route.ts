@@ -5,6 +5,7 @@ import Supplier from '@/lib/models/Supplier';
 import SupplierInvoice from '@/lib/models/SupplierInvoice';
 import SupplierPayment from '@/lib/models/SupplierPayment';
 import { z } from 'zod';
+import { isValidObjectId } from '@/lib/utils/validation';
 
 const updateSupplierSchema = z.object({
     name: z.string().min(1, 'اسم المورد مطلوب').optional(),
@@ -24,9 +25,19 @@ export const GET = withPermission('suppliers.view', async (req: NextRequest, con
         const params = await context.params;
         const id = params.id;
 
+        if (!isValidObjectId(id)) {
+            return NextResponse.json(
+                { error: { code: 'INVALID_INPUT', message: 'المعرف غير صالح' } },
+                { status: 400 }
+            );
+        }
+
         const supplier = await Supplier.findById(id).lean();
         if (!supplier) {
-            return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'المورد غير موجود' } }, { status: 404 });
+            return NextResponse.json(
+                { error: { code: 'NOT_FOUND', message: 'المورد غير موجود' } },
+                { status: 404 }
+            );
         }
 
         const recentInvoices = await SupplierInvoice.find({ supplierId: id })
@@ -53,21 +64,41 @@ export const PUT = withPermission('suppliers.manage', async (req: NextRequest, c
 
         const params = await context.params;
         const id = params.id;
+
+        if (!isValidObjectId(id)) {
+            return NextResponse.json(
+                { error: { code: 'INVALID_INPUT', message: 'المعرف غير صالح' } },
+                { status: 400 }
+            );
+        }
+
         const body = await req.json();
 
         // Validation
         const parsed = updateSupplierSchema.parse(body);
 
-        const supplier = await Supplier.findByIdAndUpdate(id, parsed, { new: true, runValidators: true });
+        const supplier = await Supplier.findByIdAndUpdate(id, parsed, {
+            new: true,
+            runValidators: true,
+        });
         if (!supplier) {
-            return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'المورد غير موجود' } }, { status: 404 });
+            return NextResponse.json(
+                { error: { code: 'NOT_FOUND', message: 'المورد غير موجود' } },
+                { status: 404 }
+            );
         }
 
         return NextResponse.json(supplier);
     } catch (error: any) {
         if (error.name === 'ZodError') {
-            return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: error.errors } }, { status: 400 });
+            return NextResponse.json(
+                { error: { code: 'VALIDATION_ERROR', message: error.errors } },
+                { status: 400 }
+            );
         }
-        return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: error.message } }, { status: 500 });
+        return NextResponse.json(
+            { error: { code: 'INTERNAL_ERROR', message: error.message } },
+            { status: 500 }
+        );
     }
 });

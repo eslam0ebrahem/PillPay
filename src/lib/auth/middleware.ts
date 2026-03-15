@@ -4,6 +4,7 @@ import { verifyAccessToken } from './jwt';
 import { connectDB } from '@/lib/db/connection';
 import User from '@/lib/models/User';
 import type { AuthUser, PermissionKey } from '@/lib/types';
+import { checkRateLimit, getClientIp } from '@/lib/utils/rateLimit';
 
 export type AuthenticatedHandler = (
     req: NextRequest,
@@ -33,9 +34,14 @@ export function withAuth(handler: AuthenticatedHandler) {
             const decoded = verifyAccessToken(token);
             await connectDB();
 
-            const user = await User.findById(decoded.userId).lean() as
-                | { _id: { toString(): string }; email: string; name: string; role: string; permissions: string[]; isActive: boolean }
-                | null;
+            const user = (await User.findById(decoded.userId).lean()) as {
+                _id: { toString(): string };
+                email: string;
+                name: string;
+                role: string;
+                permissions: string[];
+                isActive: boolean;
+            } | null;
 
             if (!user || !user.isActive) {
                 return NextResponse.json(
@@ -67,10 +73,7 @@ export function withAuth(handler: AuthenticatedHandler) {
  * Wrap an authenticated handler with permission check.
  * Owner role has full access; cashier requires specific permission.
  */
-export function withPermission(
-    permission: PermissionKey,
-    handler: AuthenticatedHandler
-) {
+export function withPermission(permission: PermissionKey, handler: AuthenticatedHandler) {
     return withAuth(async (req, context) => {
         const { user } = context;
 
@@ -83,4 +86,25 @@ export function withPermission(
 
         return handler(req, context);
     });
+}
+
+/**
+ * Wrap a financial endpoint handler with per-user rate limiting.
+ * Allows up to 60 requests per minute per authenticated user.
+ */
+export function withFinancialRateLimit(handler: AuthenticatedHandler): AuthenticatedHandler {
+    return async (req, context) => {
+        const key = `financial:${context.user._id}:${getClientIp(req)}`;
+        const rl = checkRateLimit(key, { max: 60, windowMs: 60_000 });
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: { code: 'RATE_LIMITED', message: 'طلبات كثيرة جداً، يرجى الانتظار' } },
+                {
+                    status: 429,
+                    headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+                }
+            );
+        }
+        return handler(req, context);
+    };
 }

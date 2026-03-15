@@ -1,8 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Button, Form, InputNumber, Select, Input, Tag, Image, App, Grid, Card, Space, Typography, Divider, Flex } from 'antd';
-import { EditOutlined, PictureOutlined, CalendarOutlined, BarcodeOutlined, ShopOutlined, InboxOutlined } from '@ant-design/icons';
+import {
+    Table,
+    Button,
+    Form,
+    InputNumber,
+    Select,
+    Input,
+    Tag,
+    Image,
+    App,
+    Grid,
+    Card,
+    Space,
+    Typography,
+    Divider,
+    Flex,
+} from 'antd';
+import {
+    EditOutlined,
+    PictureOutlined,
+    CalendarOutlined,
+    BarcodeOutlined,
+    ShopOutlined,
+    InboxOutlined,
+} from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import ar from '@/i18n/ar';
 import dayjs from 'dayjs';
@@ -37,7 +60,7 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
     const router = useRouter();
     const screens = useBreakpoint();
     const [mounted, setMounted] = useState(false);
-    
+
     const [isAdjusting, setIsAdjusting] = useState(false);
     const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
     const [form] = Form.useForm();
@@ -62,7 +85,10 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
     const handleFormChange = (changedValues: any, allValues: any) => {
         if (changedValues.location && selectedBatch) {
             form.setFieldsValue({
-                newQuantity: changedValues.location === 'floor' ? selectedBatch.floorQty : selectedBatch.warehouseQty
+                newQuantity:
+                    changedValues.location === 'floor'
+                        ? selectedBatch.floorQty
+                        : selectedBatch.warehouseQty,
             });
         }
     };
@@ -108,20 +134,45 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
                             width={48}
                             height={48}
                             style={{ objectFit: 'cover', borderRadius: 8 }}
-                            fallback="https://via.placeholder.com/48?text=No+Image"
+                            fallback="/no-image.svg"
                         />
                     ) : (
-                        <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                        <div
+                            style={{
+                                width: 48,
+                                height: 48,
+                                backgroundColor: '#f5f5f5',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderRadius: 8,
+                            }}
+                        >
                             <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
                         </div>
                     )}
                 </div>
                 <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div
+                        style={{
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        }}
+                    >
                         {product.nameAr}
                     </div>
                     {product.nameEn && (
-                        <div style={{ color: '#8c8c8c', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div
+                            style={{
+                                color: '#8c8c8c',
+                                fontSize: '12px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}
+                        >
                             {product.nameEn}
                         </div>
                     )}
@@ -198,43 +249,65 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
             {isMobile ? (
                 <Flex vertical gap={16}>
                     {batches.map((batch) => (
-                        <Card 
+                        <Card
                             key={batch._id}
-                            size="small" 
-                            style={{ width: '100%', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                            size="small"
+                            style={{
+                                width: '100%',
+                                borderRadius: 12,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                            }}
                         >
                             {renderProductInfo(batch.productId)}
-                            
+
                             <Divider style={{ margin: '12px 0' }} />
-                            
+
                             <Space orientation="vertical" size="small" style={{ width: '100%' }}>
                                 <Flex justify="space-between" align="center">
-                                    <Text type="secondary"><BarcodeOutlined /> {ar.batches.batchNumber}</Text>
+                                    <Text type="secondary">
+                                        <BarcodeOutlined /> {ar.batches.batchNumber}
+                                    </Text>
                                     <Text strong>{batch.batchNumber}</Text>
                                 </Flex>
-                                
+
                                 <Flex justify="space-between" align="center">
-                                    <Text type="secondary"><CalendarOutlined /> {ar.batches.expirationDate}</Text>
+                                    <Text type="secondary">
+                                        <CalendarOutlined /> {ar.batches.expirationDate}
+                                    </Text>
                                     {renderExpirationTag(batch.expirationDate)}
                                 </Flex>
 
                                 <Divider style={{ margin: '8px 0', borderStyle: 'dashed' }} />
 
                                 <Flex justify="space-between" align="center">
-                                    <Text type="secondary"><ShopOutlined /> {ar.batches.floorQty}</Text>
-                                    <Tag color="blue" style={{ margin: 0, padding: '0 12px', fontSize: 14 }}>{batch.floorQty}</Tag>
+                                    <Text type="secondary">
+                                        <ShopOutlined /> {ar.batches.floorQty}
+                                    </Text>
+                                    <Tag
+                                        color="blue"
+                                        style={{ margin: 0, padding: '0 12px', fontSize: 14 }}
+                                    >
+                                        {batch.floorQty}
+                                    </Tag>
                                 </Flex>
 
                                 <Flex justify="space-between" align="center">
-                                    <Text type="secondary"><InboxOutlined /> {ar.batches.warehouseQty}</Text>
-                                    <Tag color="purple" style={{ margin: 0, padding: '0 12px', fontSize: 14 }}>{batch.warehouseQty}</Tag>
+                                    <Text type="secondary">
+                                        <InboxOutlined /> {ar.batches.warehouseQty}
+                                    </Text>
+                                    <Tag
+                                        color="purple"
+                                        style={{ margin: 0, padding: '0 12px', fontSize: 14 }}
+                                    >
+                                        {batch.warehouseQty}
+                                    </Tag>
                                 </Flex>
                             </Space>
 
-                            <Button 
-                                type="primary" 
-                                icon={<EditOutlined />} 
-                                block 
+                            <Button
+                                type="primary"
+                                icon={<EditOutlined />}
+                                block
                                 style={{ marginTop: 16 }}
                                 onClick={() => openAdjustModal(batch)}
                             >
@@ -260,10 +333,10 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
                 open={isAdjusting}
                 onClose={() => setIsAdjusting(false)}
             >
-                <Form 
-                    form={form} 
-                    layout="vertical" 
-                    onFinish={handleAdjust} 
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleAdjust}
                     onValuesChange={handleFormChange}
                     style={{ marginTop: 12 }}
                 >
@@ -278,23 +351,39 @@ export default function StockOverviewClient({ batches }: StockOverviewClientProp
                         </Select>
                     </Form.Item>
 
-                    <Form.Item name="newQuantity" label="الكمية الجديدة" rules={[{ required: true }]}>
+                    <Form.Item
+                        name="newQuantity"
+                        label="الكمية الجديدة"
+                        rules={[{ required: true }]}
+                    >
                         <InputNumber min={0} size="large" style={{ width: '100%' }} />
                     </Form.Item>
 
-                    <Form.Item 
-                        name="reason" 
-                        label="سبب التعديل" 
-                        rules={[{ required: true, min: 5, message: 'يجب إدخال سبب واضح (5 حروف على الأقل)' }]}
+                    <Form.Item
+                        name="reason"
+                        label="سبب التعديل"
+                        rules={[
+                            {
+                                required: true,
+                                min: 5,
+                                message: 'يجب إدخال سبب واضح (5 حروف على الأقل)',
+                            },
+                        ]}
                     >
-                        <Input.TextArea 
-                            rows={3} 
+                        <Input.TextArea
+                            rows={3}
                             size="large"
-                            placeholder="مثال: جرد يدوي، بضاعة تالفة، خطأ إدخال سابق..." 
+                            placeholder="مثال: جرد يدوي، بضاعة تالفة، خطأ إدخال سابق..."
                         />
                     </Form.Item>
 
-                    <Button type="primary" htmlType="submit" size="large" block style={{ marginTop: 8 }}>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        block
+                        style={{ marginTop: 8 }}
+                    >
                         حفظ التعديل
                     </Button>
                 </Form>

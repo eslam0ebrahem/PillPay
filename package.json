@@ -7,7 +7,10 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "import:drugs": "node scripts/import-drugs-dataset.mjs"
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "import:drugs": "node scripts/import-drugs-dataset.mjs",
+        "prepare": "husky"
     },
     "dependencies": {
         "@ant-design/cssinjs": "^2.1.2",
@@ -26,14 +29,27 @@
         "react-dom": "^19.1.0",
         "zod": "^3.25.67"
     },
+    "lint-staged": {
+        "*.{ts,tsx,json,css,md}": "prettier --write"
+    },
     "devDependencies": {
         "@tanstack/react-query-devtools": "^5.91.3",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.2",
+        "@testing-library/user-event": "^14.6.1",
         "@types/bcrypt": "^5.0.2",
         "@types/cookie": "^1.0.0",
         "@types/jsonwebtoken": "^9.0.9",
         "@types/node": "^22.15.30",
         "@types/react": "^19.1.6",
         "@types/react-dom": "^19.1.6",
-        "typescript": "^5.8.3"
+        "@vitejs/plugin-react": "^6.0.1",
+        "husky": "^9.1.7",
+        "jsdom": "^29.0.0",
+        "lint-staged": "^16.4.0",
+        "prettier": "^3.8.1",
+        "typescript": "^5.8.3",
+        "vite-tsconfig-paths": "^6.1.1",
+        "vitest": "^4.1.0"
     }
 }

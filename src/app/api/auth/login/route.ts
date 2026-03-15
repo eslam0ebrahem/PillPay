@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { login, seedOwnerOnFirstRun } from '@/lib/services/auth.service';
 import { loginSchema } from '@/lib/utils/validation';
+import { checkRateLimit, getClientIp } from '@/lib/utils/rateLimit';
 
 export async function POST(req: NextRequest) {
+    // Rate limit: 10 login attempts per minute per IP
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`login:${ip}`, { max: 10, windowMs: 60_000 });
+    if (!rl.allowed) {
+        return NextResponse.json(
+            { error: { code: 'RATE_LIMITED', message: 'محاولات كثيرة، يرجى المحاولة بعد دقيقة' } },
+            {
+                status: 429,
+                headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+            }
+        );
+    }
+
     try {
         // Seed owner on first run
         await seedOwnerOnFirstRun();
@@ -49,11 +63,7 @@ export async function POST(req: NextRequest) {
 
         return response;
     } catch (error) {
-        const message =
-            error instanceof Error ? error.message : 'حدث خطأ غير متوقع';
-        return NextResponse.json(
-            { error: { code: 'AUTH_ERROR', message } },
-            { status: 401 }
-        );
+        const message = error instanceof Error ? error.message : 'حدث خطأ غير متوقع';
+        return NextResponse.json({ error: { code: 'AUTH_ERROR', message } }, { status: 401 });
     }
 }

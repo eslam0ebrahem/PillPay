@@ -27,10 +27,11 @@ export const GET = withPermission('suppliers.view', async (req: NextRequest) => 
         const filter: any = {};
 
         if (search) {
+            const safeSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             filter.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { phone: { $regex: search, $options: 'i' } },
-                { contactPerson: { $regex: search, $options: 'i' } },
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { phone: { $regex: safeSearch, $options: 'i' } },
+                { contactPerson: { $regex: safeSearch, $options: 'i' } },
             ];
         }
 
@@ -61,8 +62,14 @@ export const POST = withPermission('suppliers.manage', async (req: NextRequest) 
         return NextResponse.json(supplier, { status: 201 });
     } catch (error: any) {
         if (error.name === 'ZodError') {
-            return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: error.errors } }, { status: 400 });
+            return NextResponse.json(
+                { error: { code: 'VALIDATION_ERROR', message: error.errors } },
+                { status: 400 }
+            );
         }
-        return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: error.message } }, { status: 500 });
+        return NextResponse.json(
+            { error: { code: 'INTERNAL_ERROR', message: error.message } },
+            { status: 500 }
+        );
     }
 });

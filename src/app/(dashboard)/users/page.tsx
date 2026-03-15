@@ -68,74 +68,75 @@ const permissionGroups: Array<{
     title: string;
     permissions: Array<{ key: PermissionKey; label: string }>;
 }> = [
-        {
-            title: 'نقطة البيع',
-            permissions: [
-                { key: 'pos.search', label: 'بحث المنتجات' },
-                { key: 'pos.checkout', label: 'إتمام البيع' },
-                { key: 'pos.cancel', label: 'إلغاء الفاتورة' },
-            ],
-        },
-        {
-            title: 'المنتجات',
-            permissions: [
-                { key: 'products.view', label: 'عرض المنتجات' },
-                { key: 'products.manage', label: 'إدارة المنتجات' },
-            ],
-        },
-        {
-            title: 'العملاء',
-            permissions: [
-                { key: 'customers.view', label: 'عرض العملاء' },
-                { key: 'customers.create', label: 'إنشاء عميل' },
-                { key: 'customers.manage', label: 'إدارة العملاء' },
-                { key: 'customers.payments', label: 'مدفوعات العملاء' },
-            ],
-        },
-        {
-            title: 'المرتجعات',
-            permissions: [
-                { key: 'refunds.create', label: 'إنشاء مرتجع' },
-                { key: 'refunds.view', label: 'عرض المرتجعات' },
-            ],
-        },
-        {
-            title: 'المخزون',
-            permissions: [
-                { key: 'stock.view', label: 'عرض المخزون' },
-                { key: 'stock.transfer', label: 'نقل المخزون' },
-                { key: 'stock.adjust', label: 'تعديل المخزون' },
-            ],
-        },
-        {
-            title: 'الموردون',
-            permissions: [
-                { key: 'suppliers.view', label: 'عرض الموردين' },
-                { key: 'suppliers.manage', label: 'إدارة الموردين' },
-                { key: 'supplier-invoices.view', label: 'عرض فواتير الموردين' },
-                { key: 'supplier-invoices.manage', label: 'إدارة فواتير الموردين' },
-                { key: 'supplier-invoices.payments', label: 'مدفوعات الموردين' },
-            ],
-        },
-        {
-            title: 'التقارير والجرد',
-            permissions: [
-                { key: 'reports.view', label: 'عرض التقارير' },
-                { key: 'inventory-audits.manage', label: 'إدارة الجرد' },
-            ],
-        },
-        {
-            title: 'النظام',
-            permissions: [
-                { key: 'balance.adjust', label: 'تعديل الأرصدة' },
-                { key: 'users.manage', label: 'إدارة المستخدمين' },
-                { key: 'settings.view', label: 'عرض الإعدادات' },
-                { key: 'settings.manage', label: 'إدارة الإعدادات' },
-                { key: 'backup.manage', label: 'النسخ الاحتياطي' },
-                { key: 'audit-logs.view', label: 'عرض سجل المراجعة' },
-            ],
-        },
-    ];
+    {
+        title: 'نقطة البيع',
+        permissions: [
+            { key: 'pos.search', label: 'بحث المنتجات' },
+            { key: 'pos.checkout', label: 'إتمام البيع' },
+            { key: 'pos.cancel', label: 'إلغاء الفاتورة' },
+        ],
+    },
+    {
+        title: 'المنتجات',
+        permissions: [
+            { key: 'products.view', label: 'عرض المنتجات' },
+            { key: 'products.manage', label: 'إدارة المنتجات' },
+        ],
+    },
+    {
+        title: 'العملاء',
+        permissions: [
+            { key: 'customers.view', label: 'عرض العملاء' },
+            { key: 'customers.create', label: 'إنشاء عميل' },
+            { key: 'customers.manage', label: 'إدارة العملاء' },
+            { key: 'customers.payments', label: 'مدفوعات العملاء' },
+        ],
+    },
+    {
+        title: 'المرتجعات',
+        permissions: [
+            { key: 'refunds.create', label: 'إنشاء مرتجع' },
+            { key: 'refunds.view', label: 'عرض المرتجعات' },
+        ],
+    },
+    {
+        title: 'المخزون',
+        permissions: [
+            { key: 'stock.view', label: 'عرض المخزون' },
+            { key: 'stock.transfer', label: 'نقل المخزون' },
+            { key: 'stock.adjust', label: 'تعديل المخزون' },
+        ],
+    },
+    {
+        title: 'الموردون',
+        permissions: [
+            { key: 'suppliers.view', label: 'عرض الموردين' },
+            { key: 'suppliers.manage', label: 'إدارة الموردين' },
+            { key: 'supplier-invoices.view', label: 'عرض فواتير الموردين' },
+            { key: 'supplier-invoices.manage', label: 'إدارة فواتير الموردين' },
+            { key: 'supplier-invoices.payments', label: 'مدفوعات الموردين' },
+        ],
+    },
+    {
+        title: 'التقارير والجرد',
+        permissions: [
+            { key: 'reports.view', label: 'عرض التقارير' },
+            { key: 'inventory-audits.manage', label: 'إدارة الجرد' },
+        ],
+    },
+    {
+        title: 'النظام',
+        permissions: [
+            { key: 'customers.balance.adjust', label: 'تعديل أرصدة العملاء' },
+            { key: 'suppliers.balance.adjust', label: 'تعديل أرصدة الموردين' },
+            { key: 'users.manage', label: 'إدارة المستخدمين' },
+            { key: 'settings.view', label: 'عرض الإعدادات' },
+            { key: 'settings.manage', label: 'إدارة الإعدادات' },
+            { key: 'backup.manage', label: 'النسخ الاحتياطي' },
+            { key: 'audit-logs.view', label: 'عرض سجل المراجعة' },
+        ],
+    },
+];
 
 function PermissionMatrix({
     value = [],
@@ -530,7 +531,9 @@ export default function UsersPage() {
                                 <>
                                     {role === 'owner' ? (
                                         <div style={{ marginBottom: 16 }}>
-                                            <Text type="secondary">المالك يمتلك جميع الصلاحيات بشكل تلقائي.</Text>
+                                            <Text type="secondary">
+                                                المالك يمتلك جميع الصلاحيات بشكل تلقائي.
+                                            </Text>
                                         </div>
                                     ) : null}
                                     <Form.Item name="permissions">
@@ -580,9 +583,7 @@ export default function UsersPage() {
                         }
 
                         if (changedValues.role === 'cashier' && editingUser?.role === 'owner') {
-                            editForm.setFieldValue('permissions', [
-                                ...CASHIER_DEFAULT_PERMISSIONS,
-                            ]);
+                            editForm.setFieldValue('permissions', [...CASHIER_DEFAULT_PERMISSIONS]);
                         }
                     }}
                     onFinish={(values) => updateUserMutation.mutate(values)}
@@ -640,7 +641,9 @@ export default function UsersPage() {
                                 <>
                                     {role === 'owner' ? (
                                         <div style={{ marginBottom: 16 }}>
-                                            <Text type="secondary">المالك يمتلك جميع الصلاحيات بشكل تلقائي.</Text>
+                                            <Text type="secondary">
+                                                المالك يمتلك جميع الصلاحيات بشكل تلقائي.
+                                            </Text>
                                         </div>
                                     ) : null}
                                     <Form.Item name="permissions">

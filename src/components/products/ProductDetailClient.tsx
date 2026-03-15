@@ -1,7 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Tabs, Card, Button, Row, Col, Statistic, Image, Typography, App, Grid, Flex, Divider } from 'antd';
+import {
+    Tabs,
+    Card,
+    Button,
+    Row,
+    Col,
+    Statistic,
+    Image,
+    Typography,
+    App,
+    Grid,
+    Flex,
+    Divider,
+} from 'antd';
 import { EditOutlined, PlusOutlined, PictureOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
@@ -21,7 +34,11 @@ interface ProductDetailClientProps {
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
-export default function ProductDetailClient({ product, batches, stockSummary }: ProductDetailClientProps) {
+export default function ProductDetailClient({
+    product,
+    batches,
+    stockSummary,
+}: ProductDetailClientProps) {
     const { message } = App.useApp();
     const router = useRouter();
     const screens = useBreakpoint();
@@ -84,10 +101,14 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
         }
     };
 
-    const DetailItem = ({ label, value }: { label: string, value: React.ReactNode }) => (
+    const DetailItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
         <div style={{ marginBottom: isMobile ? 12 : 0 }}>
-            <Text type="secondary" style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>{label}</Text>
-            <Text strong style={{ fontSize: 15 }}>{value || '-'}</Text>
+            <Text type="secondary" style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>
+                {label}
+            </Text>
+            <Text strong style={{ fontSize: 15 }}>
+                {value || '-'}
+            </Text>
         </div>
     );
 
@@ -96,38 +117,67 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
             key: '1',
             label: 'تفاصيل المخزون',
             children: (
-                <Card 
-                    size={isMobile ? "small" : "medium"} 
-                    variant={isMobile ? 'borderless' : 'outlined'} 
-                    style={{ backgroundColor: isMobile ? 'transparent' : '#fff', boxShadow: 'none' }}
+                <Card
+                    size={isMobile ? 'small' : 'medium'}
+                    variant={isMobile ? 'borderless' : 'outlined'}
+                    style={{
+                        backgroundColor: isMobile ? 'transparent' : '#fff',
+                        boxShadow: 'none',
+                    }}
                     styles={{ body: { padding: isMobile ? '12px 0' : 24 } }}
                 >
                     <Row gutter={[12, 12]} style={{ marginBottom: 24 }}>
                         <Col xs={24} sm={8}>
-                            <Card size="small" style={{ backgroundColor: '#e6f4ff', borderColor: '#91caff' }}>
-                                <Statistic title={<Text strong>{ar.products.totalStock}</Text>} value={stockSummary.totalQty} suffix={product.baseUnit} styles={{ content: { color: '#1677ff' } }} />
+                            <Card
+                                size="small"
+                                style={{ backgroundColor: '#e6f4ff', borderColor: '#91caff' }}
+                            >
+                                <Statistic
+                                    title={<Text strong>{ar.products.totalStock}</Text>}
+                                    value={stockSummary.totalQty}
+                                    suffix={product.baseUnit}
+                                    styles={{ content: { color: '#1677ff' } }}
+                                />
                             </Card>
                         </Col>
                         <Col xs={12} sm={8}>
-                            <Card size="small" style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f' }}>
-                                <Statistic title={ar.products.floorStock} value={stockSummary.totalFloorQty} suffix={product.baseUnit} styles={{ content: { color: '#389e0d' } }} />
+                            <Card
+                                size="small"
+                                style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f' }}
+                            >
+                                <Statistic
+                                    title={ar.products.floorStock}
+                                    value={stockSummary.totalFloorQty}
+                                    suffix={product.baseUnit}
+                                    styles={{ content: { color: '#389e0d' } }}
+                                />
                             </Card>
                         </Col>
                         <Col xs={12} sm={8}>
-                            <Card size="small" style={{ backgroundColor: '#f9f0ff', borderColor: '#d3adf7' }}>
-                                <Statistic title={ar.products.warehouseStock} value={stockSummary.totalWarehouseQty} suffix={product.baseUnit} styles={{ content: { color: '#531dab' } }} />
+                            <Card
+                                size="small"
+                                style={{ backgroundColor: '#f9f0ff', borderColor: '#d3adf7' }}
+                            >
+                                <Statistic
+                                    title={ar.products.warehouseStock}
+                                    value={stockSummary.totalWarehouseQty}
+                                    suffix={product.baseUnit}
+                                    styles={{ content: { color: '#531dab' } }}
+                                />
                             </Card>
                         </Col>
                     </Row>
-                    
-                    <Flex 
-                        vertical={isMobile} 
-                        align={isMobile ? 'stretch' : 'center'} 
-                        justify="space-between" 
+
+                    <Flex
+                        vertical={isMobile}
+                        align={isMobile ? 'stretch' : 'center'}
+                        justify="space-between"
                         gap={12}
                         style={{ marginBottom: 16 }}
                     >
-                        <Title level={isMobile ? 5 : 4} style={{ margin: 0 }}>سجل التشغيلات (Batches)</Title>
+                        <Title level={isMobile ? 5 : 4} style={{ margin: 0 }}>
+                            سجل التشغيلات (Batches)
+                        </Title>
                         <Button
                             type="dashed"
                             icon={<PlusOutlined />}
@@ -137,7 +187,7 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                             {ar.initialStock.addInitialStock}
                         </Button>
                     </Flex>
-                    
+
                     <BatchViewer batches={batches} expiringSoonDays={90} />
                 </Card>
             ),
@@ -148,56 +198,117 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
             children: (
                 <div style={{ marginTop: 16 }}>
                     {!isEditing ? (
-                        <Card 
-                            size={isMobile ? "small" : "medium"}
+                        <Card
+                            size={isMobile ? 'small' : 'medium'}
                             actions={[
-                                <Button key="edit" type="link" icon={<EditOutlined />} onClick={() => setIsEditing(true)} block>
+                                <Button
+                                    key="edit"
+                                    type="link"
+                                    icon={<EditOutlined />}
+                                    onClick={() => setIsEditing(true)}
+                                    block
+                                >
                                     تعديل بيانات المنتج
-                                </Button>
+                                </Button>,
                             ]}
                         >
                             <Row gutter={[16, 24]}>
-                                <Col xs={24} sm={12}><DetailItem label={ar.products.barcode} value={product.barcode} /></Col>
-                                <Col xs={24} sm={12}><DetailItem label={ar.products.barcode2} value={product.barcode2} /></Col>
-                                
-                                {isMobile && <Divider style={{ margin: 0 }} />}
-                                
-                                <Col xs={24} sm={12}><DetailItem label={ar.products.brand} value={product.brand?.nameEn || product.brand?.nameAr || product.manufacturer} /></Col>
-                                <Col xs={24} sm={12}><DetailItem label={ar.products.manufacturer} value={product.manufacturer} /></Col>
-                                
+                                <Col xs={24} sm={12}>
+                                    <DetailItem
+                                        label={ar.products.barcode}
+                                        value={product.barcode}
+                                    />
+                                </Col>
+                                <Col xs={24} sm={12}>
+                                    <DetailItem
+                                        label={ar.products.barcode2}
+                                        value={product.barcode2}
+                                    />
+                                </Col>
+
                                 {isMobile && <Divider style={{ margin: 0 }} />}
 
-                                <Col xs={12} sm={12}><DetailItem label={ar.products.sellingPrice} value={<span style={{ color: '#237804' }}>{formatPiasters(product.sellingPrice)}</span>} /></Col>
-                                <Col xs={12} sm={12}><DetailItem label={ar.products.baseUnit} value={product.baseUnit} /></Col>
+                                <Col xs={24} sm={12}>
+                                    <DetailItem
+                                        label={ar.products.brand}
+                                        value={
+                                            product.brand?.nameEn ||
+                                            product.brand?.nameAr ||
+                                            product.manufacturer
+                                        }
+                                    />
+                                </Col>
+                                <Col xs={24} sm={12}>
+                                    <DetailItem
+                                        label={ar.products.manufacturer}
+                                        value={product.manufacturer}
+                                    />
+                                </Col>
 
                                 {isMobile && <Divider style={{ margin: 0 }} />}
-                                
-                                <Col xs={24}><DetailItem label={ar.products.activeIngredient} value={product.activeIngredient} /></Col>
+
+                                <Col xs={12} sm={12}>
+                                    <DetailItem
+                                        label={ar.products.sellingPrice}
+                                        value={
+                                            <span style={{ color: '#237804' }}>
+                                                {formatPiasters(product.sellingPrice)}
+                                            </span>
+                                        }
+                                    />
+                                </Col>
+                                <Col xs={12} sm={12}>
+                                    <DetailItem
+                                        label={ar.products.baseUnit}
+                                        value={product.baseUnit}
+                                    />
+                                </Col>
+
+                                {isMobile && <Divider style={{ margin: 0 }} />}
+
+                                <Col xs={24}>
+                                    <DetailItem
+                                        label={ar.products.activeIngredient}
+                                        value={product.activeIngredient}
+                                    />
+                                </Col>
                             </Row>
                         </Card>
                     ) : (
-                        <Card size={isMobile ? "small" : "medium"}>
+                        <Card size={isMobile ? 'small' : 'medium'}>
                             <div style={{ marginBottom: 16 }}>
-                                <Button icon={<ArrowLeftOutlined />} onClick={() => setIsEditing(false)} type="default">
+                                <Button
+                                    icon={<ArrowLeftOutlined />}
+                                    onClick={() => setIsEditing(false)}
+                                    type="default"
+                                >
                                     العودة للتفاصيل
                                 </Button>
                             </div>
-                            <ProductForm initialValues={product} onSubmit={handleUpdate} isSubmitting={isSubmitting} mode="edit" />
+                            <ProductForm
+                                initialValues={product}
+                                onSubmit={handleUpdate}
+                                isSubmitting={isSubmitting}
+                                mode="edit"
+                            />
                         </Card>
                     )}
                 </div>
-            )
-        }
+            ),
+        },
     ];
 
     if (!mounted) return null;
 
     return (
         <div>
-            <Card style={{ marginBottom: 24, borderRadius: 12, overflow: 'hidden' }} styles={{ body: { padding: isMobile ? 16 : 24 } }}>
-                <Flex 
-                    vertical={isMobile} 
-                    gap={24} 
+            <Card
+                style={{ marginBottom: 24, borderRadius: 12, overflow: 'hidden' }}
+                styles={{ body: { padding: isMobile ? 16 : 24 } }}
+            >
+                <Flex
+                    vertical={isMobile}
+                    gap={24}
                     align={isMobile ? 'center' : 'flex-start'}
                     style={{ textAlign: isMobile ? 'center' : 'right' }} // Assuming RTL
                 >
@@ -208,23 +319,51 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                                 alt={product.nameAr}
                                 width={isMobile ? 100 : 120}
                                 height={isMobile ? 100 : 120}
-                                style={{ objectFit: 'cover', borderRadius: 12, border: '1px solid #f0f0f0' }}
-                                fallback="https://via.placeholder.com/120?text=No+Image"
+                                style={{
+                                    objectFit: 'cover',
+                                    borderRadius: 12,
+                                    border: '1px solid #f0f0f0',
+                                }}
+                                fallback="/no-image.svg"
                             />
                         ) : (
-                            <div style={{ width: isMobile ? 100 : 120, height: isMobile ? 100 : 120, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 12, border: '1px solid #f0f0f0' }}>
+                            <div
+                                style={{
+                                    width: isMobile ? 100 : 120,
+                                    height: isMobile ? 100 : 120,
+                                    backgroundColor: '#f5f5f5',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    borderRadius: 12,
+                                    border: '1px solid #f0f0f0',
+                                }}
+                            >
                                 <PictureOutlined style={{ fontSize: 40, color: '#d9d9d9' }} />
                             </div>
                         )}
                     </div>
                     <div style={{ flex: 1 }}>
-                        <Title level={isMobile ? 3 : 2} style={{ margin: 0, marginBottom: 8, color: '#1f1f1f' }}>{product.nameAr}</Title>
-                        {product.nameEn && <Title level={isMobile ? 5 : 4} type="secondary" style={{ margin: 0, fontWeight: 400 }}>{product.nameEn}</Title>}
+                        <Title
+                            level={isMobile ? 3 : 2}
+                            style={{ margin: 0, marginBottom: 8, color: '#1f1f1f' }}
+                        >
+                            {product.nameAr}
+                        </Title>
+                        {product.nameEn && (
+                            <Title
+                                level={isMobile ? 5 : 4}
+                                type="secondary"
+                                style={{ margin: 0, fontWeight: 400 }}
+                            >
+                                {product.nameEn}
+                            </Title>
+                        )}
                     </div>
                 </Flex>
             </Card>
 
-            <Tabs defaultActiveKey="1" items={items} size={isMobile ? "small" : "middle"} />
+            <Tabs defaultActiveKey="1" items={items} size={isMobile ? 'small' : 'middle'} />
 
             <MobileFormWrapper
                 title={ar.initialStock.title}
@@ -234,9 +373,18 @@ export default function ProductDetailClient({ product, batches, stockSummary }: 
                 {isInitialStockModalOpen && (
                     <div style={{ padding: isMobile ? '12px 0' : 0 }}>
                         <InitialStockForm
-                            products={[{ _id: product._id, nameAr: product.nameAr, barcode: product.barcode, barcode2: product.barcode2 }]}
+                            products={[
+                                {
+                                    _id: product._id,
+                                    nameAr: product.nameAr,
+                                    barcode: product.barcode,
+                                    barcode2: product.barcode2,
+                                },
+                            ]}
                             preselectedProductId={product._id}
-                            onSubmit={async (values) => await initialStockMutation.mutateAsync(values)}
+                            onSubmit={async (values) =>
+                                await initialStockMutation.mutateAsync(values)
+                            }
                             isLoading={initialStockMutation.isPending}
                         />
                     </div>

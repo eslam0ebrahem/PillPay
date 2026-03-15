@@ -44,9 +44,8 @@ next-env.d.ts
 # logs
 *.log
 
-# Data and scripts
+# Data and generated files
 dataSet/
-scripts/
 logs/
 .agent/
 .claude/

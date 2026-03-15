@@ -75,20 +75,44 @@ export default function ProductList({
                                 width={48}
                                 height={48}
                                 style={{ objectFit: 'cover', borderRadius: 4 }}
-                                fallback="https://via.placeholder.com/48?text=No+Image"
+                                fallback="/no-image.svg"
                             />
                         ) : (
-                            <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                            <div
+                                style={{
+                                    width: 48,
+                                    height: 48,
+                                    backgroundColor: '#f5f5f5',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    borderRadius: 4,
+                                }}
+                            >
                                 <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
                             </div>
                         )}
                     </div>
                     <div style={{ overflow: 'hidden' }}>
-                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div
+                            style={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}
+                        >
                             <Text strong>{record.nameAr}</Text>
                         </div>
                         {record.nameEn && (
-                            <div style={{ color: '#8c8c8c', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div
+                                style={{
+                                    color: '#8c8c8c',
+                                    fontSize: '12px',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                }}
+                            >
                                 {record.nameEn}
                             </div>
                         )}
@@ -159,7 +183,9 @@ export default function ProductList({
         if (record.totalQty === 0) stockColor = 'red';
         else if (record.totalQty <= record.lowStockThreshold) stockColor = 'gold';
 
-        const brand = record.brand ? (record.brand.nameEn || record.brand.nameAr) : record.manufacturer;
+        const brand = record.brand
+            ? record.brand.nameEn || record.brand.nameAr
+            : record.manufacturer;
 
         // Structured Header for the Card
         const cardHeader = (
@@ -172,35 +198,49 @@ export default function ProductList({
                             width={56}
                             height={56}
                             style={{ objectFit: 'cover', borderRadius: 8 }}
-                            fallback="https://via.placeholder.com/56?text=No+Image"
+                            fallback="/no-image.svg"
                         />
                     ) : (
-                        <div style={{ width: 56, height: 56, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                        <div
+                            style={{
+                                width: 56,
+                                height: 56,
+                                backgroundColor: '#f5f5f5',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderRadius: 8,
+                            }}
+                        >
                             <PictureOutlined style={{ fontSize: 24, color: '#d9d9d9' }} />
                         </div>
                     )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <Link href={`/products/${record._id}`}>
-                        <div style={{ 
-                            color: '#1677ff', 
-                            fontSize: 16, 
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis' 
-                        }}>
+                        <div
+                            style={{
+                                color: '#1677ff',
+                                fontSize: 16,
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}
+                        >
                             {record.nameAr}
                         </div>
                     </Link>
                     {record.nameEn && (
-                        <div style={{ 
-                            color: '#8c8c8c', 
-                            fontSize: 12,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                        }}>
+                        <div
+                            style={{
+                                color: '#8c8c8c',
+                                fontSize: 12,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}
+                        >
                             {record.nameEn}
                         </div>
                     )}
@@ -209,7 +249,12 @@ export default function ProductList({
                             {record.totalQty} {record.baseUnit}
                         </Tag>
                         {!record.isActive && (
-                            <Tag color="default" style={{ marginInlineStart: 4, marginInlineEnd: 0 }}>غير نشط</Tag>
+                            <Tag
+                                color="default"
+                                style={{ marginInlineStart: 4, marginInlineEnd: 0 }}
+                            >
+                                غير نشط
+                            </Tag>
                         )}
                     </div>
                 </div>
@@ -221,15 +266,22 @@ export default function ProductList({
                 title={cardHeader}
                 // Removed the complex badge to prevent overlapping on small screens, moved price to properties
                 properties={[
-                    { 
-                        label: 'السعر', 
-                        value: <Text strong style={{ fontSize: 16, color: '#237804' }}>{formatPiasters(record.sellingPrice)}</Text> 
+                    {
+                        label: 'السعر',
+                        value: (
+                            <Text strong style={{ fontSize: 16, color: '#237804' }}>
+                                {formatPiasters(record.sellingPrice)}
+                            </Text>
+                        ),
                     },
                     { label: ar.products.barcode, value: record.barcode || '-' },
-                    { label: ar.products.brand, value: brand || '-' }
+                    { label: ar.products.brand, value: brand || '-' },
                 ]}
                 actions={
-                    <Link href={`/products/${record._id}`} style={{ width: '100%', display: 'block' }}>
+                    <Link
+                        href={`/products/${record._id}`}
+                        style={{ width: '100%', display: 'block' }}
+                    >
                         <Button type="primary" size="middle" icon={<EyeOutlined />} block>
                             التفاصيل
                         </Button>
@@ -245,9 +297,9 @@ export default function ProductList({
         <div>
             {/* Search and Filters Section */}
             <div style={{ marginBottom: 16 }}>
-                <Flex 
+                <Flex
                     vertical={isMobile} // Stack vertically on mobile, horizontally on desktop
-                    gap={12} 
+                    gap={12}
                     align={isMobile ? 'stretch' : 'center'}
                 >
                     <Space.Compact style={{ flex: 1, width: '100%' }}>
@@ -255,7 +307,7 @@ export default function ProductList({
                             placeholder={ar.products.searchPlaceholder}
                             allowClear
                             onSearch={onSearch}
-                            size={isMobile ? "large" : "middle"}
+                            size={isMobile ? 'large' : 'middle'}
                             style={{ width: '100%' }}
                         />
                         <BarcodeScanner
@@ -264,13 +316,13 @@ export default function ProductList({
                             buttonProps={{ size: isMobile ? 'large' : 'middle' }}
                         />
                     </Space.Compact>
-                    
+
                     <Select
                         placeholder={ar.products.brand}
                         allowClear
                         showSearch
                         optionFilterProp="label"
-                        size={isMobile ? "large" : "middle"}
+                        size={isMobile ? 'large' : 'middle'}
                         style={{ width: isMobile ? '100%' : 200 }}
                         loading={isLoadingBrands}
                         value={selectedBrand || undefined}
@@ -294,7 +346,7 @@ export default function ProductList({
                 tableProps={{
                     onChange: onTableChange,
                     scroll: { x: 'max-content' },
-                    size: 'small'
+                    size: 'small',
                 }}
             />
         </div>

@@ -1,7 +1,20 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Input, Button, Typography, Space, Tag, InputNumber, Radio, Image, App, Grid, Flex, Divider } from 'antd';
+import {
+    Input,
+    Button,
+    Typography,
+    Space,
+    Tag,
+    InputNumber,
+    Radio,
+    Image,
+    App,
+    Grid,
+    Flex,
+    Divider,
+} from 'antd';
 import { ScanOutlined, SearchOutlined, PictureOutlined, PlusOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
@@ -31,7 +44,11 @@ export interface ProductSearchResult {
 }
 
 interface ProductSearchProps {
-    onAddToCart: (item: { product: ProductSearchResult; quantity: number; unitSold: UnitSold }) => void;
+    onAddToCart: (item: {
+        product: ProductSearchResult;
+        quantity: number;
+        unitSold: UnitSold;
+    }) => void;
 }
 
 // Debounce hook
@@ -72,7 +89,11 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
 
     const isMobile = screens.xs || (screens.sm && !screens.md);
 
-    const { data: results, isFetching, refetch } = useQuery({
+    const {
+        data: results,
+        isFetching,
+        refetch,
+    } = useQuery({
         queryKey: ['productSearch', debouncedQuery],
         queryFn: async () => {
             if (!debouncedQuery) return [];
@@ -80,7 +101,10 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
             const res = await fetch('/api/pos/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: debouncedQuery, type: isBarcode ? 'barcode' : 'text' }),
+                body: JSON.stringify({
+                    query: debouncedQuery,
+                    type: isBarcode ? 'barcode' : 'text',
+                }),
             });
             if (!res.ok) throw new Error('Search failed');
             return res.json() as Promise<ProductSearchResult[]>;
@@ -164,20 +188,46 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                             width={64}
                             height={64}
                             style={{ objectFit: 'cover', borderRadius: 8 }}
-                            fallback="https://via.placeholder.com/64?text=No+Image"
+                            fallback="/no-image.svg"
                         />
                     ) : (
-                        <div style={{ width: 64, height: 64, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                        <div
+                            style={{
+                                width: 64,
+                                height: 64,
+                                backgroundColor: '#f5f5f5',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderRadius: 8,
+                            }}
+                        >
                             <PictureOutlined style={{ fontSize: 24, color: '#d9d9d9' }} />
                         </div>
                     )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div
+                        style={{
+                            fontSize: 16,
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        }}
+                    >
                         {item.nameAr}
                     </div>
                     {item.nameEn && (
-                        <div style={{ color: '#8c8c8c', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div
+                            style={{
+                                color: '#8c8c8c',
+                                fontSize: 13,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}
+                        >
                             {item.nameEn}
                         </div>
                     )}
@@ -191,18 +241,21 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                 properties={[
                     {
                         label: 'السعر',
-                        value: <MoneyDisplay amount={item.sellingPrice} />
+                        value: <MoneyDisplay amount={item.sellingPrice} />,
                     },
                     {
                         label: 'المخزون',
-                        value: item.floorStock > 0 ? (
-                            <Tag color="green" style={{ margin: 0, padding: '2px 8px' }}>
-                                {item.floorStock} {item.baseUnit}
-                            </Tag>
-                        ) : (
-                            <Tag color="error" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
-                        )
-                    }
+                        value:
+                            item.floorStock > 0 ? (
+                                <Tag color="green" style={{ margin: 0, padding: '2px 8px' }}>
+                                    {item.floorStock} {item.baseUnit}
+                                </Tag>
+                            ) : (
+                                <Tag color="error" style={{ margin: 0 }}>
+                                    {ar.pos.outOfStock}
+                                </Tag>
+                            ),
+                    },
                 ]}
                 actions={
                     <Button
@@ -236,17 +289,33 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                                 width={48}
                                 height={48}
                                 style={{ objectFit: 'cover', borderRadius: 4 }}
-                                fallback="https://via.placeholder.com/48?text=No+Image"
+                                fallback="/no-image.svg"
                             />
                         ) : (
-                            <div style={{ width: 48, height: 48, backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
+                            <div
+                                style={{
+                                    width: 48,
+                                    height: 48,
+                                    backgroundColor: '#f5f5f5',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    borderRadius: 4,
+                                }}
+                            >
                                 <PictureOutlined style={{ fontSize: 20, color: '#d9d9d9' }} />
                             </div>
                         )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                        <Text strong style={{ fontSize: 15 }}>{item.nameAr}</Text>
-                        {item.nameEn && <Text type="secondary" style={{ fontSize: 13 }}>{item.nameEn}</Text>}
+                        <Text strong style={{ fontSize: 15 }}>
+                            {item.nameAr}
+                        </Text>
+                        {item.nameEn && (
+                            <Text type="secondary" style={{ fontSize: 13 }}>
+                                {item.nameEn}
+                            </Text>
+                        )}
                         <Space wrap size="middle">
                             <MoneyDisplay amount={item.sellingPrice} />
                             {item.floorStock > 0 ? (
@@ -254,9 +323,15 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                                     {ar.pos.inStock}: {item.floorStock} {item.baseUnit}
                                 </Tag>
                             ) : (
-                                <Tag color="error" style={{ margin: 0 }}>{ar.pos.outOfStock}</Tag>
+                                <Tag color="error" style={{ margin: 0 }}>
+                                    {ar.pos.outOfStock}
+                                </Tag>
                             )}
-                            {item.barcode && <Text type="secondary" style={{ fontSize: 12 }}><ScanOutlined /> {item.barcode}</Text>}
+                            {item.barcode && (
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    <ScanOutlined /> {item.barcode}
+                                </Text>
+                            )}
                         </Space>
                     </div>
                 </div>
@@ -304,7 +379,7 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                     buttonProps={{
                         size: 'large',
                         type: 'primary',
-                        style: { width: 56, height: 56, borderRadius: 12 }
+                        style: { width: 56, height: 56, borderRadius: 12 },
                     }}
                 />
             </Flex>
@@ -319,8 +394,8 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                 pagination={false}
                 tableProps={{
                     showHeader: false,
-                    size: "small",
-                    locale: { emptyText: ar.actions.noData }
+                    size: 'small',
+                    locale: { emptyText: ar.actions.noData },
                 }}
             />
 
@@ -332,9 +407,18 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
             >
                 {selectedProduct && (
                     <div style={{ padding: isMobile ? '12px 0' : 0 }}>
-                        <Flex vertical align="center" gap={4} style={{ textAlign: 'center', marginBottom: 24 }}>
-                            <Text strong style={{ fontSize: 20 }}>{selectedProduct.nameAr}</Text>
-                            {selectedProduct.nameEn && <Text type="secondary">{selectedProduct.nameEn}</Text>}
+                        <Flex
+                            vertical
+                            align="center"
+                            gap={4}
+                            style={{ textAlign: 'center', marginBottom: 24 }}
+                        >
+                            <Text strong style={{ fontSize: 20 }}>
+                                {selectedProduct.nameAr}
+                            </Text>
+                            {selectedProduct.nameEn && (
+                                <Text type="secondary">{selectedProduct.nameEn}</Text>
+                            )}
                             <div style={{ marginTop: 8 }}>
                                 <MoneyDisplay amount={selectedProduct.sellingPrice} />
                             </div>
@@ -344,7 +428,9 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
 
                         <Flex vertical gap={16}>
                             <div>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.pos.quantity}: </Text>
+                                <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                                    {ar.pos.quantity}:{' '}
+                                </Text>
                                 <InputNumber
                                     min={1}
                                     max={selectedProduct.floorStock} // Prevent adding more than available stock
@@ -357,7 +443,9 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
 
                             {selectedProduct.subUnit && selectedProduct.subUnitConversionFactor && (
                                 <div>
-                                    <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.products.baseUnit}: </Text>
+                                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                                        {ar.products.baseUnit}:{' '}
+                                    </Text>
                                     <Radio.Group
                                         value={unitType}
                                         onChange={(e) => setUnitType(e.target.value)}
@@ -366,10 +454,16 @@ export default function ProductSearch({ onAddToCart }: ProductSearchProps) {
                                         buttonStyle="solid"
                                         size="large"
                                     >
-                                        <Radio.Button value="base" style={{ flex: 1, textAlign: 'center' }}>
+                                        <Radio.Button
+                                            value="base"
+                                            style={{ flex: 1, textAlign: 'center' }}
+                                        >
                                             {selectedProduct.baseUnit}
                                         </Radio.Button>
-                                        <Radio.Button value="sub" style={{ flex: 1, textAlign: 'center' }}>
+                                        <Radio.Button
+                                            value="sub"
+                                            style={{ flex: 1, textAlign: 'center' }}
+                                        >
                                             {selectedProduct.subUnit}
                                         </Radio.Button>
                                     </Radio.Group>

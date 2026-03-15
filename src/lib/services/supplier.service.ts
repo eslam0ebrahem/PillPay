@@ -24,7 +24,7 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
         const invoice = new SupplierInvoice({
             ...invoiceData,
             remainingBalance: invoiceData.total - (invoiceData.paidAmount || 0),
-            status: 'active'
+            status: 'active',
         });
         await invoice.save({ session });
 
@@ -64,14 +64,12 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
                 supplierId: invoice.supplierId,
                 supplierInvoiceId: invoice._id,
                 amount: invoiceData.paidAmount,
-                paidBy: userId
+                paidBy: userId,
             });
             await payment.save({ session });
             createdPaymentId = payment._id.toString();
             createdPaymentAmount = invoiceData.paidAmount;
         }
-
-        await session.commitTransaction();
 
         createdInvoiceId = invoice._id.toString();
         createdInvoiceNumber = invoice.invoiceNumber;
@@ -84,7 +82,8 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
             entityType: 'SupplierInvoice',
             entityId: createdInvoiceId,
             invoiceNumber: createdInvoiceNumber,
-            details: { invoiceNumber: createdInvoiceNumber, total: createdInvoiceTotal }
+            details: { invoiceNumber: createdInvoiceNumber, total: createdInvoiceTotal },
+            session,
         });
 
         if (createdPaymentId) {
@@ -98,9 +97,12 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
                     amount: createdPaymentAmount,
                     supplierId: createdSupplierId,
                     supplierInvoiceId: createdInvoiceId,
-                }
+                },
+                session,
             });
         }
+
+        await session.commitTransaction();
 
         return invoice;
     } catch (error) {
@@ -111,7 +113,12 @@ export async function createSupplierInvoice(invoiceData: any, userId: string) {
     }
 }
 
-export async function recordSupplierPayment(supplierId: string, amount: number, userId: string, invoiceId?: string) {
+export async function recordSupplierPayment(
+    supplierId: string,
+    amount: number,
+    userId: string,
+    invoiceId?: string
+) {
     await connectDB();
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -124,14 +131,14 @@ export async function recordSupplierPayment(supplierId: string, amount: number, 
             supplierId,
             supplierInvoiceId: invoiceId,
             amount,
-            paidBy: userId
+            paidBy: userId,
         });
         await payment.save({ session });
 
         const supplier = await Supplier.findById(supplierId).session(session);
         if (!supplier) throw new Error('المورد غير موجود');
 
-        supplier.totalOwed -= amount; // Amount paid reduces what we owe
+        supplier.totalOwed = Math.max(0, supplier.totalOwed - amount); // Amount paid reduces what we owe
         await supplier.save({ session });
 
         if (invoiceId) {
@@ -144,7 +151,6 @@ export async function recordSupplierPayment(supplierId: string, amount: number, 
             }
         }
 
-        await session.commitTransaction();
         paymentId = payment._id.toString();
 
         await logAction({
@@ -153,8 +159,11 @@ export async function recordSupplierPayment(supplierId: string, amount: number, 
             entityType: 'SupplierPayment',
             entityId: paymentId,
             invoiceNumber,
-            details: { amount, supplierId, invoiceId }
+            details: { amount, supplierId, invoiceId },
+            session,
         });
+
+        await session.commitTransaction();
 
         return payment;
     } catch (error) {
@@ -179,13 +188,17 @@ export async function voidSupplierInvoice(invoiceId: string, userId: string) {
         // This is simplified: if any batch's warehouseQty + floorQty < initial quantity, we cannot void.
         const batches = await Batch.find({ supplierInvoiceId: invoiceId }).session(session);
         for (const batch of batches) {
-            const originalItem = invoice.items.find(i =>
-                i.productId.toString() === batch.productId.toString() && i.batchNumber === batch.batchNumber
+            const originalItem = invoice.items.find(
+                (i) =>
+                    i.productId.toString() === batch.productId.toString() &&
+                    i.batchNumber === batch.batchNumber
             );
             if (!originalItem) continue;
 
             if (batch.warehouseQty + batch.floorQty < originalItem.quantity) {
-                throw new Error(`لا يمكن إلغاء الفاتورة: تم استخدام أو بيع جزء من التشغيلة ${batch.batchNumber}`);
+                throw new Error(
+                    `لا يمكن إلغاء الفاتورة: تم استخدام أو بيع جزء من التشغيلة ${batch.batchNumber}`
+                );
             }
         }
 
@@ -204,16 +217,17 @@ export async function voidSupplierInvoice(invoiceId: string, userId: string) {
         invoice.remainingBalance = 0;
         await invoice.save({ session });
 
-        await session.commitTransaction();
-
         await logAction({
             userId,
             action: 'SUPPLIER_INVOICE_VOIDED',
             entityType: 'SupplierInvoice',
             entityId: invoiceId,
             invoiceNumber: invoice.invoiceNumber,
-            details: { invoiceNumber: invoice.invoiceNumber }
+            details: { invoiceNumber: invoice.invoiceNumber },
+            session,
         });
+
+        await session.commitTransaction();
 
         return invoice;
     } catch (error) {
@@ -224,7 +238,12 @@ export async function voidSupplierInvoice(invoiceId: string, userId: string) {
     }
 }
 
-export async function adjustSupplierBalance(supplierId: string, amountChange: number, reason: string, userId: string) {
+export async function adjustSupplierBalance(
+    supplierId: string,
+    amountChange: number,
+    reason: string,
+    userId: string
+) {
     await connectDB();
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -234,18 +253,20 @@ export async function adjustSupplierBalance(supplierId: string, amountChange: nu
         if (!supplier) throw new Error('المورد غير موجود');
 
         const oldBalance = supplier.totalOwed;
-        supplier.totalOwed += amountChange;
+        supplier.totalOwed = Math.max(0, supplier.totalOwed + amountChange);
 
         await supplier.save({ session });
-        await session.commitTransaction();
 
         await logAction({
             userId,
             action: 'SUPPLIER_BALANCE_ADJUSTED',
             entityType: 'Supplier',
             entityId: supplierId,
-            details: { oldBalance, newBalance: supplier.totalOwed, amountChange, reason }
+            details: { oldBalance, newBalance: supplier.totalOwed, amountChange, reason },
+            session,
         });
+
+        await session.commitTransaction();
 
         return supplier;
     } catch (error) {
@@ -300,15 +321,15 @@ export async function processSupplierReturn(returnData: any, userId: string) {
         await supplier.save({ session });
 
         if (returnData.supplierInvoiceId) {
-            const invoice = await SupplierInvoice.findById(returnData.supplierInvoiceId).session(session);
+            const invoice = await SupplierInvoice.findById(returnData.supplierInvoiceId).session(
+                session
+            );
             if (invoice) {
                 invoice.total = Math.max(0, invoice.total - returnData.total);
                 invoice.remainingBalance = Math.max(0, invoice.remainingBalance - returnData.total);
                 await invoice.save({ session });
             }
         }
-
-        await session.commitTransaction();
 
         await logAction({
             userId,
@@ -319,8 +340,11 @@ export async function processSupplierReturn(returnData: any, userId: string) {
                 supplierId: returnData.supplierId,
                 total: returnData.total,
                 itemCount: returnData.items.length,
-            }
+            },
+            session,
         });
+
+        await session.commitTransaction();
 
         return supplierReturn;
     } catch (error) {

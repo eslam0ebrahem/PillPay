@@ -55,6 +55,8 @@ auditLogSchema.index({ action: 1, timestamp: -1 });
 auditLogSchema.index({ entityType: 1, entityId: 1 });
 // For reports: filtering by date and status
 auditLogSchema.index({ timestamp: -1 });
+// For product-specific audit history
+auditLogSchema.index({ productId: 1, timestamp: -1 }, { sparse: true });
 
 // IMMUTABILITY: Block update and delete operations
 auditLogSchema.pre('updateOne', function () {

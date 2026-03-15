@@ -1,7 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, InputNumber, Button, Typography, Select, App, Grid, Flex, Radio, Divider, Space } from 'antd';
+import {
+    Card,
+    InputNumber,
+    Button,
+    Typography,
+    Select,
+    App,
+    Grid,
+    Flex,
+    Radio,
+    Divider,
+    Space,
+    Descriptions,
+} from 'antd';
 import { DollarOutlined, UserOutlined } from '@ant-design/icons';
 import ar from '@/i18n/ar';
 import MoneyDisplay from '../common/MoneyDisplay';
@@ -23,10 +36,10 @@ interface CheckoutProps {
 }
 
 export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutProps) {
-    const { message } = App.useApp();
+    const { message, modal } = App.useApp();
     const screens = useBreakpoint();
     const [mounted, setMounted] = useState(false);
-    
+
     const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
     const [paidAmount, setPaidAmount] = useState<number>(0);
     const [customerId, setCustomerId] = useState<string | null>(null);
@@ -47,7 +60,7 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
         },
     });
 
-    const handleComplete = async () => {
+    const handleComplete = () => {
         if ((paymentMode === 'credit' || paymentMode === 'partial') && !customerId) {
             message.error(ar.pos.creditRequiresCustomer);
             return;
@@ -57,11 +70,45 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
         if (paymentMode === 'credit') finalPaid = 0;
         if (paymentMode === 'partial') finalPaid = paidAmount;
 
-        await onCheckout(paymentMode, finalPaid, customerId);
+        const paymentModeLabel =
+            paymentMode === 'cash'
+                ? ar.pos.cash
+                : paymentMode === 'credit'
+                  ? ar.pos.credit
+                  : ar.pos.partial;
+        const selectedCustomer = customers?.find((c) => c._id === customerId);
 
-        setPaymentMode('cash');
-        setPaidAmount(0);
-        setCustomerId(null);
+        modal.confirm({
+            title: 'تأكيد إتمام البيع',
+            icon: <DollarOutlined />,
+            content: (
+                <Descriptions column={1} size="small" style={{ marginTop: 12 }}>
+                    <Descriptions.Item label="الإجمالي">
+                        <MoneyDisplay amount={total} />
+                    </Descriptions.Item>
+                    <Descriptions.Item label="طريقة الدفع">{paymentModeLabel}</Descriptions.Item>
+                    {paymentMode === 'partial' && (
+                        <Descriptions.Item label="المدفوع الآن">
+                            <MoneyDisplay amount={finalPaid} />
+                        </Descriptions.Item>
+                    )}
+                    {selectedCustomer && (
+                        <Descriptions.Item label="العميل">
+                            {selectedCustomer.name}
+                        </Descriptions.Item>
+                    )}
+                </Descriptions>
+            ),
+            okText: 'تأكيد البيع',
+            cancelText: 'إلغاء',
+            okButtonProps: { size: 'large' },
+            onOk: async () => {
+                await onCheckout(paymentMode, finalPaid, customerId);
+                setPaymentMode('cash');
+                setPaidAmount(0);
+                setCustomerId(null);
+            },
+        });
     };
 
     const handlePaymentModeChange = (mode: PaymentMode) => {
@@ -77,11 +124,15 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
 
     const checkoutContent = (
         <Flex vertical gap={24} style={{ width: '100%' }}>
-            
             {/* Added Prominent Total Display for Mobile Context */}
             {isMobile && (
-                <Card size="small" style={{ background: '#e6f4ff', borderColor: '#91caff', textAlign: 'center' }}>
-                    <Text type="secondary" style={{ fontSize: 14 }}>المبلغ الإجمالي المطلوب</Text>
+                <Card
+                    size="small"
+                    style={{ background: '#e6f4ff', borderColor: '#91caff', textAlign: 'center' }}
+                >
+                    <Text type="secondary" style={{ fontSize: 14 }}>
+                        المبلغ الإجمالي المطلوب
+                    </Text>
                     <Title level={2} style={{ margin: '4px 0 0 0', color: '#1677ff' }}>
                         <MoneyDisplay amount={total} />
                     </Title>
@@ -89,7 +140,9 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
             )}
 
             <div>
-                <Text strong style={{ display: 'block', marginBottom: 12, fontSize: 16 }}>{ar.pos.paymentMode}</Text>
+                <Text strong style={{ display: 'block', marginBottom: 12, fontSize: 16 }}>
+                    {ar.pos.paymentMode}
+                </Text>
                 <Radio.Group
                     value={paymentMode}
                     onChange={(e) => handlePaymentModeChange(e.target.value)}
@@ -110,7 +163,14 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
             </div>
 
             {(paymentMode === 'credit' || paymentMode === 'partial') && (
-                <div style={{ background: '#fafafa', padding: 16, borderRadius: 8, border: '1px solid #f0f0f0' }}>
+                <div
+                    style={{
+                        background: '#fafafa',
+                        padding: 16,
+                        borderRadius: 8,
+                        border: '1px solid #f0f0f0',
+                    }}
+                >
                     <Text strong style={{ display: 'block', marginBottom: 8 }}>
                         <UserOutlined /> {ar.nav.customers} <Text type="danger">*</Text>
                     </Text>
@@ -122,7 +182,7 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
                         onChange={setCustomerId}
                         style={{ width: '100%' }}
                         loading={isLoading}
-                        options={customers?.map(c => ({ value: c._id, label: c.name })) || []}
+                        options={customers?.map((c) => ({ value: c._id, label: c.name })) || []}
                         filterOption={(input, option) =>
                             (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                         }
@@ -132,7 +192,9 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
 
             {paymentMode === 'partial' && (
                 <div>
-                    <Text strong style={{ display: 'block', marginBottom: 8 }}>{ar.pos.paidAmount} (نقداً)</Text>
+                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                        {ar.pos.paidAmount} (نقداً)
+                    </Text>
                     <Space.Compact style={{ width: '100%' }}>
                         <InputNumber
                             size="large"
@@ -143,13 +205,19 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
                             max={total / 100}
                             inputMode="decimal"
                         />
-                        <Button size="large" disabled style={{ background: '#f5f5f5', color: '#000', cursor: 'default' }}>
+                        <Button
+                            size="large"
+                            disabled
+                            style={{ background: '#f5f5f5', color: '#000', cursor: 'default' }}
+                        >
                             ج.م
                         </Button>
                     </Space.Compact>
                     <Flex justify="space-between" style={{ marginTop: 8, padding: '0 4px' }}>
                         <Text type="secondary">المتبقي آجل:</Text>
-                        <Text strong type="danger"><MoneyDisplay amount={total - paidAmount} /></Text>
+                        <Text strong type="danger">
+                            <MoneyDisplay amount={total - paidAmount} />
+                        </Text>
                     </Flex>
                 </div>
             )}
@@ -169,12 +237,19 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
                             inputMode="decimal"
                             placeholder="أدخل المبلغ لحساب الباقي..."
                         />
-                        <Button size="large" disabled style={{ background: '#f5f5f5', color: '#000', cursor: 'default' }}>
+                        <Button
+                            size="large"
+                            disabled
+                            style={{ background: '#f5f5f5', color: '#000', cursor: 'default' }}
+                        >
                             ج.م
                         </Button>
                     </Space.Compact>
                     {paidAmount > total && (
-                        <Card size="small" style={{ marginTop: 12, background: '#f6ffed', borderColor: '#b7eb8f' }}>
+                        <Card
+                            size="small"
+                            style={{ marginTop: 12, background: '#f6ffed', borderColor: '#b7eb8f' }}
+                        >
                             <Flex justify="space-between" align="center">
                                 <Text style={{ fontSize: 16 }}>الباقي للعميل:</Text>
                                 <Text strong style={{ fontSize: 20, color: '#389e0d' }}>
@@ -196,11 +271,11 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
             onClick={handleComplete}
             loading={isSubmitting}
             disabled={total === 0}
-            style={{ 
-                height: isMobile ? 56 : 48, 
-                fontSize: 18, 
-                fontWeight: 'bold', 
-                borderRadius: 8 
+            style={{
+                height: isMobile ? 56 : 48,
+                fontSize: 18,
+                fontWeight: 'bold',
+                borderRadius: 8,
             }}
             icon={<DollarOutlined />}
         >
@@ -212,9 +287,7 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
         return (
             <div style={{ padding: 16, paddingBottom: 120 }}>
                 {checkoutContent}
-                <StickySubmitBar>
-                    {completeBtn}
-                </StickySubmitBar>
+                <StickySubmitBar>{completeBtn}</StickySubmitBar>
             </div>
         );
     }
@@ -222,18 +295,22 @@ export default function Checkout({ total, onCheckout, isSubmitting }: CheckoutPr
     return (
         <Card title={ar.pos.checkout} variant="outlined" styles={{ header: { fontSize: 18 } }}>
             {/* Desktop prominent total display */}
-            <Flex justify="space-between" align="center" style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
-                <Text type="secondary" style={{ fontSize: 16 }}>الإجمالي المطلوب:</Text>
+            <Flex
+                justify="space-between"
+                align="center"
+                style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}
+            >
+                <Text type="secondary" style={{ fontSize: 16 }}>
+                    الإجمالي المطلوب:
+                </Text>
                 <Title level={3} style={{ margin: 0, color: '#1677ff' }}>
                     <MoneyDisplay amount={total} />
                 </Title>
             </Flex>
 
             {checkoutContent}
-            
-            <div style={{ marginTop: 32 }}>
-                {completeBtn}
-            </div>
+
+            <div style={{ marginTop: 32 }}>{completeBtn}</div>
         </Card>
     );
 }

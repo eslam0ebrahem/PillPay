@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button, Col, Row, App, Grid, Segmented, Badge, Flex, Typography, Tag } from 'antd';
-import { RollbackOutlined, ShoppingCartOutlined, SearchOutlined, CreditCardOutlined } from '@ant-design/icons';
+import {
+    RollbackOutlined,
+    ShoppingCartOutlined,
+    SearchOutlined,
+    CreditCardOutlined,
+} from '@ant-design/icons';
 import ProductSearch from './ProductSearch';
 import Cart from './Cart';
 import Checkout from './Checkout';
@@ -33,9 +38,35 @@ export default function POSScreen() {
     const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<ActiveTab>('search');
 
+    // Restore cart from localStorage on mount
     useEffect(() => {
         setMounted(true);
+        try {
+            const saved = localStorage.getItem('pillpay-pos-cart');
+            if (saved) {
+                const parsed = JSON.parse(saved) as { items: CartItem[]; discount?: DiscountObj };
+                if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+                    setCartItems(parsed.items);
+                    setInvoiceDiscount(parsed.discount);
+                }
+            }
+        } catch {
+            // Ignore corrupt data
+        }
     }, []);
+
+    // Persist cart to localStorage whenever it changes
+    useEffect(() => {
+        if (!mounted) return;
+        try {
+            localStorage.setItem(
+                'pillpay-pos-cart',
+                JSON.stringify({ items: cartItems, discount: invoiceDiscount })
+            );
+        } catch {
+            // Ignore storage quota errors
+        }
+    }, [cartItems, invoiceDiscount, mounted]);
 
     // Memoized to avoid recalculating on every render
     const isMobile = useMemo(
@@ -153,7 +184,12 @@ export default function POSScreen() {
                         item.discount
                     );
 
-                    return { ...item, quantity, computedUnitPrice: unitPrice, computedSubtotal: subtotal };
+                    return {
+                        ...item,
+                        quantity,
+                        computedUnitPrice: unitPrice,
+                        computedSubtotal: subtotal,
+                    };
                 })
             );
         },
@@ -173,7 +209,12 @@ export default function POSScreen() {
                         discount
                     );
 
-                    return { ...item, discount, computedUnitPrice: unitPrice, computedSubtotal: subtotal };
+                    return {
+                        ...item,
+                        discount,
+                        computedUnitPrice: unitPrice,
+                        computedSubtotal: subtotal,
+                    };
                 })
             );
         },
@@ -221,6 +262,7 @@ export default function POSScreen() {
                 setCartItems([]);
                 setInvoiceDiscount(undefined);
                 setActiveTab('search');
+                localStorage.removeItem('pillpay-pos-cart');
             } catch (error) {
                 const messageText =
                     error instanceof Error ? error.message : 'تعذر إتمام عملية البيع';
@@ -292,7 +334,14 @@ export default function POSScreen() {
 
                     <Row gutter={[16, 16]} style={{ flex: 1, minHeight: 0 }}>
                         <Col xs={24} lg={16}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 16,
+                                    height: '100%',
+                                }}
+                            >
                                 <ProductSearch onAddToCart={handleAddToCart} />
                                 <div style={{ flex: 1, minHeight: 0 }}>
                                     <Cart
@@ -425,10 +474,7 @@ export default function POSScreen() {
                 </>
             )}
 
-            <RefundDialog
-                open={isRefundDialogOpen}
-                onClose={() => setIsRefundDialogOpen(false)}
-            />
+            <RefundDialog open={isRefundDialogOpen} onClose={() => setIsRefundDialogOpen(false)} />
         </div>
     );
 }
