@@ -9,7 +9,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
-        value: "20"
+        value: "24"
       - key: HUSKY
         value: "0"
       - key: PORT
