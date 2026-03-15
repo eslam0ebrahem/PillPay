@@ -10,7 +10,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "import:drugs": "node scripts/import-drugs-dataset.mjs",
-        "prepare": "husky"
+        "prepare": "husky || true"
     },
     "dependencies": {
         "@ant-design/cssinjs": "^2.1.2",
