@@ -25,7 +25,8 @@ export type PermissionKey =
     | 'supplier-invoices.manage'
     | 'supplier-invoices.payments'
     | 'reports.view'
-    | 'balance.adjust'
+    | 'customers.balance.adjust'
+    | 'suppliers.balance.adjust'
     | 'inventory-audits.manage'
     | 'users.manage'
     | 'settings.view'
@@ -67,7 +68,8 @@ export const ALL_PERMISSIONS: PermissionKey[] = [
     'supplier-invoices.manage',
     'supplier-invoices.payments',
     'reports.view',
-    'balance.adjust',
+    'customers.balance.adjust',
+    'suppliers.balance.adjust',
     'inventory-audits.manage',
     'users.manage',
     'settings.view',
@@ -133,7 +135,6 @@ export interface CartItem {
 
 // --- Pagination ---
 export interface PaginationParams {
-
     page: number;
     limit: number;
 }

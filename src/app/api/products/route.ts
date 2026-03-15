@@ -21,9 +21,10 @@ export const GET = withPermission('products.view', async (req: NextRequest) => {
         const filter: any = {};
 
         if (search) {
+            const safeSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             filter.$or = [
-                { nameAr: { $regex: search, $options: 'i' } },
-                { nameEn: { $regex: search, $options: 'i' } },
+                { nameAr: { $regex: safeSearch, $options: 'i' } },
+                { nameEn: { $regex: safeSearch, $options: 'i' } },
                 { barcode: search },
                 { barcode2: search },
             ];
@@ -123,8 +124,14 @@ export const POST = withPermission('products.manage', async (req: NextRequest) =
         return NextResponse.json(product, { status: 201 });
     } catch (error: any) {
         if (error.name === 'ZodError') {
-            return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: error.errors } }, { status: 400 });
+            return NextResponse.json(
+                { error: { code: 'VALIDATION_ERROR', message: error.errors } },
+                { status: 400 }
+            );
         }
-        return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: error.message } }, { status: 500 });
+        return NextResponse.json(
+            { error: { code: 'INTERNAL_ERROR', message: error.message } },
+            { status: 500 }
+        );
     }
 });

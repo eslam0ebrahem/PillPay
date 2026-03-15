@@ -6,6 +6,7 @@ import SaleInvoice from '@/lib/models/SaleInvoice';
 import CustomerPayment from '@/lib/models/CustomerPayment';
 import BalanceAdjustment from '@/lib/models/BalanceAdjustment';
 import { z } from 'zod';
+import { isValidObjectId } from '@/lib/utils/validation';
 
 const updateCustomerSchema = z.object({
     name: z.string().min(1, 'اسم العميل مطلوب').optional(),
@@ -18,15 +19,27 @@ export const GET = withPermission('customers.view', async (req: NextRequest, con
         const params = await context.params;
         const id = params.id;
 
+        if (!isValidObjectId(id)) {
+            return NextResponse.json(
+                { error: { code: 'INVALID_INPUT', message: 'المعرف غير صالح' } },
+                { status: 400 }
+            );
+        }
+
         const customer = await Customer.findById(id).lean();
         if (!customer) {
-            return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'العميل غير موجود' } }, { status: 404 });
+            return NextResponse.json(
+                { error: { code: 'NOT_FOUND', message: 'العميل غير موجود' } },
+                { status: 404 }
+            );
         }
 
         const unpaidInvoices = await SaleInvoice.find({
             customerId: id,
-            paymentStatus: { $in: ['unpaid', 'partial'] }
-        }).sort({ date: -1 }).lean();
+            paymentStatus: { $in: ['unpaid', 'partial'] },
+        })
+            .sort({ date: -1 })
+            .lean();
 
         const recentPayments = await CustomerPayment.find({ customerId: id })
             .sort({ createdAt: -1 })
@@ -36,8 +49,9 @@ export const GET = withPermission('customers.view', async (req: NextRequest, con
 
         const recentAdjustments = await BalanceAdjustment.find({
             entityType: 'customer',
-            entityId: id
-        }).sort({ createdAt: -1 })
+            entityId: id,
+        })
+            .sort({ createdAt: -1 })
             .populate('adjustedBy', 'name')
             .limit(10)
             .lean();
@@ -55,21 +69,41 @@ export const PUT = withPermission('customers.manage', async (req: NextRequest, c
 
         const params = await context.params;
         const id = params.id;
+
+        if (!isValidObjectId(id)) {
+            return NextResponse.json(
+                { error: { code: 'INVALID_INPUT', message: 'المعرف غير صالح' } },
+                { status: 400 }
+            );
+        }
+
         const body = await req.json();
 
         // Validation
         const parsed = updateCustomerSchema.parse(body);
 
-        const customer = await Customer.findByIdAndUpdate(id, parsed, { new: true, runValidators: true });
+        const customer = await Customer.findByIdAndUpdate(id, parsed, {
+            new: true,
+            runValidators: true,
+        });
         if (!customer) {
-            return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'العميل غير موجود' } }, { status: 404 });
+            return NextResponse.json(
+                { error: { code: 'NOT_FOUND', message: 'العميل غير موجود' } },
+                { status: 404 }
+            );
         }
 
         return NextResponse.json(customer);
     } catch (error: any) {
         if (error.name === 'ZodError') {
-            return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: error.errors } }, { status: 400 });
+            return NextResponse.json(
+                { error: { code: 'VALIDATION_ERROR', message: error.errors } },
+                { status: 400 }
+            );
         }
-        return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: error.message } }, { status: 500 });
+        return NextResponse.json(
+            { error: { code: 'INTERNAL_ERROR', message: error.message } },
+            { status: 500 }
+        );
     }
 });

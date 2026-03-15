@@ -21,8 +21,10 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
         // FIFO Allocation: Find oldest unpaid invoices
         const unpaidInvoices = await SaleInvoice.find({
             customerId,
-            paymentStatus: { $in: ['unpaid', 'partial'] }
-        }).sort({ createdAt: 1 }).session(session);
+            paymentStatus: { $in: ['unpaid', 'partial'] },
+        })
+            .sort({ createdAt: 1 })
+            .session(session);
 
         let remainingAmount = amountToApply;
         const allocations = [];
@@ -33,17 +35,34 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
             const invoiceRemaining = invoice.total - invoice.paidAmount;
             const allocated = Math.min(remainingAmount, invoiceRemaining);
 
-            invoice.paidAmount += allocated;
-            if (invoice.paidAmount >= invoice.total) {
-                invoice.paymentStatus = 'paid';
-            } else {
-                invoice.paymentStatus = 'partial';
+            // Use findOneAndUpdate with $inc for atomic concurrency-safe update
+            const newPaidAmount = invoice.paidAmount + allocated;
+            const updatedInvoice = await SaleInvoice.findOneAndUpdate(
+                {
+                    _id: invoice._id,
+                    // Guard: only update if paidAmount hasn't changed since we read it
+                    paidAmount: invoice.paidAmount,
+                    paymentStatus: { $in: ['unpaid', 'partial'] },
+                },
+                {
+                    $inc: { paidAmount: allocated },
+                    $set: {
+                        paymentStatus: newPaidAmount >= invoice.total ? 'paid' : 'partial',
+                    },
+                },
+                { new: true, session }
+            );
+
+            if (!updatedInvoice) {
+                // Concurrent payment modified this invoice — abort and retry
+                throw new Error(
+                    'تم تعديل الفاتورة بواسطة عملية مدفوعات أخرى في نفس الوقت، يرجى المحاولة مرة أخرى'
+                );
             }
-            await invoice.save({ session });
 
             allocations.push({
                 invoiceId: invoice._id,
-                amount: allocated
+                amount: allocated,
             });
 
             remainingAmount -= allocated;
@@ -53,7 +72,7 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
             customerId,
             amount: amountToApply,
             allocations,
-            receivedBy: userId
+            receivedBy: userId,
         });
         await payment.save({ session });
 
@@ -61,8 +80,6 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
         const oldBalance = customer.totalOwed;
         customer.totalOwed = Math.max(0, customer.totalOwed - amountToApply);
         await customer.save({ session });
-
-        await session.commitTransaction();
 
         await logAction({
             userId,
@@ -76,8 +93,11 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
                 newBalance: customer.totalOwed,
                 customerId,
                 allocations,
-            }
+            },
+            session,
         });
+
+        await session.commitTransaction();
 
         return payment;
     } catch (error) {
@@ -88,7 +108,12 @@ export async function recordCustomerPayment(customerId: string, amount: number, 
     }
 }
 
-export async function adjustCustomerBalance(customerId: string, amountChange: number, reason: string, userId: string) {
+export async function adjustCustomerBalance(
+    customerId: string,
+    amountChange: number,
+    reason: string,
+    userId: string
+) {
     await connectDB();
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -98,7 +123,7 @@ export async function adjustCustomerBalance(customerId: string, amountChange: nu
         if (!customer) throw new Error('العميل غير موجود');
 
         const oldBalance = customer.totalOwed;
-        customer.totalOwed += amountChange;
+        customer.totalOwed = Math.max(0, customer.totalOwed + amountChange);
 
         await customer.save({ session });
 
@@ -107,19 +132,20 @@ export async function adjustCustomerBalance(customerId: string, amountChange: nu
             entityId: customerId,
             amount: amountChange,
             reason,
-            adjustedBy: userId
+            adjustedBy: userId,
         });
         await adjustment.save({ session });
-
-        await session.commitTransaction();
 
         await logAction({
             userId,
             action: 'CUSTOMER_BALANCE_ADJUSTED',
             entityType: 'BalanceAdjustment',
             entityId: adjustment._id.toString(),
-            details: { oldBalance, newBalance: customer.totalOwed, amountChange, reason }
+            details: { oldBalance, newBalance: customer.totalOwed, amountChange, reason },
+            session,
         });
+
+        await session.commitTransaction();
 
         return { customer, adjustment };
     } catch (error) {

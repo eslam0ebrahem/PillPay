@@ -4,7 +4,8 @@ import Product from '@/lib/models/Product';
 import Customer from '@/lib/models/Customer';
 import SaleInvoice from '@/lib/models/SaleInvoice';
 import { getSettings } from '@/lib/models/Settings';
-import { allocateBatchesFEFO, deductFloorStock, getProductFloorStock } from './stock.service';
+import Batch from '@/lib/models/Batch';
+import { allocateBatchesFEFO, deductFloorStock } from './stock.service';
 import { generateInvoiceNumber } from '@/lib/utils/invoiceNumber';
 import { logAction } from './audit.service';
 import { calcSubtotal, calcDiscountAmount } from '@/lib/utils/money';
@@ -57,13 +58,10 @@ export async function searchProducts(
         const trimmed = query.trim();
         filter = {
             isActive: true,
-            $or: [
-                { barcode: trimmed },
-                { barcode2: trimmed },
-            ],
+            $or: [{ barcode: trimmed }, { barcode2: trimmed }],
         };
     } else if (type === 'text' && query.trim()) {
-        const q = query.trim();
+        const q = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         // Try text index first, fallback to regex for partial matches
         filter = {
             isActive: true,
@@ -80,26 +78,32 @@ export async function searchProducts(
     // Limit results to 20 for performance
     const products = await Product.find(filter).limit(20).lean<any[]>();
 
-    const results: ProductSearchResult[] = [];
+    if (products.length === 0) return [];
 
-    for (const p of products) {
-        const floorStock = await getProductFloorStock(p._id);
-        results.push({
-            _id: p._id.toString(),
-            barcode: p.barcode || null,
-            barcode2: p.barcode2 || null,
-            nameAr: p.nameAr,
-            nameEn: p.nameEn,
-            imageUrl: p.imageUrl,
-            sellingPrice: p.sellingPrice,
-            baseUnit: p.baseUnit,
-            subUnit: p.subUnit,
-            subUnitConversionFactor: p.subUnitConversionFactor,
-            floorStock,
-        });
-    }
+    // Single aggregation to get floor stock for all products at once (replaces N+1 loop)
+    const productIds = products.map((p: any) => p._id);
+    const floorStockAgg = await Batch.aggregate([
+        { $match: { productId: { $in: productIds } } },
+        { $group: { _id: '$productId', total: { $sum: '$floorQty' } } },
+    ]);
 
-    return results;
+    const floorStockMap = new Map<string, number>(
+        floorStockAgg.map((r: any) => [r._id.toString(), r.total])
+    );
+
+    return products.map((p: any) => ({
+        _id: p._id.toString(),
+        barcode: p.barcode || null,
+        barcode2: p.barcode2 || null,
+        nameAr: p.nameAr,
+        nameEn: p.nameEn,
+        imageUrl: p.imageUrl,
+        sellingPrice: p.sellingPrice,
+        baseUnit: p.baseUnit,
+        subUnit: p.subUnit,
+        subUnitConversionFactor: p.subUnitConversionFactor,
+        floorStock: floorStockMap.get(p._id.toString()) ?? 0,
+    }));
 }
 
 /**
@@ -141,16 +145,26 @@ export async function checkout(input: CheckoutInput): Promise<string> {
                 if (!product.subUnitConversionFactor) {
                     throw new Error(`المنتج ${product.nameAr} لا يحتوي على معامل تحويل فرعي`);
                 }
-                qtyInBaseUnits = convertToBaseUnits(itemInput.quantity, product.subUnitConversionFactor);
+                qtyInBaseUnits = convertToBaseUnits(
+                    itemInput.quantity,
+                    product.subUnitConversionFactor
+                );
             }
 
             // Validate Discount
-            if (itemInput.discount?.type === 'percentage' && itemInput.discount.value > settings.maxDiscountPercentage) {
+            if (
+                itemInput.discount?.type === 'percentage' &&
+                itemInput.discount.value > settings.maxDiscountPercentage
+            ) {
                 throw new Error(`نسبة الخصم للمنتج ${product.nameAr} تتجاوز الحد الأقصى المسموح`);
             }
 
             // FEFO Allocation
-            const allocationResult = await allocateBatchesFEFO(product._id, qtyInBaseUnits, session);
+            const allocationResult = await allocateBatchesFEFO(
+                product._id,
+                qtyInBaseUnits,
+                session
+            );
 
             if (allocationResult.allocatedQuantity === 0) {
                 throw new Error(`لا يوجد مخزون متاح للمنتج ${product.nameAr}`);
@@ -187,7 +201,10 @@ export async function checkout(input: CheckoutInput): Promise<string> {
         }
 
         // Invoice level discount validation
-        if (invoiceDiscount?.type === 'percentage' && invoiceDiscount.value > settings.maxDiscountPercentage) {
+        if (
+            invoiceDiscount?.type === 'percentage' &&
+            invoiceDiscount.value > settings.maxDiscountPercentage
+        ) {
             throw new Error(`نسبة خصم الفاتورة تتجاوز الحد الأقصى المسموح`);
         }
 

@@ -1,8 +1,15 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import type { JWTPayload } from '@/lib/types';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET must be set and at least 32 characters long');
+}
+if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 32) {
+    throw new Error('JWT_REFRESH_SECRET must be set and at least 32 characters long');
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 // Use numeric seconds for expiry to avoid StringValue type issues
 const ACCESS_TOKEN_EXPIRY = 60 * 60 * 24; // 24 hours in seconds

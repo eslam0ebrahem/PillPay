@@ -5,6 +5,7 @@ import { ConfigProvider, App } from 'antd';
 import arEG from 'antd/locale/ar_EG';
 import './globals.css';
 import QueryProvider from '@/components/common/QueryProvider';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 const cairo = Cairo({
     subsets: ['arabic', 'latin'],
@@ -25,11 +26,7 @@ export const viewport = {
     viewportFit: 'cover' as const,
 };
 
-export default function RootLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="ar" dir="rtl" className={cairo.variable}>
             <body className={cairo.className}>
@@ -44,11 +41,13 @@ export default function RootLayout({
                         }}
                     >
                         <App>
-                            <QueryProvider>{children}</QueryProvider>
+                            <ErrorBoundary>
+                                <QueryProvider>{children}</QueryProvider>
+                            </ErrorBoundary>
                         </App>
                     </ConfigProvider>
                 </AntdRegistry>
             </body>
-        </html >
+        </html>
     );
 }

@@ -1,4 +1,17 @@
 import { z } from 'zod';
+import { Types } from 'mongoose';
+
+// --- Utilities ---
+
+/** Escape special regex characters to prevent ReDoS attacks. */
+export function escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Validate that a string is a valid MongoDB ObjectId. */
+export function isValidObjectId(id: string): boolean {
+    return Types.ObjectId.isValid(id);
+}
 
 // --- Login ---
 export const loginSchema = z.object({
@@ -7,10 +20,15 @@ export const loginSchema = z.object({
 });
 
 // --- Discount ---
-const discountSchema = z.object({
-    type: z.enum(['amount', 'percentage']),
-    value: z.number().int().min(0),
-}).optional();
+const discountSchema = z
+    .object({
+        type: z.enum(['amount', 'percentage']),
+        value: z.number().int().min(0),
+    })
+    .refine((d) => d.type !== 'percentage' || d.value <= 10000, {
+        message: 'نسبة الخصم لا يمكن أن تتجاوز 100%',
+    })
+    .optional();
 
 // --- Product ---
 export const productSchema = z.object({

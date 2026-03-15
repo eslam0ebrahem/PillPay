@@ -1,5 +1,12 @@
 import { Schema, model, models, Document, Types } from 'mongoose';
-import type { IBatchAllocation, ISaleItem, DiscountObj, PaymentMode, SaleInvoiceStatus, UnitSold } from '@/lib/types';
+import type {
+    IBatchAllocation,
+    ISaleItem,
+    DiscountObj,
+    PaymentMode,
+    SaleInvoiceStatus,
+    UnitSold,
+} from '@/lib/types';
 
 export interface ISaleInvoice extends Document {
     invoiceNumber: string;
@@ -93,7 +100,7 @@ const saleInvoiceSchema = new Schema<ISaleInvoice>(
             type: String,
             enum: ['paid', 'unpaid', 'partial'],
             required: true,
-            default: 'paid'
+            default: 'paid',
         },
     },
     { timestamps: true }
@@ -104,7 +111,10 @@ const saleInvoiceSchema = new Schema<ISaleInvoice>(
 saleInvoiceSchema.index({ createdAt: -1, status: 1 });
 // For customer history
 saleInvoiceSchema.index({ customerId: 1, createdAt: -1 });
-// For invoice lookup
+// For FIFO payment allocation: find unpaid/partial invoices for a customer sorted by date
+saleInvoiceSchema.index({ customerId: 1, paymentStatus: 1, createdAt: 1 });
+// For cashier activity / shift reports
+saleInvoiceSchema.index({ cashierId: 1, createdAt: -1 });
 // For refunds lookup inside items
 saleInvoiceSchema.index({ 'items.productId': 1 });
 
